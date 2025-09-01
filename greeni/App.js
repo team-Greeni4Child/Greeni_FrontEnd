@@ -96,14 +96,14 @@ export default function App() {
       <StatusBar style="dark" />
 
       {/* 바닥 */}
-      <Animated.Image source={require("./assets/ground.png")} style={styles.ground} resizeMode="contain" />
+      <Animated.Image source={require("./assets/images/ground.png")} style={styles.ground} resizeMode="contain" />
 
       {/* 개구리 */}
-      <Animated.Image source={require("./assets/greeni.png")} style={styles.greeni} resizeMode="contain" />
+      <Animated.Image source={require("./assets/images/greeni.png")} style={styles.greeni} resizeMode="contain" />
 
       {/* 비 */}
       <Animated.Image
-        source={require("./assets/rain.png")}
+        source={require("./assets/images/rain.png")}
         style={[
           styles.rain,
           { opacity: rainOpacity, transform: [{ translateY: rainDropY }] },
@@ -112,13 +112,13 @@ export default function App() {
       />
 
       {/* 구름 */}
-      <Animated.Image source={require("./assets/cloud.png")} style={[styles.cloud1, { transform: [{ translateX: cloud1X }] }]} resizeMode="contain" />
-      <Animated.Image source={require("./assets/cloud.png")} style={[styles.cloud2, { transform: [{ translateX: cloud2X }] }]} resizeMode="contain" />
-      <Animated.Image source={require("./assets/cloud.png")} style={[styles.cloud3, { transform: [{ translateX: cloud3X }] }]} resizeMode="contain" />
+      <Animated.Image source={require("./assets/images/cloud.png")} style={[styles.cloud1, { transform: [{ translateX: cloud1X }] }]} resizeMode="contain" />
+      <Animated.Image source={require("./assets/images/cloud.png")} style={[styles.cloud2, { transform: [{ translateX: cloud2X }] }]} resizeMode="contain" />
+      <Animated.Image source={require("./assets/images/cloud.png")} style={[styles.cloud3, { transform: [{ translateX: cloud3X }] }]} resizeMode="contain" />
 
       {/* 해 */}
       <Animated.Image
-        source={require("./assets/sun.png")}
+        source={require("./assets/images/sun.png")}
         style={[
           styles.sun,
           { opacity: sunOpacity, transform: [{ translateX: sunX }, { translateY: sunY }, { scale: sunScale }] },
