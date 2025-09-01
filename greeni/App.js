@@ -16,16 +16,16 @@ const AR = {
 
 export default function App() {
   /*** 애니메이션 값들 ***/
-  // 비: 아래로 살짝 떨어지며(translateY) 페이드아웃(opacity)
+  // 비: 아래로 살짝 떨어지며 사라짐
   const rainOpacity = useRef(new Animated.Value(1)).current;
   const rainDropY   = useRef(new Animated.Value(0)).current;
 
-  // 구름: 좌/우로 화면 밖까지 이탈
+  // 구름: 좌/우로 화면 밖까지 이동
   const cloud1X = useRef(new Animated.Value(0)).current;
   const cloud2X = useRef(new Animated.Value(0)).current;
   const cloud3X = useRef(new Animated.Value(0)).current;
 
-  // 해: 오른쪽 위에서 등장 → styles.sun 기준 위치로 이동
+  // 해: 오른쪽 위에서 등장
   const sunOpacity = useRef(new Animated.Value(0)).current;
   const sunScale   = useRef(new Animated.Value(1)).current;
   const sunX       = useRef(new Animated.Value(W * 0.12)).current;   // 오른쪽에서 시작
