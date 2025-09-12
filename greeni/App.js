@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import SplashScreen from "./screens/SplashScreen";
-import HomeScreen from "./screens/HomeScreen";
+import LoginScreen from "./screens/LoginScreen";
 
 export default function App() {
   const [showSplash, setShowSplash] = useState(true);
@@ -8,5 +8,5 @@ export default function App() {
   if (showSplash) {
     return <SplashScreen onDone={() => setShowSplash(false)} />;
   }
-  return <HomeScreen />;
+  return <LoginScreen />;
 }

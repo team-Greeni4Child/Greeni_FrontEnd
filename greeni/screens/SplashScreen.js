@@ -62,7 +62,7 @@ export default function SplashScreen({ onDone }) {
         Animated.timing(cloud2X, { toValue:  W * 1.6, duration: DURATION, easing: EASE, useNativeDriver: true }),
         Animated.timing(cloud3X, { toValue: -W * 1.4, duration: DURATION, easing: EASE, useNativeDriver: true }),
 
-        // 해: 오른쪽 위에서 → 제자리 (styles.sun 기준)
+        // 해: 오른쪽 위에서 → 제자리 
         Animated.timing(sunX, {
           toValue: 0,
           duration: DURATION,
