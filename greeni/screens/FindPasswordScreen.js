@@ -26,7 +26,8 @@ export default function LoginScreen({ navigation }) {
       <View style={styles.topBackground} />
 
       {/* 뒤로가기 버튼 */}
-      <TouchableOpacity onPress={() => navigation.goBack()} 
+      <TouchableOpacity 
+        onPress={() => navigation.goBack()} 
         style={styles.backButton}
       >
         <Image 

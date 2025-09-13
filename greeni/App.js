@@ -1,12 +1,43 @@
 import React, { useState } from "react";
+import { NavigationContainer } from "@react-navigation/native";
+import { createNativeStackNavigator } from "@react-navigation/native-stack";
+
 import SplashScreen from "./screens/SplashScreen";
 import LoginScreen from "./screens/LoginScreen";
+import FindPasswordScreen from "./screens/FindPasswordScreen";
+
+const Stack = createNativeStackNavigator();
 
 export default function App() {
+
   const [showSplash, setShowSplash] = useState(true);
 
-  if (showSplash) {
-    return <SplashScreen onDone={() => setShowSplash(false)} />;
-  }
-  return <LoginScreen />;
+  return (
+    <NavigationContainer>
+      {/* 화면 이동을 스택 방식으로 관리 */}
+      <Stack.Navigator screenOptions={{ headerShown: false }}>
+        
+        {/* 1) 첫화면 SplashScreen */}
+        {showSplash ? (
+          <Stack.Screen name="Splash">
+            {(props) => (
+              <SplashScreen
+                {...props}
+                // 스플래시 애니메이션이 끝나면 showSplash = false 로 변경
+                onDone={() => setShowSplash(false)}
+              />
+            )}
+          </Stack.Screen>
+        ) : (
+          <>
+            {/* 2) 로그인 화면 LoginScreen */}
+            <Stack.Screen name="Login" component={LoginScreen} />
+
+            {/* 3) 비밀번호 찾기 화면 FindPasswordSceen */}
+            <Stack.Screen name="FindPassword" component={FindPasswordScreen} />
+          </>
+        )}
+      </Stack.Navigator>
+    </NavigationContainer>
+  );
 }

@@ -64,9 +64,13 @@ export default function LoginScreen({ navigation }) {
 
         {/* 비밀번호 찾기, 회원가입 하기 */}
         <View style={styles.linkWrap}>
-          <TouchableOpacity style={styles.linkButton}>
+          <TouchableOpacity 
+            style={styles.linkButton}
+            onPress={() => navigation.navigate("FindPassword")}
+          >
             <Text style={styles.linkText}>비밀번호 찾기   {'>'}</Text>
           </TouchableOpacity>
+          
           <TouchableOpacity style={styles.linkButton}>
             <Text style={styles.linkText}>회원가입 하기   {'>'}</Text>
           </TouchableOpacity>
