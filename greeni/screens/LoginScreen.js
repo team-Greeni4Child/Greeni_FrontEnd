@@ -34,14 +34,14 @@ export default function LoginScreen({ navigation }) {
             <TextInput
             style={styles.input}
             placeholder="이메일"
-            placeholderTextColor="#5A463C"
+            placeholderTextColor={colors.brown}
             value={email}
             onChangeText={setEmail}
             />
             <TextInput
             style={styles.input}
             placeholder="비밀번호"
-            placeholderTextColor="#5A463C"
+            placeholderTextColor={colors.brown}
             value={password}
             onChangeText={setPassword}
             secureTextEntry
@@ -101,7 +101,7 @@ const styles = StyleSheet.create({
     borderRadius: 21,
     padding: 20,
     borderWidth: 2,
-    borderColor: "#9EA95F",
+    borderColor: colors.greenDark,
     justifyContent: "space-between",
   },
   loginTitle: {
@@ -119,7 +119,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     paddingVertical: 8,
     marginBottom: 8,
-    color: "#58453E",
+    color: colors.brown,
   },
   loginButton: {
     backgroundColor: colors.green,
