@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import colors from "../theme/colors";
 import { 
   View, 
   Text, 
@@ -79,7 +80,7 @@ export default function LoginScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#FFFDEE", // 아이보리
+    backgroundColor: colors.ivory, 
     alignItems: "center",
   },
   topBackground: {
@@ -88,7 +89,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: H * 0.6,
-    backgroundColor: "#FFE1E1", // 분홍
+    backgroundColor: colors.pink, 
     borderBottomLeftRadius: 30,
     borderBottomRightRadius: 30,
   },
@@ -96,7 +97,7 @@ const styles = StyleSheet.create({
     marginTop: H * 0.2,
     width: W * 0.8,
     height: H * 0.35,
-    backgroundColor: "#ffffff",
+    backgroundColor: colors.white,
     borderRadius: 21,
     padding: 20,
     borderWidth: 2,
@@ -105,7 +106,7 @@ const styles = StyleSheet.create({
   },
   loginTitle: {
     fontSize: 24,
-    color: "#58453E",
+    color: colors.brown,
     textAlign: "center",
   },
   inputsWrap: {
@@ -114,14 +115,14 @@ const styles = StyleSheet.create({
   input: {
     width: "100%",
     borderBottomWidth: 2,
-    borderBottomColor: "#9EA95F",
+    borderBottomColor: colors.greenDark,
     fontSize: 14,
     paddingVertical: 8,
     marginBottom: 8,
     color: "#58453E",
   },
   loginButton: {
-    backgroundColor: "#BEEA8b",
+    backgroundColor: colors.green,
     borderRadius: 10,
     width: "100%",
     height: 46,
@@ -131,7 +132,7 @@ const styles = StyleSheet.create({
   loginButtonText: {
     fontSize: 14,
     fontWeight: "700",
-    color: "#58453E",
+    color: colors.brown,
   },
   bottomWrap: {
     marginTop: H * 0.08,
@@ -150,8 +151,8 @@ const styles = StyleSheet.create({
   },
   linkButton: {
     borderWidth: 2,
-    borderColor: "#9CAF88",
-    backgroundColor: "#ffffff",
+    borderColor: colors.greenDark,
+    backgroundColor: colors.white,
     borderRadius: 21,
     paddingVertical: 3,
     paddingHorizontal: 20,
@@ -159,7 +160,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   linkText: {
-    color: "#58453E",
+    color: colors.brown,
     fontSize: 16,
   },
 });
