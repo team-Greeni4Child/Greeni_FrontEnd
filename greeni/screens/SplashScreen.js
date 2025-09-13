@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from "react";
 import { View, Animated, Text, StyleSheet, Dimensions, Easing } from "react-native";
 import { StatusBar } from "expo-status-bar";
+import colors from "../theme/colors";
 
 // 현재 기기의 화면 너비 W, 화면 높이 H
 const { width: W, height: H } = Dimensions.get("window");
@@ -141,7 +142,7 @@ export default function SplashScreen({ onDone }) {
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: "#FFFDEE",
+    backgroundColor: colors.ivory,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -197,12 +198,12 @@ const styles = StyleSheet.create({
   titleKr: {
     fontSize: 70,
     fontWeight: "800",
-    color: "#5A463C",
+    color: colors.brown,
   },
   titleEn: {
     fontSize: 20,
     fontWeight: "800",
-    color: "#5A463C",
+    color: colors.brown,
   },
 
   greeni: {
