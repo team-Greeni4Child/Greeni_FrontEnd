@@ -7,8 +7,10 @@ const { width: W, height: H } = Dimensions.get("window");
 
 export default function ProfileSelectScreen({route, navigation}) {
 
+  // 생성된 프로필 목록 배열로 관리
   const [profiles, setProfiles] = useState([]);
 
+  // 새로운 프로필이 생성되면 profiles 배열에 추가
   useEffect(() => {
     if (route.params?.newProfile) {
       setProfiles((prev) => [...prev, route.params.newProfile]);
