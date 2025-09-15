@@ -19,28 +19,26 @@ export default function ProfileCreateScreen1({route, navigation}) {
 
          {/* 상단 뒤로가기 버튼 및 '프로필 만들기' 제목 */}
         <View style={styles.titleWrap}>
-            <Image style={styles.backBtn} source={require("../assets/images/back_arrow.png")} 
+            <Image style={styles.backBtn} source={require("../assets/images/back.png")} 
                   onTouchEnd={() => navigation.navigate("ProfileCreateScreen1")}/>
             <Text style={styles.title}>프로필 만들기</Text>
         </View>
 
          {/* 선택한 프로필 이미지 및 이름, 생년월일 입력 */}
         <View style={styles.profileWrap}>
-            <Image style={styles.image} source={selectedImage}></Image>
+            <Image style={styles.image} source={selectedImage} />
             <TextInput
                 placeholder="이름을 입력해주세요"
                 placeholderTextColor="#58453E60"
                 value={name}
                 onChangeText={setName}
-                style={styles.input}>
-            </TextInput>
+                style={styles.input} />
             <TextInput
                 placeholder="생년월일을 입력해주세요(예: 20xx.xx.xx)"
                 placeholderTextColor="#58453E60"
                 value={birth}
                 onChangeText={setBirth}
-                style={styles.input}>
-            </TextInput>
+                style={styles.input} />
         </View>
 
         {/* 생성 버튼 */}

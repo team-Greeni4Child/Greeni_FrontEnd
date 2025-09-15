@@ -54,7 +54,7 @@ export default function ProfileCreateScreen1({navigation}) {
 
          {/* 상단 뒤로가기 버튼 및 '프로필 만들기' 제목 */}
         <View style={styles.titleWrap}>
-            <Image style={styles.backBtn} source={require("../assets/images/back_arrow.png")} onTouchEnd={() => navigation.navigate("ProfileSelectScreen")}></Image>
+            <Image style={styles.backBtn} source={require("../assets/images/back.png")} onTouchEnd={() => navigation.navigate("ProfileSelectScreen")} />
             <Text style={styles.title}>프로필 만들기</Text>
         </View>
 
