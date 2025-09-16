@@ -20,7 +20,7 @@ export default function App() {
       {/* 화면 이동을 스택 방식으로 관리 */}
       <Stack.Navigator screenOptions={{ headerShown: false }}>
         
-        {/* 1) 첫화면 SplashScreen */}
+        {/* 첫화면 SplashScreen */}
         {showSplash ? (
           <Stack.Screen name="Splash">
             {(props) => (
@@ -33,11 +33,20 @@ export default function App() {
           </Stack.Screen>
         ) : (
           <>
-            {/* 2) 로그인 화면 LoginScreen */}
+            {/* 로그인 화면 LoginScreen */}
             <Stack.Screen name="Login" component={LoginScreen} />
 
-            {/* 3) 비밀번호 찾기 화면 FindPasswordSceen */}
+            {/* 비밀번호 찾기 화면 FindPasswordSceen */}
             <Stack.Screen name="FindPassword" component={FindPasswordScreen} />
+
+            {/* 프로필 선택 화면 ProfileSelectScreen */}
+            <Stack.Screen name="ProfileSelect" component={ProfileSelectScreen} />
+
+            {/* 비밀번호 찾기 화면 ProfileCreateScreen1 */}
+            <Stack.Screen name="ProfileCreate1" component={ProfileCreateScreen1} />
+
+            {/* 비밀번호 찾기 화면 ProfileCreateScreen2 */}
+            <Stack.Screen name="ProfileCreate2" component={ProfileCreateScreen2} />
           </>
         )}
       </Stack.Navigator>
