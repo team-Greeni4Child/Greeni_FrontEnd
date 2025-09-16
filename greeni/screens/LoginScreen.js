@@ -49,7 +49,10 @@ export default function LoginScreen({ navigation }) {
         </View>
 
         {/* 로그인 버튼 */}
-        <TouchableOpacity style={styles.loginButton}>
+        <TouchableOpacity 
+          style={styles.loginButton}
+          onPress={() => navigation.navigate("ProfileSelect")}
+        >
           <Text style={styles.loginButtonText}>로그인</Text>
         </TouchableOpacity>
       </View>

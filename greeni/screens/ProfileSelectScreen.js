@@ -35,7 +35,7 @@ export default function ProfileSelectScreen({route, navigation}) {
 
        {/* + 버튼 누르면 프로필 이미지 선택 창으로 이동 */}
       <TouchableOpacity
-        onPress={() => navigation.navigate("ProfileCreateScreen1")}>
+        onPress={() => navigation.navigate("ProfileCreate1")}>
       <Image source={require("../assets/images/create_btn.png")} style={styles.createBtn} />
       </TouchableOpacity>
     </View>

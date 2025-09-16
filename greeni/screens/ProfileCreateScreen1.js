@@ -54,7 +54,7 @@ export default function ProfileCreateScreen1({navigation}) {
 
          {/* 상단 뒤로가기 버튼 및 '프로필 만들기' 제목 */}
         <View style={styles.titleWrap}>
-            <Image style={styles.backBtn} source={require("../assets/images/back.png")} onTouchEnd={() => navigation.navigate("ProfileSelectScreen")} />
+            <Image style={styles.backBtn} source={require("../assets/images/back.png")} onTouchEnd={() => navigation.navigate("ProfileSelect")} />
             <Text style={styles.title}>프로필 만들기</Text>
         </View>
 
@@ -76,7 +76,7 @@ export default function ProfileCreateScreen1({navigation}) {
             <Button title="다음" buttonColor='#BEEA8B' titleColor="#000" width={108} height={49} borderRadius={24.5}
                 onPress={() => {
                     if (selectedIndex !== null) {
-                        navigation.navigate("ProfileCreateScreen2", {
+                        navigation.navigate("ProfileCreate2", {
                             selectedImage: profileImages[selectedIndex],
                         })
                     }
