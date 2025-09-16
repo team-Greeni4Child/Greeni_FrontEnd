@@ -1,5 +1,5 @@
 import {React, useState} from "react";
-import { View, Text, Image, StyleSheet, Dimensions, TouchableOpacity } from "react-native";
+import { View, Text, Image, StyleSheet, Platform, Dimensions, TouchableOpacity } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import Button from "../components/Button";
 
@@ -88,6 +88,7 @@ export default function ProfileCreateScreen1({navigation}) {
 const styles = StyleSheet.create({
   root: {
     flex: 1,
+    flexDirection: 'column',
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: "#FFFDEE", 
@@ -96,6 +97,7 @@ const styles = StyleSheet.create({
   // 뒤로가기 버튼과 제목을 감싸는 wrapper 
   titleWrap: {
     position: "absolute",
+    alignItems: 'center',
     top: H * 0.08,
     width: W,
   },
@@ -108,7 +110,6 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: "800",
     color: "#5A463C",
-    left: W * 0.3
   },
 
   // 10개의 그리니 이미지를 감싸는 wrapper
@@ -117,13 +118,15 @@ const styles = StyleSheet.create({
     flexWrap: "wrap",
     justifyContent: "flex-start",
     top: -H * 0.05,
+    // left: Platform.OS === "ios" ? W * 0.032 : W * 0.05,
     margin: 20,
-    marginLeft: 30,
+    width: '90%',
+    alignSelf: 'center',
   },
   profile: {
-    width: 104,
-    height: 104,
-    margin: 5
+    aspectRatio: 1,
+    width: W * 0.24,
+    margin: 10,
   },
   image: {
     width: "100%",

@@ -1,5 +1,5 @@
 import {React, useState} from "react";
-import { View, Text, Image, TextInput, StyleSheet, Dimensions } from "react-native";
+import { View, Text, Image, TextInput, StyleSheet, Platform, Dimensions } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import Button from "../components/Button";
 
@@ -66,6 +66,7 @@ const styles = StyleSheet.create({
   // 뒤로가기 버튼과 제목을 감싸는 wrapper 
   titleWrap: {
     position: "absolute",
+    alignItems: 'center',
     top: H * 0.08,
     width: W,
   },
@@ -78,7 +79,6 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: "800",
     color: "#5A463C",
-    left: W * 0.3
   },
 
   // 선택한 프로필 이미지와 이름, 생년월일 입력창을 감싸는 wrapper
@@ -107,11 +107,11 @@ const styles = StyleSheet.create({
     fontWeight: "400",
     lineHeight: 20,
     letterSpacing: -0.32,
-    height: 20,
+    // height: 20,
     width: 345,
-    marginBottom: 20,
+    marginBottom: 15,
     paddingTop: 12,
-    paddingBottom: 20,
+    paddingBottom: Platform.OS === 'ios'? 5 : 8,
     borderBottomColor: "#9EA95F",
     borderBottomWidth: 2,
   },
