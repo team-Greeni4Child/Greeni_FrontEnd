@@ -7,7 +7,8 @@ import {
   TouchableOpacity, 
   StyleSheet, 
   Image, 
-  Dimensions 
+  Dimensions, 
+  Platform,
 } from "react-native";
 
 const { width: W, height: H } = Dimensions.get("window");
@@ -143,7 +144,7 @@ const styles = StyleSheet.create({
     color: colors.brown,
   },
   verificationButton:{
-    bottom: -4,
+    bottom: Platform.OS === "ios" ? 4 : -4,
     backgroundColor: colors.pink,
     borderRadius: 5,
     height: 30,
