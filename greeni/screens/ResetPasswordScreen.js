@@ -19,8 +19,8 @@ const AR = {
 };
 
 export default function LoginScreen({ navigation }) {
-  const [email, setEmail] = useState("");
-  const [code, setCode] = useState("");
+  const [password, setPassword] = useState("");
+  const [checkPassword, setCheckPassword] = useState("");
 
   return (
     <View style={styles.container}>
@@ -40,36 +40,31 @@ export default function LoginScreen({ navigation }) {
 
       {/* 비밀번호 찾기 박스 */}
       <View style={styles.box}>
-        <Text style={styles.title}>비밀번호 찾기</Text>
+        <Text style={styles.title}>비밀번호 재설정</Text>
 
-        {/* 이메일, 인증코드 입력 */}
+        {/* 이메일, 비밀번호 입력 */}
         <View style={styles.inputsWrap}>
-          <View style={styles.emailWrap}>
             <TextInput
-              style={styles.email}
-              placeholder="이메일"
-              placeholderTextColor={colors.brown}
-              value={email}
-              onChangeText={setEmail}
-            />
-            <TouchableOpacity style={styles.verificationButton}>
-              <Text style={styles.verificationButtonText}>인증</Text>
-            </TouchableOpacity>
-          </View>
-
-          <TextInput
-            style={styles.code}
-            placeholder="인증코드"
+            style={styles.input}
+            placeholder="비밀번호"
             placeholderTextColor={colors.brown}
-            value={code}
-            onChangeText={setCode}
-          />
+            value={password}
+            onChangeText={setPassword}
+            />
+            <TextInput
+            style={styles.input}
+            placeholder="비밀번호 확인"
+            placeholderTextColor={colors.brown}
+            value={checkPassword}
+            onChangeText={setCheckPassword}
+            secureTextEntry
+            />
         </View>
 
         {/* 완료 버튼 */}
         <TouchableOpacity 
           style={styles.finishButton}
-          onPress={() => navigation.navigate("ResetPassword")}
+          //onPress={() => navigation.navigate("ResetPassword")}
         >
           <Text style={styles.finishButtonText}>완료</Text>
         </TouchableOpacity>
@@ -134,32 +129,7 @@ const styles = StyleSheet.create({
   inputsWrap: {
     alignItems: "stretch",        
   },
-  emailWrap: {
-    flexDirection: "row",
-    borderBottomWidth: 2,
-    borderBottomColor: colors.greenDark,
-    marginBottom: 8,
-  },
-  email: {
-    width: "75%",
-    fontSize: 14,
-    paddingVertical: 8,
-    color: colors.brown,
-  },
-  verificationButton:{
-    bottom: Platform.OS === "ios" ? 4 : -4,
-    backgroundColor: colors.pink,
-    borderRadius: 5,
-    height: 30,
-    paddingHorizontal: 20,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  verificationButtonText:{
-    fontSize: 12,
-    color: colors.brown,
-  },
-  code: {
+  input: {
     width: "100%",
     borderBottomWidth: 2,
     borderBottomColor: colors.greenDark,
