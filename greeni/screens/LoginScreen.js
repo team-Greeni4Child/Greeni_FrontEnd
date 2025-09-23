@@ -1,5 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
 import colors from "../theme/colors";
+import { AuthContext } from "../App"; 
 import { 
   View, 
   Text, 
@@ -20,6 +21,7 @@ const AR = {
 export default function LoginScreen({ navigation }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const {setStep} = useContext(AuthContext);
 
   return (
     <View style={styles.container}>
@@ -51,7 +53,7 @@ export default function LoginScreen({ navigation }) {
         {/* 로그인 버튼 */}
         <TouchableOpacity 
           style={styles.loginButton}
-          onPress={() => navigation.navigate("ProfileSelect")}
+          onPress={() => setStep("profile")}
         >
           <Text style={styles.loginButtonText}>로그인</Text>
         </TouchableOpacity>

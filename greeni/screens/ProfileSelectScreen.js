@@ -1,6 +1,7 @@
-import {React, useState, useEffect} from "react";
+import {React, useState, useEffect, useContext} from "react";
 import { View, Text, Image, StyleSheet, Dimensions, TouchableOpacity } from "react-native";
 import { StatusBar } from "expo-status-bar";
+import { AuthContext } from "../App";
 
 // 현재 기기의 화면 너비 W, 화면 높이 H
 const { width: W, height: H } = Dimensions.get("window");
@@ -9,6 +10,7 @@ export default function ProfileSelectScreen({route, navigation}) {
 
   // 생성된 프로필 목록 배열로 관리
   const [profiles, setProfiles] = useState([]);
+  const { setStep } = useContext(AuthContext);
 
   // 새로운 프로필이 생성되면 profiles 배열에 추가
   useEffect(() => {
@@ -27,9 +29,13 @@ export default function ProfileSelectScreen({route, navigation}) {
       {/* 생성한 프로필 목록 */}
       <View style={styles.profileWrap}>
         {profiles.map((p, idx) => (
-          <View key={idx} style={styles.profile}>
+          <TouchableOpacity 
+            key={idx} 
+            style={styles.profile} 
+            onPress={() => setStep("main")}  
+          >
             <Image source={p.image} style={styles.profileImage} />
-          </View>
+          </TouchableOpacity>
         ))}
       </View>
 
