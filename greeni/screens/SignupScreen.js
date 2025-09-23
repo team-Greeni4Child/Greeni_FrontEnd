@@ -86,7 +86,7 @@ export default function SignUpScreen({ navigation }) {
         />
       </View>
 
-      {/* 개구리 + 가입하기 버튼 */}
+      {/* 그리니 + 가입하기 버튼 */}
       <View style={styles.bottomWrap}>
         <Image
           source={require("../assets/images/greeni_shy.png")}
@@ -94,7 +94,10 @@ export default function SignUpScreen({ navigation }) {
           resizeMode="contain"
         />
 
-        <TouchableOpacity style={styles.submitButton}>
+        <TouchableOpacity 
+          style={styles.submitButton}
+          onPress={() => navigation.navigate("Login")}
+        >
           <Text style={styles.submitButtonText}>가입하기</Text>
         </TouchableOpacity>
       </View>
