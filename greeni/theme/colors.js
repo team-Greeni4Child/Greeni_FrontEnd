@@ -20,7 +20,4 @@ export default {
   pink: "#FFE1E1", 
   pinkMid: "#FFD1D1",
   pinkDark: "#FFB5BF",
-
-  // White tones
-  white: "#FFFFFF",
 };
