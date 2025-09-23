@@ -68,8 +68,6 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     justifyContent: 'center',
     alignItems: 'center',
-    borderColor: 'red',
-    borderWidth: 2
   },
   profile: {
     width: 120,
@@ -77,8 +75,6 @@ const styles = StyleSheet.create({
     margin: 8,
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 2,
-    borderColor: 'blue'
   },
   profileImage: {
     aspectRatio: 1,
@@ -98,8 +94,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     margin: 8,
-    borderWidth: 2,
-    borderColor: 'green'
   },
   createImage: {
     width: '70%',
