@@ -8,7 +8,6 @@ import {
   StyleSheet, 
   Image, 
   Dimensions, 
-  Platform,
 } from "react-native";
 
 const { width: W, height: H } = Dimensions.get("window");
@@ -64,7 +63,7 @@ export default function LoginScreen({ navigation }) {
         {/* 완료 버튼 */}
         <TouchableOpacity 
           style={styles.finishButton}
-          //onPress={() => navigation.navigate("ResetPassword")}
+          onPress={() => navigation.navigate("Login")}
         >
           <Text style={styles.finishButtonText}>완료</Text>
         </TouchableOpacity>

@@ -6,6 +6,7 @@ import SplashScreen from "./screens/SplashScreen";
 import LoginScreen from "./screens/LoginScreen";
 import FindPasswordScreen from "./screens/FindPasswordScreen";
 import ResetPasswordScreen from "./screens/ResetPasswordScreen";
+import SignupScreen from "./screens/SignupScreen";
 import ProfileSelectScreen from "./screens/ProfileSelectScreen";
 import ProfileCreateScreen1 from "./screens/ProfileCreateScreen1";
 import ProfileCreateScreen2 from "./screens/ProfileCreateScreen2";
@@ -40,6 +41,8 @@ export default function App() {
             <Stack.Screen name="FindPassword" component={FindPasswordScreen} />
             {/* 비밀번호 재설정 화면 ResetPasswordScreen */}
             <Stack.Screen name="ResetPassword" component={ResetPasswordScreen} />
+            {/* 회원가입 화면 SignupScreen */}
+            <Stack.Screen name="Signup" component={SignupScreen} />
 
 
             {/* 프로필 선택 화면 ProfileSelectScreen */}
