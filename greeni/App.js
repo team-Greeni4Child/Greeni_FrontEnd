@@ -11,12 +11,10 @@ import ProfileSelectScreen from "./screens/ProfileSelectScreen";
 import ProfileCreateScreen1 from "./screens/ProfileCreateScreen1";
 import ProfileCreateScreen2 from "./screens/ProfileCreateScreen2";
 import HomeScreen from "./screens/HomeScreen";
-{/* 페이지 추가 시 수정
 import DiaryScreen from "./screens/DiaryScreen";
 import TwentyQuestionsScreen from "./screens/TwentyQuestionsScreen";
 import AnimalQuizScreen from "./screens/AnimalQuizScreen";
 import RolePlayingScreen from "./screens/RolePlayingScreen";
-*/}
 
 export const AuthContext = createContext();
 
@@ -50,12 +48,10 @@ function MainStack() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="Home" component={HomeScreen} />
-      {/* 페이지 추가 시 수정
       <Stack.Screen name="Diary" component={DiaryScreen} />
       <Stack.Screen name="TwentyQuestions" component={TwentyQuestionsScreen} />
       <Stack.Screen name="AnimalQuiz" component={AnimalQuizScreen} />
       <Stack.Screen name="RolePlaying" component={RolePlayingScreen} />
-      */}
       {/* 나중에 다른 페이지 추가 */}
     </Stack.Navigator>
   );
