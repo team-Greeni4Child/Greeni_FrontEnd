@@ -7,6 +7,9 @@ export default {
   beigeLight: "#FCF8DB",
   beige: "#E2DCB5",
   brown: "#58453E",
+  brown60: "#58453E60",
+  lightGray: "#D3D3D3",
+  lightGray60: "#D3D3D360",
 
   // Green tones
   green: "#BEEA8B", 
@@ -17,4 +20,7 @@ export default {
   pink: "#FFE1E1", 
   pinkMid: "#FFD1D1",
   pinkDark: "#FFB5BF",
+
+  // White tones
+  white: "#FFFFFF",
 };
