@@ -1,5 +1,7 @@
 // screens/SignUpScreen.js
 import React, { useState } from "react";
+import colors from "../theme/colors";
+import BackButton from "../components/BackButton";
 import {
   View,
   Text,
@@ -10,7 +12,6 @@ import {
   Dimensions,
   Platform,
 } from "react-native";
-import colors from "../theme/colors";
 
 const { width: W, height: H } = Dimensions.get("window");
 
@@ -26,17 +27,8 @@ export default function SignUpScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
-{/* 뒤로가기 버튼 */}
-      <TouchableOpacity 
-        onPress={() => navigation.goBack()} 
-        style={styles.backButton}
-      >
-        <Image 
-          source={require("../assets/images/back.png")} 
-          style={styles.backIcon}
-          resizeMode="contain"
-        />
-      </TouchableOpacity>
+      {/* 뒤로가기 버튼 */}
+      <BackButton navigation={navigation} />
 
       {/* 입력 박스 */}
       <View style={styles.box}>

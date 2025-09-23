@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import colors from "../theme/colors";
+import BackButton from "../components/BackButton";
 import { 
   View, 
   Text, 
@@ -26,16 +27,7 @@ export default function LoginScreen({ navigation }) {
       <View style={styles.topBackground} />
 
       {/* 뒤로가기 버튼 */}
-      <TouchableOpacity 
-        onPress={() => navigation.goBack()} 
-        style={styles.backButton}
-      >
-        <Image 
-          source={require("../assets/images/back.png")} 
-          style={styles.backIcon}
-          resizeMode="contain"
-        />
-      </TouchableOpacity>
+      <BackButton navigation={navigation} />
 
       {/* 비밀번호 찾기 박스 */}
       <View style={styles.box}>
@@ -99,15 +91,6 @@ const styles = StyleSheet.create({
     backgroundColor: colors.pink, 
     borderBottomLeftRadius: 30,
     borderBottomRightRadius: 30,
-  },
-  backButton: {
-    position: "absolute",
-    top: 80,   
-    left: 25,
-  },
-  backIcon: {
-    width: 19 * 1.5,
-    height: 22 * 1.5,
   },
   box: {
     marginTop: H * 0.2,
