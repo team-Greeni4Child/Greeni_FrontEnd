@@ -1,6 +1,7 @@
 import React, { useState, createContext } from "react";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import { ProfileProvider } from "./context/ProfileContext";
 
 import SplashScreen from "./screens/SplashScreen";
 import LoginScreen from "./screens/LoginScreen";
@@ -8,8 +9,8 @@ import FindPasswordScreen from "./screens/FindPasswordScreen";
 import ResetPasswordScreen from "./screens/ResetPasswordScreen";
 import SignupScreen from "./screens/SignupScreen";
 import ProfileSelectScreen from "./screens/ProfileSelectScreen";
-import ProfileCreateScreen1 from "./screens/ProfileCreateScreen1";
-import ProfileCreateScreen2 from "./screens/ProfileCreateScreen2";
+import ProfileImageSelectScreen from "./screens/ProfileImageSelectScreen";
+import ProfileInfoFormScreen from "./screens/ProfileInfoFormScreen";
 import HomeScreen from "./screens/HomeScreen";
 import DiaryScreen from "./screens/DiaryScreen";
 import TwentyQuestionsScreen from "./screens/TwentyQuestionsScreen";
@@ -37,8 +38,8 @@ function ProfileStack() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="ProfileSelect" component={ProfileSelectScreen} />
-      <Stack.Screen name="ProfileCreate1" component={ProfileCreateScreen1} />
-      <Stack.Screen name="ProfileCreate2" component={ProfileCreateScreen2} />
+      <Stack.Screen name="ProfileImageSelect" component={ProfileImageSelectScreen} />
+      <Stack.Screen name="ProfileInfoForm" component={ProfileInfoFormScreen} />
     </Stack.Navigator>
   );
 }
@@ -62,6 +63,7 @@ export default function App() {
   const [step, setStep] = useState("auth"); 
 
   return (
+    <ProfileProvider>
     <AuthContext.Provider value={{ step, setStep }}>
       <NavigationContainer>
         {showSplash ? (
@@ -84,5 +86,6 @@ export default function App() {
         )}
       </NavigationContainer>
     </AuthContext.Provider>
+    </ProfileProvider>
   );
 }
