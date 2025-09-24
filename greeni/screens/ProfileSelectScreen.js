@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useContext } from "react";
+import {React, useState, useEffect, useContext} from "react";
 import { View, Text, Image, StyleSheet, Dimensions, TouchableOpacity } from "react-native";
 import { StatusBar } from "expo-status-bar";
+import { AuthContext } from "../App";
 import colors from "../theme/colors";
 import { ProfileContext } from "../context/ProfileContext";
 
@@ -8,6 +9,7 @@ const { width: W, height: H } = Dimensions.get("window");
 
 export default function ProfileSelectScreen({route, navigation}) {
   const { profiles } = useContext(ProfileContext);
+  const { setStep } = useContext(AuthContext);
 
   return (
     <View style={styles.root}>
@@ -21,10 +23,13 @@ export default function ProfileSelectScreen({route, navigation}) {
       {/* 프로필 목록 */}
       <View style={styles.profileWrap}>
         {profiles.map((p, idx) => (
-          <View key={idx} style={styles.profile}>
-            <Image source={p.image} style={styles.profileImage} resizeMode="contain" />
-            <Text style={styles.profileName}>{p.name}</Text>
-          </View>
+          <TouchableOpacity 
+            key={idx} 
+            style={styles.profile} 
+            onPress={() => setStep("main")}  
+          >
+            <Image source={p.image} style={styles.profileImage} />
+          </TouchableOpacity>
         ))}
 
         {/* + 버튼: 새로운 프로필 생성 */}
