@@ -1,47 +1,71 @@
-import React, {Component} from "react";
-import { TouchableOpacity, Text, StyleSheet } from "react-native";
+import React from "react";
+import { TouchableOpacity, Text, Image, StyleSheet } from "react-native";
+import colors from "../theme/colors";
 
 // 커스텀 버튼
-// 크기, 색, 타이들 다르게 설정가능하도록 기본 설정만 해둠
+// 타이틀, 너비, 높이, 색상, 테두리, 비활성화 다르게 설정가능하도록 기본 설정만 해둠
 
-export default class Button extends Component {
+const Button = ({
+    title = 'untitled',
+    width = 108,
+    height = 49,
+    backgroundColor = colors.green,
+    borderRadius = 24.5,
+    borderWidth = 0,
+    borderColor = 'transparent',
+    onPress = () => null,
+    icon = null,
+    disabled = false,
+}) => {
 
-    static defaultProps = {
-        title: 'untitled',
-        buttonColor: '#000',
-        titleColor: '#fff',
-        width: 108,
-        height: 49,
-        borderRadius: 24.5,
-        onPress: () => null,
-    }
+    // 비활성화 상태일 때 배경색은 lightGray60으로 하고
+    //  활성화 상태일 때는 backgroundColor로
+    const btnBackgroundColor = disabled ? colors.lightGray60 : backgroundColor;
 
-    constructor(props) {
-        super(props);
-    }
-
-    render(){
-        return (
-            <TouchableOpacity
-                style={[styles.button, {backgroundColor: this.props.buttonColor, width: this.props.width, height: this.props.height, borderRadius: this.props.borderRadius}]}
-                onPress={this.props.onPress}>
-                <Text
-                    style={[styles.title, {color:this.props.titleColor}]}>
-                    {this.props.title}
-                </Text>
-            </TouchableOpacity>
-        )
-    }
-}
+    return (
+        <TouchableOpacity
+            style={[
+                styles.button,
+                {
+                    width,
+                    height,
+                    backgroundColor: btnBackgroundColor,
+                    borderRadius,
+                    borderWidth,
+                    borderColor,
+                },
+            ]}
+            // 비활성화 상태일 때는 눌러도 동작 안 함
+            onPress={disabled ? null : onPress}
+            disabled={disabled}
+        >
+            <Text style={[ styles.title ]}>
+                {title}
+            </Text>
+            {icon && (
+                <Image source={icon} style={styles.icon} resizeMode="contain" />
+            )}
+        </TouchableOpacity>
+    );
+};
 
 const styles = StyleSheet.create({
     button: {
+        flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
         marginBottom: 10,
-        borderRadius: 5,
     },
     title: {
-        fontSize: 15,
-    }
-})
+        fontSize: 18,
+        fontWeight: '700',
+        color: colors.brown,
+    },
+    icon: {
+        width: 16,
+        height: 16,
+        marginLeft: 7,
+    },
+});
+
+export default Button;
