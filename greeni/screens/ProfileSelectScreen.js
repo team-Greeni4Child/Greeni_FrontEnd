@@ -2,31 +2,25 @@ import {React, useState, useEffect, useContext} from "react";
 import { View, Text, Image, StyleSheet, Dimensions, TouchableOpacity } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { AuthContext } from "../App";
+import colors from "../theme/colors";
+import { ProfileContext } from "../context/ProfileContext";
 
-// 현재 기기의 화면 너비 W, 화면 높이 H
 const { width: W, height: H } = Dimensions.get("window");
 
 export default function ProfileSelectScreen({route, navigation}) {
-
-  // 생성된 프로필 목록 배열로 관리
-  const [profiles, setProfiles] = useState([]);
+  const { profiles } = useContext(ProfileContext);
   const { setStep } = useContext(AuthContext);
-
-  // 새로운 프로필이 생성되면 profiles 배열에 추가
-  useEffect(() => {
-    if (route.params?.newProfile) {
-      setProfiles((prev) => [...prev, route.params.newProfile]);
-    }
-  }, [route.params?.newProfile]);
 
   return (
     <View style={styles.root}>
       <StatusBar style="dark" />
 
       {/* 제목 */}
-      <Text style={styles.title}>프로필 선택</Text>
+      <View style={styles.titleWrap}>
+        <Text style={styles.title}>프로필 선택</Text>
+      </View>
 
-      {/* 생성한 프로필 목록 */}
+      {/* 프로필 목록 */}
       <View style={styles.profileWrap}>
         {profiles.map((p, idx) => (
           <TouchableOpacity 
@@ -37,13 +31,16 @@ export default function ProfileSelectScreen({route, navigation}) {
             <Image source={p.image} style={styles.profileImage} />
           </TouchableOpacity>
         ))}
-      </View>
 
-       {/* + 버튼 누르면 프로필 이미지 선택 창으로 이동 */}
-      <TouchableOpacity
-        onPress={() => navigation.navigate("ProfileCreate1")}>
-      <Image source={require("../assets/images/create_btn.png")} style={styles.createBtn} />
-      </TouchableOpacity>
+        {/* + 버튼: 새로운 프로필 생성 */}
+        <TouchableOpacity
+          style={styles.createBtn}
+          onPress={() =>
+            navigation.navigate("ProfileImageSelect", { existingProfiles: profiles })
+          }>
+          <Image source={require("../assets/images/create.png")} style={styles.createImage} />
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }
@@ -53,27 +50,59 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#FFFDEE", 
+    backgroundColor: colors.ivory,
   },
 
-  // 프로필 선택하기 제목
+  // 프로필 선택을 감싸고 있는 Wrapper
+  titleWrap: {
+    position: "absolute",
+    alignItems: "center",
+    top: H * 0.08,
+    width: W,
+  },
   title: {
     fontSize: 28,
     fontWeight: "800",
-    color: "#5A463C",
-    top: -W * 0.6,
-    marginBottom: 12,
+    color: colors.brown,
   },
 
-  // 생성한 프로필 감싸는 wrapper
+  // 생성된 프로필과 + 버튼을 감싸고 있는 Wrapper
   profileWrap: {
-
+    width: W * 0.8,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-
-  // + 버튼
+  profile: {
+    width: 120,
+    height: 120,
+    margin: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  profileImage: {
+    aspectRatio: 1,
+    width: '80%',
+    height: '80%',
+    resizeMode: "contain",
+  },
+  profileName: {
+    width: '80%',
+    fontsize: 14,
+    textAlign: 'center',
+    marginTop: 10,
+  },
   createBtn: {
-    width: 69,
-    height: 69,
-    top: W * 0.6
-  }
+    width: 120,
+    height: 120,
+    justifyContent: 'center',
+    alignItems: 'center',
+    margin: 8,
+  },
+  createImage: {
+    width: '70%',
+    height: '70%',
+    resizeMode: "contain",
+  },
 });
