@@ -55,10 +55,10 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
-        marginBottom: 10,
+        //marginBottom: 10,
     },
     title: {
-        fontFamily: "WantedSans-Bold",
+        fontFamily: "WantedSans-SemiBold",
         color: colors.brown,
     },
     icon: {

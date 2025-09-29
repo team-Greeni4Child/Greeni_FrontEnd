@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import colors from "../theme/colors";
 import BackButton from "../components/BackButton";
+import Button from "../components/Button";
 import { 
   View, 
   Text, 
@@ -53,12 +54,14 @@ export default function LoginScreen({ navigation }) {
         </View>
 
         {/* 완료 버튼 */}
-        <TouchableOpacity 
-          style={styles.finishButton}
+        <Button
+          title="완료"
+          width="100%"
+          height={46}
+          borderRadius= {10}
+          fontSize={14}
           onPress={() => navigation.navigate("Login")}
-        >
-          <Text style={styles.finishButtonText}>완료</Text>
-        </TouchableOpacity>
+        />
       </View>
 
       <View style={styles.bottomWrap}>
@@ -120,19 +123,6 @@ const styles = StyleSheet.create({
     fontFamily: "WantedSans-Regular",
     paddingVertical: 8,
     marginBottom: 8,
-    color: colors.brown,
-  },
-  finishButton: {
-    backgroundColor: colors.green,
-    borderRadius: 10,
-    width: "100%",
-    height: 46,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  finishButtonText: {
-    fontSize: 14,
-    fontFamily: "WantedSans-SemiBold",
     color: colors.brown,
   },
   bottomWrap: {
