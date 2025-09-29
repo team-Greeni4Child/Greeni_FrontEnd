@@ -1,5 +1,5 @@
 // screens/HomeScreen.js
-import React from "react";
+import React, { useCallback } from "react";
 import {
   View,
   Text,
@@ -8,14 +8,48 @@ import {
   Dimensions,
   TouchableOpacity,
   ImageBackground,
+  BackHandler,
+  Platform,
 } from "react-native";
 import colors from "../theme/colors";
+import NavigationBar from "../components/NavigationBar";
+import { useState } from "react";
+import { useFocusEffect } from "@react-navigation/native";
 
 const { width: W, height: H } = Dimensions.get("window");
 
 export default function HomeScreen({ navigation }) {
+  const [tab, setTab] = useState(1);
+
+  //뒤로가기 앱 종료
+    useFocusEffect(
+      useCallback(() => {
+        const onBackPress = () => {
+          if (Platform.OS === "android") {
+            BackHandler.exitApp();   // 앱 종료
+          }
+          return true; 
+        };
+  
+        const backHandler = BackHandler.addEventListener("hardwareBackPress", onBackPress);
+        return () => backHandler.remove();
+      }, [])
+    );
+
   return (
     <View style={styles.root}>
+
+      {/* 네비게이션 바 */}
+      <NavigationBar
+        state={tab}
+        onTabPress={(i) => {
+          setTab(i);
+          if (i === 0) navigation.navigate("Calendar");
+          if (i === 1) navigation.navigate("Home");
+          if (i === 2) navigation.navigate("MyPage");
+        }}
+      />
+
       {/* 말풍선 */}
       <ImageBackground
         source={require("../assets/images/bubble_home.png")}
@@ -38,58 +72,51 @@ export default function HomeScreen({ navigation }) {
       <View style={styles.grid}>
         {/* 일기 */}
         <TouchableOpacity
-          style={[styles.gameButton, { backgroundColor: colors.pink }]}
+          style={[styles.button, { backgroundColor: colors.pink }]}
           onPress={() => navigation.navigate("Diary")}
         >
           <Image
             source={require("../assets/images/icon_diary.png")}
             style={styles.icon}
           />
-          <Text style={styles.gameText}>일기</Text>
+          <Text style={styles.buttonText}>일기</Text>
         </TouchableOpacity>
 
         {/* 스무고개 */}
         <TouchableOpacity
-          style={[styles.gameButton, { backgroundColor: colors.green }]}
+          style={[styles.button, { backgroundColor: colors.green }]}
           onPress={() => navigation.navigate("TwentyQuestions")}
         >
           <Image
             source={require("../assets/images/icon_twenty.png")}
             style={styles.icon}
           />
-          <Text style={styles.gameText}>스무고개</Text>
+          <Text style={styles.buttonText}>스무고개</Text>
         </TouchableOpacity>
 
         {/* 동물퀴즈 */}
         <TouchableOpacity
-          style={[styles.gameButton, { backgroundColor: colors.green }]}
+          style={[styles.button, { backgroundColor: colors.green }]}
           onPress={() => navigation.navigate("AnimalQuiz")}
         >
           <Image
             source={require("../assets/images/icon_animal.png")}
             style={styles.icon}
           />
-          <Text style={styles.gameText}>동물퀴즈</Text>
+          <Text style={styles.buttonText}>동물퀴즈</Text>
         </TouchableOpacity>
 
         {/* 역할놀이 */}
         <TouchableOpacity
-          style={[styles.gameButton, { backgroundColor: colors.pink }]}
+          style={[styles.button, { backgroundColor: colors.pink }]}
           onPress={() => navigation.navigate("RolePlaying")}
         >
           <Image
             source={require("../assets/images/icon_role.png")}
             style={styles.icon}
           />
-          <Text style={styles.gameText}>역할놀이</Text>
+          <Text style={styles.buttonText}>역할놀이</Text>
         </TouchableOpacity>
-      </View>
-
-      {/* 네비게이션 바 (임시) */}
-      <View style={styles.tabBar}>
-        <Text style={styles.tabText}>달력</Text>
-        <Text style={styles.tabText}>홈</Text>
-        <Text style={styles.tabText}>마이</Text>
       </View>
     </View>
   );
@@ -129,9 +156,10 @@ const styles = StyleSheet.create({
     flexWrap: "wrap",
     justifyContent: "center",
     width: W * 0.85,
-    marginVertical: 25,
+    marginTop: 10,
+    marginBottom: H * 0.15,
   },
-  gameButton: {
+  button: {
     width: W * 0.38,
     height: W * 0.38,
     margin: 8,
@@ -146,24 +174,9 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     resizeMode: "contain",
   },
-  gameText: {
+  buttonText: {
     fontSize: 20,
     fontFamily: "KCC-Murukmuruk",
     color: colors.brown,
-  },
-
-  tabBar: {
-    marginBottom: H * 0.06,
-    marginTop: 10,
-    width: W * 0.8,
-    height: 55,
-    backgroundColor: colors.green,
-    borderRadius: 30,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-around",
-  },
-  tabText: {
-    fontSize: 14,
   },
 });
