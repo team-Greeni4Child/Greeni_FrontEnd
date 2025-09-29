@@ -92,8 +92,6 @@ export default function ProfileImageSelectScreen({ navigation }) {
       <View style={styles.bottomWrap}>
         <Button
           title="다음"
-          width={108}
-          height={49}
           onPress={() =>
             navigation.navigate("ProfileInfoForm", {
               selectedImage: profileImages[selectedIndex],

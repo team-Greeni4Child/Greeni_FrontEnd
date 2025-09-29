@@ -120,8 +120,6 @@ export default function ProfileInfoFormScreen({ route, navigation }) {
       <View style={styles.bottomWrap}>
         <Button
           title="생성"
-          width={108}
-          height={49}
           onPress={handleCreate}
           icon={require("../assets/images/next.png")}
         />
