@@ -62,7 +62,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 28,
-    fontWeight: "800",
+    fontFamily: "KCC-Murukmuruk",
     color: colors.brown,
   },
 
@@ -90,6 +90,7 @@ const styles = StyleSheet.create({
   profileName: {
     width: '80%',
     fontsize: 14,
+    fontFamily: "WantedSans-Regular",
     textAlign: 'center',
     marginTop: 10,
   },

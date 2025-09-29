@@ -117,6 +117,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
   loginTitle: {
+    fontFamily: "KCC-Murukmuruk",
     fontSize: 24,
     color: colors.brown,
     textAlign: "center",
@@ -128,6 +129,7 @@ const styles = StyleSheet.create({
     width: "100%",
     borderBottomWidth: 2,
     borderBottomColor: colors.greenDark,
+    fontFamily: "WantedSans-Regular",
     fontSize: 14,
     paddingVertical: 8,
     marginBottom: 8,
@@ -143,7 +145,7 @@ const styles = StyleSheet.create({
   },
   loginButtonText: {
     fontSize: 14,
-    fontWeight: "700",
+    fontFamily: "WantedSans-SemiBold",
     color: colors.brown,
   },
   bottomWrap: {
@@ -174,5 +176,6 @@ const styles = StyleSheet.create({
   linkText: {
     color: colors.brown,
     fontSize: 16,
+    fontFamily: "WantedSans-Regular",
   },
 });

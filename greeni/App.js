@@ -2,6 +2,7 @@ import React, { useState, createContext } from "react";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { ProfileProvider } from "./context/ProfileContext";
+import { useFonts } from "expo-font";
 
 import SplashScreen from "./screens/SplashScreen";
 import LoginScreen from "./screens/LoginScreen";
@@ -61,6 +62,22 @@ function MainStack() {
 export default function App() {
   const [showSplash, setShowSplash] = useState(true);
   const [step, setStep] = useState("auth"); 
+
+  //폰트
+  const [fontsLoaded] = useFonts({
+    "KCC-Murukmuruk": require("./assets/fonts/KCC-Murukmuruk.ttf"),
+    "WantedSans": require("./assets/fonts/WantedSansStdVariable.ttf"),
+    "WantedSans-Regular": require("./assets/fonts/WantedSansStd-Regular.ttf"),
+    "WantedSans-Medium": require("./assets/fonts/WantedSansStd-Medium.ttf"),
+    "WantedSans-SemiBold": require("./assets/fonts/WantedSansStd-SemiBold.ttf"),
+    "WantedSans-Bold": require("./assets/fonts/WantedSansStd-Bold.ttf"),
+    "WantedSans-ExtraBold": require("./assets/fonts/WantedSansStd-ExtraBold.ttf"),
+    "WantedSans-Black": require("./assets/fonts/WantedSansStd-Black.ttf"),
+    "WantedSans-ExtraBlack": require("./assets/fonts/WantedSansStd-ExtraBlack.ttf"),
+  });  
+  if (!fontsLoaded) {
+    return null; 
+  }
 
   return (
     <ProfileProvider>

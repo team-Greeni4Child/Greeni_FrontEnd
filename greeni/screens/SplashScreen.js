@@ -84,7 +84,7 @@ export default function SplashScreen({ onDone }) {
         }),
         Animated.timing(sunScale, {
           toValue: 1.02,
-          duration: DURATION,
+          duration: DURATION * 1.5,
           easing: Easing.out(Easing.quad),
           useNativeDriver: true,
         }),
@@ -197,12 +197,12 @@ const styles = StyleSheet.create({
   },
   titleKr: {
     fontSize: 70,
-    fontWeight: "800",
+    fontFamily: "KCC-Murukmuruk",
     color: colors.brown,
   },
   titleEn: {
     fontSize: 20,
-    fontWeight: "800",
+    fontFamily: "KCC-Murukmuruk",
     color: colors.brown,
   },
 

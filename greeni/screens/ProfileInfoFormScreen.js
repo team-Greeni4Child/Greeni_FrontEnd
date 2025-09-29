@@ -158,7 +158,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 28,
-    fontWeight: "800",
+    fontFamily: "KCC-Murukmuruk",
     color: colors.brown,
   },
 
@@ -186,7 +186,7 @@ const styles = StyleSheet.create({
   },
   input: {
     fontSize: 14,
-    fontWeight: '400',
+    fontFamily: "WantedSans-Regular",
     lineHeight: 20,
     letterSpacing: -0.32,
     width: 345,

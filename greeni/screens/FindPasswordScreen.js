@@ -111,6 +111,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 24,
+    fontFamily: "KCC-Murukmuruk",
     color: colors.brown,
     textAlign: "center",
   },
@@ -126,6 +127,7 @@ const styles = StyleSheet.create({
   email: {
     width: "75%",
     fontSize: 14,
+    fontFamily: "WantedSans-Regular",
     paddingVertical: 8,
     color: colors.brown,
   },
@@ -140,6 +142,7 @@ const styles = StyleSheet.create({
   },
   verificationButtonText:{
     fontSize: 12,
+    fontFamily: "WantedSans-Regular",
     color: colors.brown,
   },
   code: {
@@ -147,6 +150,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 2,
     borderBottomColor: colors.greenDark,
     fontSize: 14,
+    fontFamily: "WantedSans-Regular",
     paddingVertical: 8,
     marginBottom: 8,
     color: colors.brown,
@@ -161,7 +165,7 @@ const styles = StyleSheet.create({
   },
   finishButtonText: {
     fontSize: 14,
-    fontWeight: "700",
+    fontFamily: "WantedSans-SemiBold",
     color: colors.brown,
   },
   bottomWrap: {
