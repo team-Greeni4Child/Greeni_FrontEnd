@@ -29,17 +29,21 @@ export default function ProfileSelectScreen({route, navigation}) {
             onPress={() => setStep("main")}  
           >
             <Image source={p.image} style={styles.profileImage} />
+            <Text style={styles.profileName}>{p.name}</Text>
           </TouchableOpacity>
         ))}
 
         {/* + 버튼: 새로운 프로필 생성 */}
-        <TouchableOpacity
-          style={styles.createBtn}
-          onPress={() =>
-            navigation.navigate("ProfileImageSelect", { existingProfiles: profiles })
-          }>
-          <Image source={require("../assets/images/create.png")} style={styles.createImage} />
-        </TouchableOpacity>
+        {profiles.length < 6 && (
+          <TouchableOpacity
+            style={styles.createBtn}
+            onPress={() =>
+              navigation.navigate("ProfileImageSelect", { existingProfiles: profiles })
+            }>
+            <Image source={require("../assets/images/create.png")} style={styles.createImage} />
+
+          </TouchableOpacity>
+        )}
       </View>
     </View>
   );
@@ -85,7 +89,8 @@ const styles = StyleSheet.create({
     aspectRatio: 1,
     width: '80%',
     height: '80%',
-    resizeMode: "contain",
+    borderRadius: 9999,
+    resizeMode: 'cover',
   },
   profileName: {
     width: '80%',
