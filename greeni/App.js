@@ -2,6 +2,7 @@ import React, { useState, createContext } from "react";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { ProfileProvider } from "./context/ProfileContext";
+import { useFonts } from "expo-font";
 
 import SplashScreen from "./screens/SplashScreen";
 import LoginScreen from "./screens/LoginScreen";
@@ -16,6 +17,8 @@ import DiaryScreen from "./screens/DiaryScreen";
 import TwentyQuestionsScreen from "./screens/TwentyQuestionsScreen";
 import AnimalQuizScreen from "./screens/AnimalQuizScreen";
 import RolePlayingScreen from "./screens/RolePlayingScreen";
+import CalendarScreen from "./screens/CalendarScreen";
+import MyPageScreen from "./screens/MyPageScreen";
 
 export const AuthContext = createContext();
 
@@ -47,12 +50,14 @@ function ProfileStack() {
 /* 3. 메인 앱 스택 */
 function MainStack() {
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
+    <Stack.Navigator screenOptions={{ headerShown: false, animation: "none"}}>
       <Stack.Screen name="Home" component={HomeScreen} />
       <Stack.Screen name="Diary" component={DiaryScreen} />
       <Stack.Screen name="TwentyQuestions" component={TwentyQuestionsScreen} />
       <Stack.Screen name="AnimalQuiz" component={AnimalQuizScreen} />
       <Stack.Screen name="RolePlaying" component={RolePlayingScreen} />
+      <Stack.Screen name="Calendar" component={CalendarScreen}/>
+      <Stack.Screen name="MyPage" component={MyPageScreen}/>
       {/* 나중에 다른 페이지 추가 */}
     </Stack.Navigator>
   );
@@ -61,6 +66,22 @@ function MainStack() {
 export default function App() {
   const [showSplash, setShowSplash] = useState(true);
   const [step, setStep] = useState("auth"); 
+
+  //폰트
+  const [fontsLoaded] = useFonts({
+    "KCC-Murukmuruk": require("./assets/fonts/KCC-Murukmuruk.ttf"),
+    "WantedSans": require("./assets/fonts/WantedSansStdVariable.ttf"),
+    "WantedSans-Regular": require("./assets/fonts/WantedSansStd-Regular.ttf"),
+    "WantedSans-Medium": require("./assets/fonts/WantedSansStd-Medium.ttf"),
+    "WantedSans-SemiBold": require("./assets/fonts/WantedSansStd-SemiBold.ttf"),
+    "WantedSans-Bold": require("./assets/fonts/WantedSansStd-Bold.ttf"),
+    "WantedSans-ExtraBold": require("./assets/fonts/WantedSansStd-ExtraBold.ttf"),
+    "WantedSans-Black": require("./assets/fonts/WantedSansStd-Black.ttf"),
+    "WantedSans-ExtraBlack": require("./assets/fonts/WantedSansStd-ExtraBlack.ttf"),
+  });  
+  if (!fontsLoaded) {
+    return null; 
+  }
 
   return (
     <ProfileProvider>

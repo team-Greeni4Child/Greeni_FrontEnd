@@ -114,9 +114,7 @@ export default function ProfileImageSelectScreen({ navigation }) {
       <View style={styles.bottomWrap}>
         <Button
           title="다음"
-          width={108}
-          height={49}
-          onPress={() => {
+          onPress={() =>{
             const selected = getSelectedImage();
             if (!selected) return;
             navigation.navigate("ProfileInfoForm", { selectedImage: selected });
@@ -147,7 +145,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 28,
-    fontWeight: "800",
+    fontFamily: "KCC-Murukmuruk",
     color: colors.brown,
   },
 

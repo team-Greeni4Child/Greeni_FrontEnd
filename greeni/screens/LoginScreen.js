@@ -1,6 +1,7 @@
 import React, { useState, useContext } from "react";
 import colors from "../theme/colors";
 import { AuthContext } from "../App"; 
+import Button from "../components/Button";
 import { 
   View, 
   Text, 
@@ -51,13 +52,15 @@ export default function LoginScreen({ navigation }) {
         </View>
 
         {/* 로그인 버튼 */}
-        <TouchableOpacity 
-          style={styles.loginButton}
+        <Button
+          title="로그인"
+          width="100%"
+          height={46}
+          borderRadius= {10}
+          fontSize={14}
           onPress={() => setStep("profile")}
-        >
-          <Text style={styles.loginButtonText}>로그인</Text>
-        </TouchableOpacity>
-      </View>
+        />
+      </View>   
 
       <View style={styles.bottomWrap}>
         {/* 그리니 */}
@@ -117,6 +120,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
   loginTitle: {
+    fontFamily: "KCC-Murukmuruk",
     fontSize: 24,
     color: colors.brown,
     textAlign: "center",
@@ -128,22 +132,10 @@ const styles = StyleSheet.create({
     width: "100%",
     borderBottomWidth: 2,
     borderBottomColor: colors.greenDark,
+    fontFamily: "WantedSans-Regular",
     fontSize: 14,
     paddingVertical: 8,
     marginBottom: 8,
-    color: colors.brown,
-  },
-  loginButton: {
-    backgroundColor: colors.green,
-    borderRadius: 10,
-    width: "100%",
-    height: 46,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  loginButtonText: {
-    fontSize: 14,
-    fontWeight: "700",
     color: colors.brown,
   },
   bottomWrap: {
@@ -174,5 +166,6 @@ const styles = StyleSheet.create({
   linkText: {
     color: colors.brown,
     fontSize: 16,
+    fontFamily: "WantedSans-Regular",
   },
 });

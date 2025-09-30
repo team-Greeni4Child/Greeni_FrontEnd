@@ -7,6 +7,7 @@ import colors from "../theme/colors";
 
 const Button = ({
     title = 'untitled',
+    fontSize = 18,
     width = 108,
     height = 49,
     backgroundColor = colors.green,
@@ -39,7 +40,7 @@ const Button = ({
             onPress={disabled ? null : onPress}
             disabled={disabled}
         >
-            <Text style={[ styles.title ]}>
+            <Text style={[ styles.title, { fontSize }]}>
                 {title}
             </Text>
             {icon && (
@@ -54,11 +55,9 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
-        marginBottom: 10,
     },
     title: {
-        fontSize: 18,
-        fontWeight: '700',
+        fontFamily: "WantedSans-SemiBold",
         color: colors.brown,
     },
     icon: {

@@ -1,7 +1,7 @@
-// screens/SignUpScreen.js
 import React, { useState } from "react";
 import colors from "../theme/colors";
 import BackButton from "../components/BackButton";
+import Button from "../components/Button";
 import {
   View,
   Text,
@@ -86,12 +86,14 @@ export default function SignUpScreen({ navigation }) {
           resizeMode="contain"
         />
 
-        <TouchableOpacity 
-          style={styles.submitButton}
+        <Button
+          title="가입하기"
+          width={W * 0.35}
+          height={46}
+          borderRadius= {10}
+          fontSize={14}
           onPress={() => navigation.navigate("Login")}
-        >
-          <Text style={styles.submitButtonText}>가입하기</Text>
-        </TouchableOpacity>
+        />
       </View>
     </View>
   );
@@ -126,6 +128,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 24,
+    fontFamily: "KCC-Murukmuruk",
     color: colors.brown,
     textAlign: "center",
     margin: 20,
@@ -139,6 +142,7 @@ const styles = StyleSheet.create({
   email: {
     width: "75%",
     fontSize: 14,
+    fontFamily: "WantedSans-Regular",
     paddingVertical: 8,
     color: colors.brown,
   },
@@ -153,6 +157,7 @@ const styles = StyleSheet.create({
   },
   verificationButtonText: {
     fontSize: 12,
+    fontFamily: "WantedSans-Regular",
     color: colors.brown,
   },
   input: {
@@ -160,6 +165,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 2,
     borderBottomColor: colors.greenDark,
     fontSize: 14,
+    fontFamily: "WantedSans-Regular",
     paddingVertical: 8,
     marginBottom: 8,
     color: colors.brown,
@@ -173,17 +179,5 @@ const styles = StyleSheet.create({
     width: W * 0.35,         
     aspectRatio: AR.greeni,   
     marginRight: W * 0.1, 
-  },
-  submitButton: {
-    backgroundColor: colors.green,
-    borderRadius: 10,
-    paddingVertical: 10,
-    paddingHorizontal: W * 0.1,
-    marginTop: 20,
-  },
-  submitButtonText: {
-    fontSize: 14,
-    fontWeight: "700",
-    color: colors.brown,
   },
 });
