@@ -8,7 +8,10 @@ import {
   TouchableOpacity 
 } from "react-native";
 import { StatusBar } from "expo-status-bar";
+import * as ImagePicker from "expo-image-picker";
+
 import Button from "../components/Button";
+import BackButton from "../components/BackButton";
 import colors from "../theme/colors";
 
 // 현재 기기의 화면 너비 W, 화면 높이 H
@@ -46,13 +49,36 @@ function Profile({ image, onPress, selected }) {
 export default function ProfileImageSelectScreen({ navigation }) {
   // 선택한 이미지의 index
   const [selectedIndex, setSelectedIndex] = useState(null);
+  const [uploadImage, setUploadImage] = useState(null);
 
-  // 이미지 업로드는 별도로 처리
-  const handleSelect = (index) => {
-    setSelectedIndex(index);
+    const handleSelect = async (index) => {
     if (index === profileImages.length - 1) {
-      // ImagePicker 사용해야 함
+      // 업로드 버튼 선택 시
+      const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (!permissionResult.granted) {
+        Alert.alert("권한 필요", "사진 라이브러리 접근 권한이 필요합니다.");
+        return;
+      }
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1,1],
+        quality: 1,
+      });
+      if (!result.canceled) {
+        setUploadImage({ uri: result.assets[0].uri });
+        setSelectedIndex(index);
+      }
+    } else {
+      setSelectedIndex(index);
+      setUploadImage(null); // 기존 이미지 선택 시 uploadImage 초기화
     }
+  };
+
+  // 선택된 이미지 가져오기
+  const getSelectedImage = () => {
+    if (selectedIndex === null) return null;
+    return selectedIndex === profileImages.length - 1 ? uploadImage : profileImages[selectedIndex];
   };
 
   return (
@@ -60,31 +86,27 @@ export default function ProfileImageSelectScreen({ navigation }) {
       <StatusBar style="dark" />
 
       {/* 상단 제목 & 뒤로가기 */}
-      {/* 뒤로 가기 버튼 누르면 ProfileSelectScreen으로 */}
       <View style={styles.titleWrap}>
-        <TouchableOpacity
-          onPress={() => navigation.navigate("ProfileSelect")}
-          style={styles.backBtnWrapper}
-        >
-          <Image
-            style={styles.backBtn}
-            source={require("../assets/images/back.png")}
-          />
-        </TouchableOpacity>
+        <BackButton navigation={navigation}
+                    top={H * 0.001}
+                    left={W * 0.05}/>
         <Text style={styles.title}>프로필 만들기</Text>
       </View>
 
       {/* 프로필 이미지 선택 */}
       {/* 이미지 선택시 선택한 이미지 index를 넘겨줌 */}
       <View style={styles.profileWrap}>
-        {profileImages.map((img, idx) => (
-          <Profile
-            key={idx}
-            image={img}
-            onPress={() => handleSelect(idx)}
-            selected={selectedIndex === idx}
-          />
-        ))}
+        {profileImages.map((img, idx) => {
+          const source = idx === profileImages.length - 1 && uploadImage ? uploadImage : img;
+          return (
+            <Profile
+              key={idx}
+              image={source}
+              onPress={() => handleSelect(idx)}
+              selected={selectedIndex === idx}
+            />
+          );
+        })}
       </View>
 
       {/* 다음 버튼 */}
@@ -94,15 +116,16 @@ export default function ProfileImageSelectScreen({ navigation }) {
           title="다음"
           width={108}
           height={49}
-          onPress={() =>
-            navigation.navigate("ProfileInfoForm", {
-              selectedImage: profileImages[selectedIndex],
-            })
-          }
+          onPress={() => {
+            const selected = getSelectedImage();
+            if (!selected) return;
+            navigation.navigate("ProfileInfoForm", { selectedImage: selected });
+          }}
           icon={require("../assets/images/next.png")}
-          disabled={selectedIndex === null} // 선택 안 하면 비활성화
+          disabled={selectedIndex === null}
         />
       </View>
+
     </View>
   );
 }
@@ -121,16 +144,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     top: H * 0.08,
     width: W,
-  },
-  backBtnWrapper: {
-    position: "absolute",
-    left: W * 0.05,
-    top: H * 0.008,
-  },
-  backBtn: {
-    width: 24,
-    height: 24,
-    resizeMode: "contain",
   },
   title: {
     fontSize: 28,
@@ -162,7 +175,7 @@ const styles = StyleSheet.create({
     borderRadius: W * 0.24 / 2,
   },
   imageSelected: {
-    borderWidth: 3,
+    borderWidth: 5,
     borderColor: colors.brown,
     borderRadius: W * 0.24 / 2,
   },
