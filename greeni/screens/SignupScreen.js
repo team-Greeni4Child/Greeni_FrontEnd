@@ -1,4 +1,3 @@
-// screens/SignUpScreen.js
 import React, { useState } from "react";
 import colors from "../theme/colors";
 import BackButton from "../components/BackButton";
