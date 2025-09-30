@@ -21,7 +21,7 @@ const Button = ({
 
     // 비활성화 상태일 때 배경색은 lightGray60으로 하고
     //  활성화 상태일 때는 backgroundColor로
-    const btnBackgroundColor = disabled ? colors.lightGray60 : backgroundColor;
+    const btnBackgroundColor = disabled ? '#fcf8db' : backgroundColor;
 
     return (
         <TouchableOpacity
