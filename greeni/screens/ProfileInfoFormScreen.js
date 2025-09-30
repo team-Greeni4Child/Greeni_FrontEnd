@@ -1,8 +1,11 @@
 import React, { useState, useContext } from "react";
 import { View, Text, Image, TextInput, TouchableOpacity, StyleSheet, Dimensions, Platform } from "react-native";
+
 import { StatusBar } from "expo-status-bar";
+
 import colors from "../theme/colors";
 import Button from "../components/Button";
+import BackButton from "../components/BackButton";
 import { ProfileContext } from "../context/ProfileContext";
 
 // 현재 기기의 화면 너비 W, 화면 높이 H
@@ -25,36 +28,37 @@ export default function ProfileInfoFormScreen({ route, navigation }) {
   // 유효성 검사
   const validate = () => {
     let valid = true;
-    if (!name) {
+
+    const nameRegex = /^[a-zA-Z가-힣ㄱ-ㅎㅏ-ㅣ]{1,20}$/;
+
+    if (!nameRegex.test(name)) {
+      setName("");
       setNameError("20자 이내의 영문, 한글로만 입력 가능합니다.");
       valid = false;
     } else {
       setNameError("");
     }
 
-    // 생년월일 형식
-    const regex = /^20\d{2}\.(0[1-9]|1[0-2])\.(0[1-9]|[12]\d|3[01])$/;
+// 생년월일 형식 
+const regex = /^20\d{2}\.(0[1-9]|1[0-2])\.(0[1-9]|[12]\d|3[01])$/;
 
-    if (!birth.match(regex)) {
-    setBirthError("생년월일을 형식에 맞게 입력해주세요.");
-    valid = false;
-  } else {
-    // 실제 날짜 객체 생성
-    const [year, month, day] = birth.split(".").map((n) => parseInt(n, 10));
-    const inputDate = new Date(year, month - 1, day);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    // 미래 날짜 입력 검사
-    if (inputDate > today) {
-      setBirthError("미래의 날짜는 입력할 수 없습니다.");
-      valid = false;
-    } else {
-      setBirthError("");
-    }
-  }
-    return valid;
-  };
+if (!birth.match(regex)) { 
+  setName("");
+  setBirthError("생년월일을 형식에 맞게 입력해주세요."); 
+  valid = false; 
+} else { 
+  // 실제 날짜 객체 생성 
+  const [year, month, day] = birth.split(".").map((n) => parseInt(n, 10)); 
+  const inputDate = new Date(year, month - 1, day); 
+  const today = new Date(); 
+  today.setHours(0, 0, 0, 0); 
+  // 미래 날짜 입력 검사 
+  if (inputDate > today) { 
+    setBirthError("미래의 날짜는 입력할 수 없습니다."); 
+    valid = false; 
+  } else { setBirthError(""); } } 
+  return valid; 
+};
 
   // 유효성 검사 통과하면, 새로운 프로필 생성
   const handleCreate = () => {
@@ -77,15 +81,9 @@ export default function ProfileInfoFormScreen({ route, navigation }) {
 
       {/* 상단 제목 & 뒤로가기 */}
       <View style={styles.titleWrap}>
-        <TouchableOpacity
-          onPress={() => navigation.navigate("ProfileImageSelect")}
-          style={styles.backBtnWrapper}
-        >
-          <Image
-            style={styles.backBtn}
-            source={require("../assets/images/back.png")}
-          />
-        </TouchableOpacity>
+        <BackButton navigation={navigation}
+                    top={H  *0.001}
+                    left={W * 0.05}/>
         <Text style={styles.title}>프로필 만들기</Text>
       </View>
 
@@ -93,27 +91,46 @@ export default function ProfileInfoFormScreen({ route, navigation }) {
       <View style={styles.profileWrap}>
         <View style={styles.profile}>
           {selectedImage && (
-            <Image source={selectedImage} style={styles.image} resizeMode="contain" />
+            <Image source={selectedImage} style={styles.image} />
           )}
         </View>
 
-        <View style={styles.inputWrap}>
-          <TextInput
-            style={styles.input}
-            placeholder="이름을 입력해주세요"
+        <TextInput
+            style={[
+              styles.input,
+              nameError ? { borderBottomColor: '#f36945' } : {},
+            ]}
+            placeholder={nameError ? nameError : "이름을 입력해주세요"}
+            placeholderTextColor={nameError ? "#f36945" : "#999"}
             value={name}
-            onChangeText={setName}
+            onChangeText={(text) => {
+              setName(text);
+            }}
+            onFocus={() => {
+              if (nameError) {
+                setNameError("");
+              }
+            }}
           />
-          {nameError ? <Text style={styles.errorText}>{nameError}</Text> : null}
 
-          <TextInput
-            style={styles.input}
-            placeholder="생년월일을 입력해주세요(예: 20xx.xx.xx)"
-            value={birth}
-            onChangeText={setBirth}
-          />
-          {birthError ? <Text style={styles.errorText}>{birthError}</Text> : null}
-        </View>
+        <TextInput
+          style={[
+            styles.input,
+            birthError ? { borderBottomColor: '#f36945' } : {},
+          ]}
+          placeholder={birthError ? birthError : "생년월일을 입력해주세요(예: 20xx.xx.xx)"}
+          placeholderTextColor={birthError ? "#f36945" : "#999"}
+          value={birth}
+          onChangeText={(text) => {
+            setBirth(text);
+          }}
+          onFocus={() => {
+            if(birthError){
+              setBirthError("");
+            }
+          }}
+        />
+
       </View>
 
       {/* 생성 버튼 */}
@@ -146,16 +163,6 @@ const styles = StyleSheet.create({
     top: H * 0.08,
     width: W,
   },
-  backBtnWrapper: {
-    position: "absolute",
-    left: W * 0.05,
-    top: H * 0.008,
-  },
-  backBtn: {
-    width: 24,
-    height: 24,
-    resizeMode: "contain",
-  },
   title: {
     fontSize: 28,
     fontWeight: "800",
@@ -180,7 +187,8 @@ const styles = StyleSheet.create({
     aspectRatio: 1,
     width: 104,
     height: 104,
-    resizeMode: 'contain',
+    borderRadius: 52,
+    resizeMode: 'cover',
   },
   inputWrap: {
   },
