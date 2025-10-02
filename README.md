@@ -7,8 +7,8 @@
 <p align="center">
   <img width="85" height="150" alt="greeni" src="https://github.com/user-attachments/assets/93bdded6-2686-4e56-b69c-a8ccee5fb3d5" />
 </p>
-Greeni는 **AI 대화 캐릭터**와 함께 아이가 그림일기, 스무고개, 역할놀이, 동물퀴즈 등을 즐기며  
-자연스럽게 **언어 표현력, 창의력, 정서 발달**을 도울 수 있도록 설계된 놀이 기반 학습 앱입니다.  
+Greeni는 AI 대화 캐릭터와 함께 아이가 그림일기, 스무고개, 역할놀이, 동물퀴즈 등을 즐기며  
+자연스럽게 언어 표현력, 창의력, 정서 발달을 도울 수 있도록 설계된 놀이 기반 학습 앱입니다.  
 
 <br><br>
 ---
