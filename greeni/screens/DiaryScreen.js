@@ -3,6 +3,7 @@ import { View, Text, Image, StyleSheet, Dimensions, ImageBackground } from "reac
 import colors from "../theme/colors";
 import BackButton from "../components/BackButton";
 import MicButton from "../components/MicButton";
+import Button from "../components/Button";
 
 const { width: W, height: H } = Dimensions.get("window");
 
@@ -34,6 +35,14 @@ export default function DiaryScreen({ navigation }) {
 
       {/* 마이크 버튼 */}
       <MicButton />
+
+      {/* 일기 그리러 가는 임시 버튼 */}
+      <View style={styles.diaryButton} >
+        <Button 
+          title="그림일기"
+          onPress={() => navigation.navigate("DiaryDraw")}
+        />
+      </View>
     </View>
   );
 }
@@ -76,5 +85,12 @@ const styles = StyleSheet.create({
   greeni: {
     width: W * 0.5,
     height: W * 0.5,
+  },
+
+  // 일기 그리러 가는 임시 버튼
+  diaryButton: {
+    position: "absolute",
+    left: 20,
+    bottom: 50,
   },
 });
