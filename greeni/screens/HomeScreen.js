@@ -136,7 +136,6 @@ const styles = StyleSheet.create({
     paddingVertical: 50,
     alignItems: "center",
     justifyContent: "center",
-    alignSelf: "center",
   },
   bubbleText: {
     fontSize: 18,
