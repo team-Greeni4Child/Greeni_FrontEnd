@@ -12,6 +12,7 @@ import Button from "../components/Button";
 import BackButton from "../components/BackButton";
 import colors from "../theme/colors";
 import { color } from "react-native-reanimated";
+import MicButton from "../components/MicButton";
 
 // 현재 기기의 화면 너비 W, 화면 높이 H
 const { width: W, height: H } = Dimensions.get("window");
@@ -74,12 +75,7 @@ export default function AnimalQuizScreen({navigation}) {
               )}
             </View>
 
-
-            <View style={styles.minWrap}>
-              <Image
-                style={styles.micImage}
-                source={require("../assets/images/mic.png")}/>
-            </View>
+            <MicButton />
         </View>
     )
 }
@@ -165,16 +161,4 @@ const styles = StyleSheet.create({
     aspectRatio: 65 / 57,
     width: 54, height: 57,
   },
-
-  minWrap: {
-    position: 'absolute',
-    width: W,
-    alignItems: 'center',
-    bottom: H * 0.05,
-  },
-  micImage: {
-    aspectRatio: 1,
-    width: 164,
-    height: 164
-  }
 })

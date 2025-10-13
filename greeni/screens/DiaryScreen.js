@@ -1,11 +1,15 @@
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
+import MicButton from "../components/MicButton";
 
 export default function HomeScreen() {
   return (
     <View style={styles.root}>
       <Text style={styles.title}>🌱 일기</Text>
+
+    <MicButton />
     </View>
+    
   );
 }
 
