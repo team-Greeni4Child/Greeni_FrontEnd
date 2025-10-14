@@ -1,13 +1,15 @@
-import {React, useState, useEffect, useContext} from "react";
+import {React, useContext} from "react";
 import { View, Text, Image, StyleSheet, Dimensions, TouchableOpacity } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { AuthContext } from "../App";
-import colors from "../theme/colors";
 import { ProfileContext } from "../context/ProfileContext";
+import colors from "../theme/colors";
 
 const { width: W, height: H } = Dimensions.get("window");
+const MAX_PROFILES = 6;
 
 export default function ProfileSelectScreen({route, navigation}) {
+
   const { profiles } = useContext(ProfileContext);
   const { setStep } = useContext(AuthContext);
 
@@ -29,19 +31,24 @@ export default function ProfileSelectScreen({route, navigation}) {
             onPress={() => setStep("main")}  
           >
             <Image source={p.image} style={styles.profileImage} />
-            <Text style={styles.profileName}>{p.name}</Text>
+            <Text 
+              style={styles.profileName}
+              numberOfLines={1}
+              ellipsizeMode="tail"
+            >
+              {p.name}
+            </Text>
           </TouchableOpacity>
         ))}
 
         {/* + 버튼: 새로운 프로필 생성 */}
-        {profiles.length < 6 && (
+        {profiles.length < MAX_PROFILES && (
           <TouchableOpacity
             style={styles.createBtn}
             onPress={() =>
               navigation.navigate("ProfileImageSelect", { existingProfiles: profiles })
             }>
             <Image source={require("../assets/images/create.png")} style={styles.createImage} />
-
           </TouchableOpacity>
         )}
       </View>
@@ -57,7 +64,6 @@ const styles = StyleSheet.create({
     backgroundColor: colors.ivory,
   },
 
-  // 프로필 선택을 감싸고 있는 Wrapper
   titleWrap: {
     position: "absolute",
     alignItems: "center",
@@ -70,7 +76,6 @@ const styles = StyleSheet.create({
     color: colors.brown,
   },
 
-  // 생성된 프로필과 + 버튼을 감싸고 있는 Wrapper
   profileWrap: {
     width: W * 0.8,
     flexDirection: 'row',
@@ -94,17 +99,18 @@ const styles = StyleSheet.create({
   },
   profileName: {
     width: '80%',
+    marginTop: 10,
     fontsize: 14,
     fontFamily: "WantedSans-Regular",
     textAlign: 'center',
-    marginTop: 10,
   },
+
   createBtn: {
     width: 120,
     height: 120,
+    margin: 8,
     justifyContent: 'center',
     alignItems: 'center',
-    margin: 8,
   },
   createImage: {
     width: '70%',

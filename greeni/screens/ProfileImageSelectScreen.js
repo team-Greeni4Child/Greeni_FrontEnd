@@ -60,7 +60,7 @@ export default function ProfileImageSelectScreen({ navigation }) {
         return;
       }
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        mediaTypes: ImagePicker.Images,
         allowsEditing: true,
         aspect: [1,1],
         quality: 1,
@@ -123,7 +123,6 @@ export default function ProfileImageSelectScreen({ navigation }) {
           disabled={selectedIndex === null}
         />
       </View>
-
     </View>
   );
 }
