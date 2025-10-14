@@ -8,22 +8,32 @@ import Button from "../components/Button";
 import BackButton from "../components/BackButton";
 import { ProfileContext } from "../context/ProfileContext";
 
+import DateTimePicker from "react-native-modal-datetime-picker";
+
 // 현재 기기의 화면 너비 W, 화면 높이 H
 const { width: W, height: H } = Dimensions.get("window");
 
 export default function ProfileInfoFormScreen({ route, navigation }) {
-  // Context 불러와서 사용
+  
   const { profiles, setProfiles } = useContext(ProfileContext);
 
-  // ProfileImageSelectScreen에서 넘어온 선택 이미지
-  // 이름, 생년월일 상태
   const [selectedImage, setSelectedImage] = useState(route.params?.selectedImage || null);
   const [name, setName] = useState("");
   const [birth, setBirth] = useState("");
 
-  // 에러 메시지 상태
   const [nameError, setNameError] = useState("");
   const [birthError, setBirthError] = useState("");
+
+  const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
+
+  const showDatePicker = () => setDatePickerVisibility(true);
+  const hideDatePicker = () => setDatePickerVisibility(false);
+
+  const handleConfirm = (date) => {
+    const formatted = `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2, "0")}.${String(date.getDate()).padStart(2, "0")}`;
+    setBirth(formatted);
+    hideDatePicker();
+  };
 
   // 유효성 검사
   const validate = () => {
@@ -39,26 +49,15 @@ export default function ProfileInfoFormScreen({ route, navigation }) {
       setNameError("");
     }
 
-// 생년월일 형식 
-const regex = /^20\d{2}\.(0[1-9]|1[0-2])\.(0[1-9]|[12]\d|3[01])$/;
+    if (!birth) {
+      setBirthError("생년월일을 선택해주세요.");
+      valid = false;
+    } else {
+      setBirthError("");
+    }
 
-if (!birth.match(regex)) { 
-  setName("");
-  setBirthError("생년월일을 형식에 맞게 입력해주세요."); 
-  valid = false; 
-} else { 
-  // 실제 날짜 객체 생성 
-  const [year, month, day] = birth.split(".").map((n) => parseInt(n, 10)); 
-  const inputDate = new Date(year, month - 1, day); 
-  const today = new Date(); 
-  today.setHours(0, 0, 0, 0); 
-  // 미래 날짜 입력 검사 
-  if (inputDate > today) { 
-    setBirthError("미래의 날짜는 입력할 수 없습니다."); 
-    valid = false; 
-  } else { setBirthError(""); } } 
-  return valid; 
-};
+    return valid;
+  };
 
   // 유효성 검사 통과하면, 새로운 프로필 생성
   const handleCreate = () => {
@@ -113,22 +112,38 @@ if (!birth.match(regex)) {
             }}
           />
 
-        <TextInput
+        {/* 생년월일 Picker */}
+        <TouchableOpacity
+          onPress={showDatePicker}
           style={[
             styles.input,
-            birthError ? { borderBottomColor: '#f36945' } : {},
+            { justifyContent: "center" },
+            birthError ? { borderBottomColor: "#f36945" } : {},
           ]}
-          placeholder={birthError ? birthError : "생년월일을 입력해주세요(예: 20xx.xx.xx)"}
-          placeholderTextColor={birthError ? "#f36945" : "#999"}
-          value={birth}
-          onChangeText={(text) => {
-            setBirth(text);
-          }}
-          onFocus={() => {
-            if(birthError){
-              setBirthError("");
-            }
-          }}
+        >
+          <Text
+            style={{
+              color: birth ? "#000" : birthError ? "#f36945" : "#999",
+              fontSize: 14,
+              fontFamily: "WantedSans-Regular",
+            }}
+          >
+            {birth
+              ? birth
+              : birthError
+              ? birthError
+              : "생년월일을 선택해주세요"}
+          </Text>
+        </TouchableOpacity>
+
+        {/* 모달 DatePicker */}
+        <DateTimePicker
+          isVisible={isDatePickerVisible}
+          mode="date"
+          onConfirm={handleConfirm}
+          onCancel={hideDatePicker}
+          maximumDate={new Date()} // 미래 날짜 선택 불가
+          locale="ko-KR"
         />
 
       </View>
@@ -154,7 +169,6 @@ const styles = StyleSheet.create({
     backgroundColor: colors.ivory,
   },
 
-  // 상단 제목과 뒤로 가기 버튼을 감싸는 Wrapper
   titleWrap: {
     position: "absolute",
     alignItems: "center",
