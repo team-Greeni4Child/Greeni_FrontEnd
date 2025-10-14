@@ -66,7 +66,7 @@ const styles = StyleSheet.create({
   },
   topBar: {
     backgroundColor: colors.pink,
-    height: H * 0.21,
+    height: 180,
     borderBottomLeftRadius: 30,
     borderBottomRightRadius: 30,
     flexDirection: "column",
@@ -81,7 +81,7 @@ const styles = StyleSheet.create({
   },
   tools: {
     flexDirection: "row",
-    marginTop: (H * 0.21 - 104) * 0.2,  //(분홍 topBar 길이 - 위에서부터 title 밑부분까지의 길이) * (적절한 숫자)
+    marginTop: 76 * 0.2, 
     gap: W * 0.2,
   },
   icon: {
