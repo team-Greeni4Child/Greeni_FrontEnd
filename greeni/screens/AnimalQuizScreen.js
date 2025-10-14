@@ -5,13 +5,12 @@ import {
   Image, 
   StyleSheet, 
   Dimensions, 
-  TouchableOpacity 
+  TouchableOpacity, 
+  ImageBackground
 } from "react-native";
 import { StatusBar } from "expo-status-bar";
-import Button from "../components/Button";
 import BackButton from "../components/BackButton";
 import colors from "../theme/colors";
-import { color } from "react-native-reanimated";
 
 // 현재 기기의 화면 너비 W, 화면 높이 H
 const { width: W, height: H } = Dimensions.get("window");
@@ -46,17 +45,19 @@ export default function AnimalQuizScreen({navigation}) {
             {/* Greeni 영역*/}
             {/* 모드에 따라 그리니 말풍선 내용 변경 */}
             <View style={styles.greeniWrap}>
-              <Image
+              <ImageBackground
                 style={styles.bubble}
-                source={require("../assets/images/bubble_animal.png")}/>
+                source={require("../assets/images/bubble_animal.png")}
+              >
+                <Text style={styles.bubbleText}>
+                  {mode === 'image'
+                  ? "이 동물은 어떤 소리를 낼까?"
+                  : "어떤 동물이 이런 소리를 낼까?"}
+                </Text>
+              </ImageBackground>
               <Image
                 style={styles.greeni}
                 source={require("../assets/images/quiz_greeni_big.png")}/>
-              <Text style={styles.bubbleText}>
-                {mode === 'image'
-                ? "이 동물은 어떤 소리를 낼까?"
-              : "어떤 동물이 이런 소리를 낼까?"}
-              </Text>
             </View>
 
             {/* 문제가 나오는 영역 */}
@@ -74,8 +75,7 @@ export default function AnimalQuizScreen({navigation}) {
               )}
             </View>
 
-
-            <View style={styles.minWrap}>
+            <View style={styles.micWrap}>
               <Image
                 style={styles.micImage}
                 source={require("../assets/images/mic.png")}/>
@@ -85,7 +85,6 @@ export default function AnimalQuizScreen({navigation}) {
 }
 
 const styles = StyleSheet.create({
-  // 전체 화면, 아이템 세로 정렬, 가로세로 중앙 정렬, 배경색
   root: {
     flex: 1,
     flexDirection: 'column',
@@ -94,18 +93,15 @@ const styles = StyleSheet.create({
     backgroundColor: colors.ivory, 
   },
 
-  // 뒤로가기 버튼과 제목을 감싸는 wrapper 
-  // root 기준으로 정렬, 수평 중앙 정렬, colorToken 변경
   titleWrap: {
     position: "absolute",
     alignItems: 'center',
     top: H * 0.08,
     width: W,
   },
-  // colorToken 변경
   title: {
     fontSize: 28,
-    fontWeight: "800",
+    fontFamily: "KCC-Murukmuruk",
     color: colors.brown,
   },
 
@@ -113,7 +109,7 @@ const styles = StyleSheet.create({
   greeniWrap: {
     position: 'absolute',
     flexDirection: 'column',
-    top: H * 0.15,
+    top: H * 0.14,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -125,23 +121,18 @@ const styles = StyleSheet.create({
     top: 0, left: -W * 0.28,
   },
   bubble: {
-    position: 'relative',
     justifyContent: 'center',
     alignItems: 'center',
-    flexDirection: 'column',
-    flexWrap: 'wrap',
-    aspectRatio: 295/112,
+    aspectRatio: 295/122,
     width: 295,
-    height: 112,
+    height: 122,
     resizeMode: 'contain',
   },
   bubbleText: {
-    position: 'absolute',
-    top: W * 0.087,
-    width: 215,
-    fontWeight: '500',
     fontSize: 18,
+    fontFamily: "WantedSans-Regular",
     color: colors.brown,
+    textAlign: 'center',
   },
 
   quizWrap: {
@@ -166,7 +157,7 @@ const styles = StyleSheet.create({
     width: 54, height: 57,
   },
 
-  minWrap: {
+  micWrap: {
     position: 'absolute',
     width: W,
     alignItems: 'center',
