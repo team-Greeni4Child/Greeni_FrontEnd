@@ -14,6 +14,7 @@ import ProfileImageSelectScreen from "./screens/ProfileImageSelectScreen";
 import ProfileInfoFormScreen from "./screens/ProfileInfoFormScreen";
 import HomeScreen from "./screens/HomeScreen";
 import DiaryScreen from "./screens/DiaryScreen";
+import DiaryDrawScreen from "./screens/DiaryDrawScreen";
 import TwentyQuestionsScreen from "./screens/TwentyQuestionsScreen";
 import AnimalQuizScreen from "./screens/AnimalQuizScreen";
 import RolePlayingScreen from "./screens/RolePlayingScreen";
@@ -53,6 +54,7 @@ function MainStack() {
     <Stack.Navigator screenOptions={{ headerShown: false, animation: "none"}}>
       <Stack.Screen name="Home" component={HomeScreen} />
       <Stack.Screen name="Diary" component={DiaryScreen} />
+      <Stack.Screen name="DiaryDraw" component={DiaryDrawScreen} />
       <Stack.Screen name="TwentyQuestions" component={TwentyQuestionsScreen} />
       <Stack.Screen name="AnimalQuiz" component={AnimalQuizScreen} />
       <Stack.Screen name="RolePlaying" component={RolePlayingScreen} />
@@ -99,7 +101,7 @@ export default function App() {
             </Stack.Screen>
           </Stack.Navigator>
         ) : step === "auth" ? (
-          <AuthStack />
+          <AuthStack  />
         ) : step === "profile" ? (
           <ProfileStack />
         ) : (
