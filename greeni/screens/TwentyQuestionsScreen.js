@@ -5,9 +5,9 @@ import {
   Image, 
   StyleSheet, 
   Dimensions, 
-  TouchableOpacity 
+  TouchableOpacity, 
+  ImageBackground
 } from "react-native";
-import Button from "../components/Button";
 import BackButton from "../components/BackButton";
 import colors from "../theme/colors";
 import MicButton from "../components/MicButton";
@@ -64,9 +64,12 @@ export default function TwentyQuestionsScreen({navigation}) {
         {/* 문제 + 힌트 */}
         <TouchableOpacity style={styles.questionsWrap} onPress={handleNextHint}>
           <Text style={styles.questionText}>ㅋㄲㄹ</Text>
-          <View style={styles.hintBubble}>
+          <ImageBackground
+            source={require("../assets/images/bubble_20.png")}
+            style={styles.hintBubble}
+            resizeMode="stretch">
             <Text style={styles.hintText}>{hints[currentHint]}</Text>
-          </View>
+          </ImageBackground>
         </TouchableOpacity>
 
         {/* greeni */}
@@ -110,7 +113,7 @@ const styles = StyleSheet.create({
   // colorToken 변경
   title: {
     fontSize: 28,
-    fontWeight: "800",
+    fontFamily: "KCC-Murukmuruk",
     color: colors.brown,
   },
 
@@ -171,17 +174,25 @@ const styles = StyleSheet.create({
     zIndex: 2,
   },
   questionText: {
-    fontWeight: "600",
     fontSize: 40,
     color: colors.brown
   },
-  bubble: {
-
+  hintBubble: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    aspectRatio: 220/99.75,
+    width: 220,
+    height: 99.75,
+    resizeMode: 'contain',
+    top: W * 0.02,
+    left: W * 0.12,
   },
   hintText: {
-    fontWeight: "500",
     fontSize: 20,
-    color: colors.brown
+    fontFamily: "Wanted Sans Std Variable",
+    color: colors.brown,
+    maxWidth: 190,
+    textAlign: 'center'
   },
 
   // 그리니

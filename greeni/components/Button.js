@@ -17,6 +17,7 @@ const Button = ({
     onPress = () => null,
     icon = null,
     disabled = false,
+    style={},
 }) => {
 
     // 비활성화 상태일 때 배경색은 lightGray60으로 하고
@@ -35,6 +36,7 @@ const Button = ({
                     borderWidth,
                     borderColor,
                 },
+                style,
             ]}
             // 비활성화 상태일 때는 눌러도 동작 안 함
             onPress={disabled ? null : onPress}
