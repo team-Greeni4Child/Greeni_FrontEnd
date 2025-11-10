@@ -61,7 +61,8 @@ const styles = StyleSheet.create({
     bottom: H * 0.06,
   },
   icon: {
-    width: 165, 
-    height: 165
+    //backgroundColor: "green",
+    width: W * 0.42, 
+    height: W * 0.42,
   },
 });

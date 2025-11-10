@@ -111,6 +111,6 @@ const styles = StyleSheet.create({
 
   situationWrap: {
     position: 'absolute',
-    top: H * 0.53,
+    bottom: H * 0.26,
   },
 })
