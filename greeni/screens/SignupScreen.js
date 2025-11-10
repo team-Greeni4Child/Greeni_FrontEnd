@@ -128,7 +128,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 24,
-    fontFamily: "KCC-Murukmuruk",
+    fontFamily: "Maplestory_Bold",
     color: colors.brown,
     textAlign: "center",
     margin: 20,
@@ -142,12 +142,12 @@ const styles = StyleSheet.create({
   email: {
     width: "75%",
     fontSize: 14,
-    fontFamily: "WantedSans-Regular",
+    fontFamily: "Maplestory_Light",
     paddingVertical: 8,
     color: colors.brown,
   },
   verificationButton:{
-    bottom: Platform.OS === "ios" ? 4 : -4,
+    //bottom: Platform.OS === "ios" ? 4 : -4,
     backgroundColor: colors.pink,
     borderRadius: 5,
     height: 30,
@@ -157,7 +157,7 @@ const styles = StyleSheet.create({
   },
   verificationButtonText: {
     fontSize: 12,
-    fontFamily: "WantedSans-Regular",
+    fontFamily: "Maplestory_Light",
     color: colors.brown,
   },
   input: {
@@ -165,7 +165,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 2,
     borderBottomColor: colors.greenDark,
     fontSize: 14,
-    fontFamily: "WantedSans-Regular",
+    fontFamily: "Maplestory_Light",
     paddingVertical: 8,
     marginBottom: 8,
     color: colors.brown,

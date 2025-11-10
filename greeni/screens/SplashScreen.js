@@ -197,12 +197,12 @@ const styles = StyleSheet.create({
   },
   titleKr: {
     fontSize: 70,
-    fontFamily: "KCC-Murukmuruk",
+    fontFamily: "Maplestory_Bold",
     color: colors.brown,
   },
   titleEn: {
     fontSize: 20,
-    fontFamily: "KCC-Murukmuruk",
+    fontFamily: "Maplestory_Bold",
     color: colors.brown,
   },
 

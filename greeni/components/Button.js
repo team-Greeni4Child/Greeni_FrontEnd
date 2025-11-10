@@ -59,7 +59,7 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
     },
     title: {
-        fontFamily: "WantedSans-SemiBold",
+        fontFamily: "Maplestory_Bold",
         color: colors.brown,
     },
     icon: {

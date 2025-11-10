@@ -71,15 +71,9 @@ export default function App() {
 
   //폰트
   const [fontsLoaded] = useFonts({
-    "KCC-Murukmuruk": require("./assets/fonts/KCC-Murukmuruk.ttf"),
-    "WantedSans": require("./assets/fonts/WantedSansStdVariable.ttf"),
-    "WantedSans-Regular": require("./assets/fonts/WantedSansStd-Regular.ttf"),
-    "WantedSans-Medium": require("./assets/fonts/WantedSansStd-Medium.ttf"),
-    "WantedSans-SemiBold": require("./assets/fonts/WantedSansStd-SemiBold.ttf"),
-    "WantedSans-Bold": require("./assets/fonts/WantedSansStd-Bold.ttf"),
-    "WantedSans-ExtraBold": require("./assets/fonts/WantedSansStd-ExtraBold.ttf"),
-    "WantedSans-Black": require("./assets/fonts/WantedSansStd-Black.ttf"),
-    "WantedSans-ExtraBlack": require("./assets/fonts/WantedSansStd-ExtraBlack.ttf"),
+    "Maplestory_Light": require("./assets/fonts/Maplestory Light.ttf"),
+    "Maplestory_Bold": require("./assets/fonts/Maplestory Bold.ttf"),
+    "gangwongyoyuksaeeum": require("./assets/fonts/강원교육새음.ttf"),
   });  
   if (!fontsLoaded) {
     return null; 

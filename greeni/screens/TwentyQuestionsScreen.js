@@ -113,7 +113,7 @@ const styles = StyleSheet.create({
   // colorToken 변경
   title: {
     fontSize: 28,
-    fontFamily: "KCC-Murukmuruk",
+    fontFamily: "Maplestory_Bold",
     color: colors.brown,
   },
 
@@ -152,12 +152,13 @@ const styles = StyleSheet.create({
   scoreLabel: {
     fontWeight: "400",
     fontSize: 16,
+    fontFamily: "Maplestory_Light",
     color: colors.brown
   },
   scoreValue: {
     fontSize: 14,
+    fontFamily: "Maplestory_Light",
     color: colors.brown,
-    fontWeight: "400"
   },
 
   // 문제 및 힌트
@@ -174,7 +175,8 @@ const styles = StyleSheet.create({
     zIndex: 2,
   },
   questionText: {
-    fontSize: 40,
+    fontSize: 45,
+    fontFamily: "Maplestory_Light",
     color: colors.brown
   },
   hintBubble: {
@@ -188,8 +190,8 @@ const styles = StyleSheet.create({
     left: W * 0.12,
   },
   hintText: {
-    fontSize: 20,
-    fontFamily: "Wanted Sans Std Variable",
+    fontSize: 28,
+    fontFamily: "gangwongyoyuksaeeum",
     color: colors.brown,
     maxWidth: 190,
     textAlign: 'center'

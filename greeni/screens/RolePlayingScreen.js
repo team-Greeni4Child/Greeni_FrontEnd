@@ -73,7 +73,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 28,
-    fontFamily: "KCC-Murukmuruk",
+    fontFamily: "Maplestory_Bold",
     color: colors.brown,
   },
 
@@ -102,8 +102,8 @@ const styles = StyleSheet.create({
     top: H * 0.155,
   },
   bubbleText: {
-    fontSize: 20,
-    fontFamily: "WantedSans-Regular",
+    fontSize: 28,
+    fontFamily: "gangwongyoyuksaeeum",
     color: colors.brown,
     textAlign: 'center',
     maxWidth : 270,

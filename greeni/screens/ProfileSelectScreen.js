@@ -72,7 +72,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 28,
-    fontFamily: "KCC-Murukmuruk",
+    fontFamily: "Maplestory_Bold",
     color: colors.brown,
   },
 
@@ -101,7 +101,7 @@ const styles = StyleSheet.create({
     width: '80%',
     marginTop: 10,
     fontsize: 14,
-    fontFamily: "WantedSans-Regular",
+    fontFamily: "Maplestory_Light",
     textAlign: 'center',
   },
 
