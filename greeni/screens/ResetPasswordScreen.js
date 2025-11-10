@@ -38,6 +38,7 @@ export default function LoginScreen({ navigation }) {
         <View style={styles.inputsWrap}>
             <TextInput
             style={styles.input}
+            fontFamily="Maplestory_Light"
             placeholder="비밀번호"
             placeholderTextColor={colors.brown}
             value={password}
@@ -45,6 +46,7 @@ export default function LoginScreen({ navigation }) {
             />
             <TextInput
             style={styles.input}
+            fontFamily="Maplestory_Light"
             placeholder="비밀번호 확인"
             placeholderTextColor={colors.brown}
             value={checkPassword}

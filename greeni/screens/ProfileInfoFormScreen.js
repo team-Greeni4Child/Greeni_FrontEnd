@@ -99,6 +99,7 @@ export default function ProfileInfoFormScreen({ route, navigation }) {
               styles.input,
               nameError ? { borderBottomColor: '#f36945' } : {},
             ]}
+            fontFamily="Maplestory_Light"
             placeholder={nameError ? nameError : "이름을 입력해주세요"}
             placeholderTextColor={nameError ? "#f36945" : "#999"}
             value={name}

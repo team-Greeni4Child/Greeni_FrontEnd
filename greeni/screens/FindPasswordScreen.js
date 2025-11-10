@@ -40,18 +40,21 @@ export default function LoginScreen({ navigation }) {
           <View style={styles.emailWrap}>
             <TextInput
               style={styles.email}
+              fontFamily="Maplestory_Light"
               placeholder="이메일"
               placeholderTextColor={colors.brown}
               value={email}
               onChangeText={setEmail}
             />
             <TouchableOpacity style={styles.verificationButton}>
-              <Text style={styles.verificationButtonText}>인증</Text>
+              <Text 
+                style={styles.verificationButtonText}>인증</Text>
             </TouchableOpacity>
           </View>
 
           <TextInput
             style={styles.code}
+            fontFamily="Maplestory_Light"
             placeholder="인증코드"
             placeholderTextColor={colors.brown}
             value={code}
@@ -129,6 +132,7 @@ const styles = StyleSheet.create({
   },
   email: {
     width: "75%",
+    height: 35,
     fontSize: 14,
     fontFamily: "Maplestory_Light",
     paddingVertical: 8,
