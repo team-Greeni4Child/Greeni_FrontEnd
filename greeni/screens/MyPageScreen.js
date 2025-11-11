@@ -88,7 +88,7 @@ export default function MyPageScreen({ navigation }) {
         <TouchableOpacity
           style={styles.settingBtn}
           activeOpacity={0.8}
-          onPress={() => navigation.navigate("Settings")}
+          onPress={() => navigation.navigate("SettingsPassword")}
         >
           <Image
             source={require("../assets/images/setting.png")}

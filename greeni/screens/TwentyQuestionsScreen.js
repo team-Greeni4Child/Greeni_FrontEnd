@@ -165,7 +165,7 @@ const styles = StyleSheet.create({
     zIndex: 4
   },
   hintProgressLabel: {
-    fontSize: 16,
+    fontSize: 14,
     fontFamily: "Maplestory_Light",
     color: colors.brown
   },
@@ -187,7 +187,7 @@ const styles = StyleSheet.create({
     fontFamily: "Maplestory_Light",
   },
   scoreItemValue: {
-    fontSize: 16,
+    fontSize: 14,
     fontFamily: "Maplestory_Light",
     color: colors.greenDark,
   },

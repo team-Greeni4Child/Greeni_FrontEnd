@@ -21,6 +21,9 @@ import RolePlayingScreen from "./screens/RolePlayingScreen";
 import CalendarScreen from "./screens/CalendarScreen";
 import DiaryRecordScreen from "./screens/DiaryRecordScreen";
 import MyPageScreen from "./screens/MyPageScreen";
+import SettingsPasswordScreen from "./screens/SettingsPasswordScreen";
+import SettingsScreen from "./screens/SettingsScreen";
+import ParentsPageScreen from "./screens/ParentsPageScreen";
 
 export const AuthContext = createContext();
 
@@ -62,6 +65,9 @@ function MainStack() {
       <Stack.Screen name="Calendar" component={CalendarScreen}/>
       <Stack.Screen name="DiaryRecord" component={DiaryRecordScreen}/>
       <Stack.Screen name="MyPage" component={MyPageScreen}/>
+      <Stack.Screen name="SettingsPassword" component={SettingsPasswordScreen}/>
+      <Stack.Screen name="Settings" component={SettingsScreen}/>
+      <Stack.Screen name="ParentsPage" component={ParentsPageScreen}/>
       {/* 나중에 다른 페이지 추가 */}
     </Stack.Navigator>
   );
