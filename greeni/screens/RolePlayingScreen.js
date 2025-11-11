@@ -87,18 +87,18 @@ const styles = StyleSheet.create({
   },
   greeni: {
     position: 'absolute',
-    aspectRatio: 95/130,
-    width: 94.72,
-    height: 130,
+    aspectRatio: 80/110,
+    width:80,
+    height: 110,
     top: -H * 0.002
   },
   bubble: {
     position: 'relative',
     justifyContent: 'center',
     alignItems: 'center',
-    aspectRatio: 302/160,
-    width: 302,
-    height: 160,
+    aspectRatio: 230/120,
+    width: 230,
+    height: 120,
     top: H * 0.155,
   },
   bubbleText: {
