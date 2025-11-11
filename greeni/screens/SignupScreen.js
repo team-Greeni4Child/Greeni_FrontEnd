@@ -38,19 +38,21 @@ export default function SignUpScreen({ navigation }) {
         <View style={styles.emailWrap}>
           <TextInput
             style={styles.email}
+            fontFamily="Maplestory_Light"
             placeholder="이메일"
             placeholderTextColor={colors.brown}
             value={email}
             onChangeText={setEmail}
           />
           <TouchableOpacity style={styles.verificationButton}>
-            <Text style={styles.verificationButtonText}>인증</Text>
+            <Text style={styles.verificationButtonText }>인증</Text>
           </TouchableOpacity>
         </View>
 
         {/* 인증코드 */}
         <TextInput
           style={styles.input}
+          fontFamily="Maplestory_Light"
           placeholder="인증코드"
           placeholderTextColor={colors.brown}
           value={code}
@@ -61,6 +63,7 @@ export default function SignUpScreen({ navigation }) {
         <TextInput
           style={styles.input}
           placeholder="비밀번호"
+          fontFamily="Maplestory_Light"
           placeholderTextColor={colors.brown}
           value={password}
           onChangeText={setPassword}
@@ -70,6 +73,7 @@ export default function SignUpScreen({ navigation }) {
         {/* 비밀번호 확인 */}
         <TextInput
           style={styles.input}
+          fontFamily="Maplestory_Light"
           placeholder="비밀번호 확인"
           placeholderTextColor={colors.brown}
           value={CheckPassword}
@@ -128,7 +132,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 24,
-    fontFamily: "KCC-Murukmuruk",
+    fontFamily: "Maplestory_Bold",
     color: colors.brown,
     textAlign: "center",
     margin: 20,
@@ -141,13 +145,14 @@ const styles = StyleSheet.create({
   },
   email: {
     width: "75%",
+    height: 35,
     fontSize: 14,
-    fontFamily: "WantedSans-Regular",
+    fontFamily: "Maplestory_Light",
     paddingVertical: 8,
     color: colors.brown,
   },
   verificationButton:{
-    bottom: Platform.OS === "ios" ? 4 : -4,
+    //bottom: Platform.OS === "ios" ? 4 : -4,
     backgroundColor: colors.pink,
     borderRadius: 5,
     height: 30,
@@ -157,7 +162,7 @@ const styles = StyleSheet.create({
   },
   verificationButtonText: {
     fontSize: 12,
-    fontFamily: "WantedSans-Regular",
+    fontFamily: "Maplestory_Light",
     color: colors.brown,
   },
   input: {
@@ -165,7 +170,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 2,
     borderBottomColor: colors.greenDark,
     fontSize: 14,
-    fontFamily: "WantedSans-Regular",
+    fontFamily: "Maplestory_Light",
     paddingVertical: 8,
     marginBottom: 8,
     color: colors.brown,

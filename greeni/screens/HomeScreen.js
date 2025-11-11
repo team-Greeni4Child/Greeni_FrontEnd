@@ -56,7 +56,7 @@ export default function HomeScreen({ navigation }) {
         resizeMode="stretch"
       >
         <Text style={styles.bubbleText}>
-          안녕 나는 그리니야!{"\n"}오늘은 또 어떤 하루를 보냈어?{"\n"}난 지독한 하루를 보냈어...
+          안녕 나는 그리니야!{"\n"}오늘은 또 어떤 하루를 보냈어?
         </Text>
       </ImageBackground>
 
@@ -138,9 +138,9 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   bubbleText: {
-    fontSize: 18,
+    fontSize: 28,
     color: colors.brown,
-    fontFamily: "WantedSans-Regular",
+    fontFamily: "gangwongyoyuksaeeum",
     textAlign: "center",
     lineHeight: 25,
   },
@@ -169,12 +169,12 @@ const styles = StyleSheet.create({
   },
   icon: {
     height: "50%",
-    marginBottom: 8,
+    marginBottom: 10,
     resizeMode: "contain",
   },
   buttonText: {
     fontSize: 20,
-    fontFamily: "KCC-Murukmuruk",
+    fontFamily: "Maplestory_Bold",
     color: colors.brown,
   },
 });

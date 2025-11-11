@@ -36,6 +36,7 @@ export default function LoginScreen({ navigation }) {
         <View style={styles.inputsWrap}>
             <TextInput
             style={styles.input}
+            fontFamily="Maplestory_Light"
             placeholder="이메일"
             placeholderTextColor={colors.brown}
             value={email}
@@ -43,6 +44,7 @@ export default function LoginScreen({ navigation }) {
             />
             <TextInput
             style={styles.input}
+            fontFamily="Maplestory_Light"
             placeholder="비밀번호"
             placeholderTextColor={colors.brown}
             value={password}
@@ -120,7 +122,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
   loginTitle: {
-    fontFamily: "KCC-Murukmuruk",
+    fontFamily: "Maplestory_Bold",
     fontSize: 24,
     color: colors.brown,
     textAlign: "center",
@@ -132,7 +134,7 @@ const styles = StyleSheet.create({
     width: "100%",
     borderBottomWidth: 2,
     borderBottomColor: colors.greenDark,
-    fontFamily: "WantedSans-Regular",
+    fontFamily: "Maplestory_Light",
     fontSize: 14,
     paddingVertical: 8,
     marginBottom: 8,
@@ -158,7 +160,7 @@ const styles = StyleSheet.create({
     borderColor: colors.greenDark,
     backgroundColor: colors.white,
     borderRadius: 21,
-    paddingVertical: 3,
+    paddingVertical: 5,
     paddingHorizontal: 20,
     marginTop: H * 0.03,
     alignItems: "center",
@@ -166,6 +168,6 @@ const styles = StyleSheet.create({
   linkText: {
     color: colors.brown,
     fontSize: 16,
-    fontFamily: "WantedSans-Regular",
+    fontFamily: "Maplestory_Light",
   },
 });

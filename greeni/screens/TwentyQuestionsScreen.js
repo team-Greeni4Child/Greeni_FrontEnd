@@ -128,7 +128,7 @@ const styles = StyleSheet.create({
   // colorToken 변경
   title: {
     fontSize: 28,
-    fontFamily: "KCC-Murukmuruk",
+    fontFamily: "Maplestory_Bold",
     color: colors.brown,
   },
 
@@ -165,14 +165,14 @@ const styles = StyleSheet.create({
     zIndex: 4
   },
   hintProgressLabel: {
-    fontWeight: "400",
-    fontSize: 16,
+    fontSize: 14,
+    fontFamily: "Maplestory_Light",
     color: colors.brown
   },
   hintProgressValue: {
     fontSize: 14,
+    fontFamily: "Maplestory_Light",
     color: colors.brown,
-    fontWeight: "400"
   },
   scoreDetailWrap: {
     flexDirection: 'row',
@@ -184,10 +184,11 @@ const styles = StyleSheet.create({
   scoreItem: {
     fontsize: 14,
     color: colors.brown,
-    fontWeight: 'bold',
+    fontFamily: "Maplestory_Light",
   },
   scoreItemValue: {
-    fontSize: 16,
+    fontSize: 14,
+    fontFamily: "Maplestory_Light",
     color: colors.greenDark,
   },
 
@@ -207,6 +208,7 @@ const styles = StyleSheet.create({
   questionText: {
     fontSize: 40,
     color: colors.brown,
+    fontFamily: "Maplestory_Light",
     top: H * 0.07,
     fontWeight: 'bold',
   },
@@ -231,8 +233,8 @@ const styles = StyleSheet.create({
     alignItems: 'center'
   },
   hintText: {
-    fontSize: 18,
-    fontFamily: "WantedSans-Regular",
+    fontSize: 28,
+    fontFamily: "gangwongyoyuksaeeum",
     color: colors.brown,
     textAlign: "center",
     lineHeight: 25,

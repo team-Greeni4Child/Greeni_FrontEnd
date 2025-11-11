@@ -99,6 +99,7 @@ export default function ProfileInfoFormScreen({ route, navigation }) {
               styles.input,
               nameError ? { borderBottomColor: '#f36945' } : {},
             ]}
+            fontFamily="Maplestory_Light"
             placeholder={nameError ? nameError : "이름을 입력해주세요"}
             placeholderTextColor={nameError ? "#f36945" : "#999"}
             value={name}
@@ -125,7 +126,7 @@ export default function ProfileInfoFormScreen({ route, navigation }) {
             style={{
               color: birth ? "#000" : birthError ? "#f36945" : "#999",
               fontSize: 14,
-              fontFamily: "WantedSans-Regular",
+              fontFamily: "Maplestory_Light",
             }}
           >
             {birth
@@ -177,7 +178,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 28,
-    fontFamily: "KCC-Murukmuruk",
+    fontFamily: "Maplestory_Bold",
     color: colors.brown,
   },
 
@@ -206,7 +207,7 @@ const styles = StyleSheet.create({
   },
   input: {
     fontSize: 14,
-    fontFamily: "WantedSans-Regular",
+    fontFamily: "Maplestory_Light",
     lineHeight: 20,
     letterSpacing: -0.32,
     width: 345,

@@ -75,13 +75,13 @@ const styles = StyleSheet.create({
     paddingTop: 80,
   },
   title: {
-    fontFamily: "KCC-Murukmuruk",
+    fontFamily: "Maplestory_Bold",
     fontSize: 24,
     color: colors.brown,
   },
   tools: {
     flexDirection: "row",
-    marginTop: 76 * 0.2, 
+    marginTop: 20, 
     gap: W * 0.2,
   },
   icon: {
