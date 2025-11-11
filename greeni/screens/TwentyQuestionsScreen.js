@@ -53,24 +53,39 @@ export default function TwentyQuestionsScreen({navigation}) {
             <View style={[styles.progressBarFill, { width: `${progress * 100}%` }]} />
           </View>
 
-          <View style={styles.scoreTextWrap}>
-            <Text style={styles.scoreLabel}>힌트 진행도</Text>
-            <Text style={styles.scoreValue}>
+          <View style={styles.hintProgressTextWrap}>
+            <Text style={styles.hintProgressLabel}>힌트 진행도</Text>
+            <Text style={styles.hintProgressValue}>
               {currentHint + 1}/{hints.length}
             </Text>
           </View>
+
+          <View style={styles.scoreDetailWrap}>
+            <Text style={styles.scoreItem}>맞춘 개수</Text>
+            <Text style={styles.scoreItemValue}>2개</Text>
+            <Text style={styles.scoreItem}>틀린 개수</Text>
+            <Text style={[styles.scoreItemValue, { color: colors.pinkDark }]}>3개</Text>
+          </View>
+
         </View>
 
         {/* 문제 + 힌트 */}
         <TouchableOpacity style={styles.questionsWrap} onPress={handleNextHint}>
           <Text style={styles.questionText}>ㅋㄲㄹ</Text>
-          <ImageBackground
-            source={require("../assets/images/bubble_20.png")}
-            style={styles.hintBubble}
-            resizeMode="stretch">
-            <Text style={styles.hintText}>{hints[currentHint]}</Text>
-          </ImageBackground>
+
+          <View style={styles.hintContainer}>
+            <ImageBackground
+              source={require("../assets/images/bubble_20.png")}
+              style={styles.hintBubble}
+              resizeMode="stretch"
+            >
+              <View style={styles.hintTextWrap}>
+                <Text style={styles.hintText}>{hints[currentHint]}</Text>
+              </View>
+            </ImageBackground>
+          </View>
         </TouchableOpacity>
+
 
         {/* greeni */}
         <View style={styles.greeniWrap}>
@@ -127,7 +142,7 @@ const styles = StyleSheet.create({
     borderColor: colors.pinkDark,
     backgroundColor: colors.ivory,
     justifyContent: 'space-between',
-    alignItems: 'center'
+    alignItems: 'center',
   },
   progressBarBackground: {
     width: 293,
@@ -142,22 +157,38 @@ const styles = StyleSheet.create({
     height: "100%",
     backgroundColor: "#BEEA8B"
   },
-  scoreTextWrap: {
+  hintProgressTextWrap: {
     flexDirection: "row",
     justifyContent: 'space-between',
-    top: -H * 0.06,
+    top: H * 0.002,
     width: 293,
     zIndex: 4
   },
-  scoreLabel: {
+  hintProgressLabel: {
     fontWeight: "400",
     fontSize: 16,
     color: colors.brown
   },
-  scoreValue: {
+  hintProgressValue: {
     fontSize: 14,
     color: colors.brown,
     fontWeight: "400"
+  },
+  scoreDetailWrap: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    width: 293,
+    top: -H * 0.02,
+  },
+  scoreItem: {
+    fontsize: 14,
+    color: colors.brown,
+    fontWeight: 'bold',
+  },
+  scoreItemValue: {
+    fontSize: 16,
+    color: colors.greenDark,
   },
 
   // 문제 및 힌트
@@ -175,24 +206,39 @@ const styles = StyleSheet.create({
   },
   questionText: {
     fontSize: 40,
-    color: colors.brown
+    color: colors.brown,
+    top: H * 0.07,
+    fontWeight: 'bold',
   },
-  hintBubble: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    aspectRatio: 220/99.75,
-    width: 220,
-    height: 99.75,
-    resizeMode: 'contain',
-    top: W * 0.02,
+  hintContainer: {
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 45,
     left: W * 0.12,
+  },  
+  hintBubble: {
+    minWidth: 220,
+    maxWidth: W * 0.6,
+    minHeight: 80,
+    paddingHorizontal: 20,
+    paddingVertical: 15,
+    alignItems: "center",
+    justifyContent: "center",
+    resizeMode: "stretch",
+  },
+  hintTextWrap: {
+    justifyContent: 'center',
+    alignItems: 'center'
   },
   hintText: {
-    fontSize: 20,
-    fontFamily: "Wanted Sans Std Variable",
+    fontSize: 18,
+    fontFamily: "WantedSans-Regular",
     color: colors.brown,
-    maxWidth: 190,
-    textAlign: 'center'
+    textAlign: "center",
+    lineHeight: 25,
+    flexWrap: 'wrap',
+    paddingHorizontal: 30,
+    paddingVertical: 25,
   },
 
   // 그리니
