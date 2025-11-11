@@ -19,6 +19,7 @@ import TwentyQuestionsScreen from "./screens/TwentyQuestionsScreen";
 import AnimalQuizScreen from "./screens/AnimalQuizScreen";
 import RolePlayingScreen from "./screens/RolePlayingScreen";
 import CalendarScreen from "./screens/CalendarScreen";
+import DiaryRecordScreen from "./screens/DiaryRecordScreen";
 import MyPageScreen from "./screens/MyPageScreen";
 
 export const AuthContext = createContext();
@@ -59,6 +60,7 @@ function MainStack() {
       <Stack.Screen name="AnimalQuiz" component={AnimalQuizScreen} />
       <Stack.Screen name="RolePlaying" component={RolePlayingScreen} />
       <Stack.Screen name="Calendar" component={CalendarScreen}/>
+      <Stack.Screen name="DiaryRecord" component={DiaryRecordScreen}/>
       <Stack.Screen name="MyPage" component={MyPageScreen}/>
       {/* 나중에 다른 페이지 추가 */}
     </Stack.Navigator>
