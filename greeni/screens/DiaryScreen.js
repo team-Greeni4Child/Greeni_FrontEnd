@@ -17,12 +17,12 @@ export default function DiaryScreen({ navigation }) {
       {/* 말풍선 + 그리니 */}
       <View style={styles.greeniWrap}>
         <ImageBackground
-          source={require("../assets/images/bubble_home.png")}
+          source={require("../assets/images/bubble_diary.png")}
           style={styles.bubble}
           resizeMode="stretch"
         >
           <Text style={styles.bubbleText}>
-            안녕 ○○아,{"\n"}오늘의 일기쓰기를 시작해볼까?
+            안녕 ○○아,{"\n"}오늘의 일기쓰기를 시작해볼까?{/*{"\n"}폰트 크기가 정해져 있으니 어쩔 수 없지. 은서는 작은 글씨를 쓸 수 밖에*/}
           </Text>
         </ImageBackground>
 
@@ -80,7 +80,7 @@ const styles = StyleSheet.create({
     color: colors.brown,
     fontFamily: "gangwongyoyuksaeeum",
     textAlign: "center",
-    lineHeight: 25,
+    lineHeight: 26,
   },
   greeni: {
     width: W * 0.5,
