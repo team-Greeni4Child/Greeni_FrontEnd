@@ -1,14 +1,13 @@
 import React, { useState, useContext } from "react";
 import { View, Text, Image, TextInput, TouchableOpacity, StyleSheet, Dimensions, Platform } from "react-native";
-
 import { StatusBar } from "expo-status-bar";
+import DateTimePicker from "react-native-modal-datetime-picker";
 
 import colors from "../theme/colors";
 import Button from "../components/Button";
 import BackButton from "../components/BackButton";
 import { ProfileContext } from "../context/ProfileContext";
 
-import DateTimePicker from "react-native-modal-datetime-picker";
 
 // 현재 기기의 화면 너비 W, 화면 높이 H
 const { width: W, height: H } = Dimensions.get("window");
@@ -16,8 +15,8 @@ const { width: W, height: H } = Dimensions.get("window");
 export default function ProfileInfoFormScreen({ route, navigation }) {
   
   const { profiles, setProfiles } = useContext(ProfileContext);
+  const selectedImage = profiles[0]?.image || null;
 
-  const [selectedImage, setSelectedImage] = useState(route.params?.selectedImage || null);
   const [name, setName] = useState("");
   const [birth, setBirth] = useState("");
 
@@ -32,6 +31,7 @@ export default function ProfileInfoFormScreen({ route, navigation }) {
   const handleConfirm = (date) => {
     const formatted = `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2, "0")}.${String(date.getDate()).padStart(2, "0")}`;
     setBirth(formatted);
+    setBirthError("")
     hideDatePicker();
   };
 
@@ -70,7 +70,7 @@ export default function ProfileInfoFormScreen({ route, navigation }) {
     };
 
     // 생성한 프로필을 Context에 추가
-    setProfiles([...profiles, newProfile]);
+    setProfiles([newProfile]);
     navigation.navigate("ProfileSelect");
   };
 
@@ -93,8 +93,8 @@ export default function ProfileInfoFormScreen({ route, navigation }) {
             <Image source={selectedImage} style={styles.image} />
           )}
         </View>
-
-        <TextInput
+        <View style={styles.inputWrap}>
+          <TextInput
             style={[
               styles.input,
               nameError ? { borderBottomColor: '#f36945' } : {},
@@ -129,24 +129,24 @@ export default function ProfileInfoFormScreen({ route, navigation }) {
               fontFamily: "Maplestory_Light",
             }}
           >
-            {birth
-              ? birth
-              : birthError
-              ? birthError
-              : "생년월일을 선택해주세요"}
-          </Text>
-        </TouchableOpacity>
+              {birth
+                ? birth
+                : birthError
+                ? birthError
+                : "생년월일을 선택해주세요"}
+            </Text>
+          </TouchableOpacity>
 
-        {/* 모달 DatePicker */}
-        <DateTimePicker
-          isVisible={isDatePickerVisible}
-          mode="date"
-          onConfirm={handleConfirm}
-          onCancel={hideDatePicker}
-          maximumDate={new Date()} // 미래 날짜 선택 불가
-          locale="ko-KR"
-        />
-
+          {/* 모달 DatePicker */}
+          <DateTimePicker
+            isVisible={isDatePickerVisible}
+            mode="date"
+            onConfirm={handleConfirm}
+            onCancel={hideDatePicker}
+            maximumDate={new Date()} // 미래 날짜 선택 불가
+            locale="ko-KR"
+          />
+        </View>
       </View>
 
       {/* 생성 버튼 */}
@@ -204,6 +204,12 @@ const styles = StyleSheet.create({
     resizeMode: 'cover',
   },
   inputWrap: {
+    width: W * 0.9,
+    justifyContent: 'center',
+    alignItems: 'center',
+    alignSelf: 'center',
+    // borderWidth: 2,
+    // borderColor: 'red'
   },
   input: {
     fontSize: 14,
@@ -216,6 +222,8 @@ const styles = StyleSheet.create({
     paddingBottom: Platform.OS ==='ios' ? 5 : 8,
     borderBottomColor: colors.greenDark,
     borderBottomWidth: 2,
+    // borderWidth: 2,
+    // borderColor: 'red'
   },
   errorText: {
     color: "red",
