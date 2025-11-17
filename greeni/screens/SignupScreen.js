@@ -280,7 +280,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.white,
     borderRadius: 21,
     padding: 20,
-    paddingBottom: 50,
+    paddingBottom: 40,
     borderWidth: 2,
     borderColor: colors.greenDark,
     justifyContent: "space-between",
@@ -331,6 +331,8 @@ const styles = StyleSheet.create({
   },
   ruleText: {
     fontSize: 10,
+    height: 30,
+    verticalAlign: "bottom",
     color: colors.brown,
     fontFamily: "Maplestory_Light",
   },
