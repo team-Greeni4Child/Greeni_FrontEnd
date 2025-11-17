@@ -29,48 +29,51 @@ export default function ResetPasswordScreen({ navigation }) {
   const [checkPasswordError, setCheckPasswordError] = useState("");
   const [ruleError, setRuleError] = useState(false); // 비밀번호 규칙 안내문 색상 용
 
-const handleComplete = () => {
-  // 에러 초기화
-  setPasswordError("");
-  setCheckPasswordError("");
-  setRuleError(false);
+  const handleComplete = () => {
+    setPasswordError("");
+    setCheckPasswordError("");
+    setRuleError(false);
 
-  const trimmedPw = password.trim();
-  const trimmedCheckPw = checkPassword.trim();
+    const trimmedPw = password.trim();
+    const trimmedCheckPw = checkPassword.trim();
 
-  // 1) 비밀번호 미입력
-  if (!trimmedPw) {
-    setPassword("");
-    setPasswordError("비밀번호를 입력해주세요");
-    return;
-  }
+    let hasError = false;
+    let shouldValidateCheckPw = true; // 비밀번호 규칙에 걸리면 false
 
-  // 2) 비밀번호 규칙 위반이면 → 다른 경고 다 무시하고 이것만
-  if (!passwordRule.test(trimmedPw)) {
-    setPassword("");
-    setCheckPassword("");
-    setRuleError(true);   // 안내문만 빨간색 + Bold
-    return;
-  }
+    // 1) 비밀번호 검사
+    if (!trimmedPw) {
+      // 공란
+      setPassword("");
+      setPasswordError("비밀번호를 입력해주세요");
+      hasError = true;
+    } else if (!passwordRule.test(trimmedPw)) {
+      // 규칙 위반 
+      setPassword("");
+      setCheckPassword("");
+      setRuleError(true);     
+      hasError = true;
+      shouldValidateCheckPw = false; // 비밀번호 확인 관련 에러 막기
+    }
 
-  // 3) 비밀번호 확인 미입력
-  if (!trimmedCheckPw) {
-    setCheckPassword("");
-    setCheckPasswordError("비밀번호 확인을 입력해주세요");
-    return;
-  }
+    // 2) 비밀번호 확인 검사 (규칙 통과한 경우에만)
+    if (shouldValidateCheckPw) {
+      if (!trimmedCheckPw) {
+        setCheckPassword("");
+        setCheckPasswordError("비밀번호 확인을 입력해주세요");
+        hasError = true;
+      } else if (trimmedPw && trimmedPw !== trimmedCheckPw) {
+        setCheckPassword("");
+        setCheckPasswordError("비밀번호가 일치하지 않습니다");
+        hasError = true;
+      }
+    }
 
-  // 4) 비밀번호 불일치
-  if (trimmedPw !== trimmedCheckPw) {
-    setCheckPassword("");
-    setCheckPasswordError("비밀번호가 일치하지 않습니다");
-    return;
-  }
+    // 에러 있으면 종료
+    if (hasError) return;
 
-  // 5) 성공 → 로그인 화면으로 이동
-  navigation.navigate("Login");
-};
-
+    // 성공 → 로그인 화면으로 이동
+    navigation.navigate("Login");
+  };
 
   return (
     <View style={styles.container}>
@@ -127,7 +130,9 @@ const handleComplete = () => {
           <Text
             style={[
               styles.ruleText,
-              ruleError ? { color: "#f36945", fontFamily: "Maplestory_Bold" } : {fontFamily: "Maplestory_Light"},
+              ruleError
+                ? { color: "#f36945", fontFamily: "Maplestory_Bold" }
+                : { fontFamily: "Maplestory_Light" },
             ]}
           >
             ※ 영문, 숫자, 특수문자 포함 8자리 이상 입력해야 합니다.
