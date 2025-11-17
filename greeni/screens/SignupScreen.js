@@ -10,6 +10,7 @@ import {
   StyleSheet,
   Image,
   Dimensions,
+  Modal,
 } from "react-native";
 
 const { width: W, height: H } = Dimensions.get("window");
@@ -36,6 +37,9 @@ export default function SignUpScreen({ navigation }) {
   const [passwordError, setPasswordError] = useState("");
   const [checkPasswordError, setCheckPasswordError] = useState("");
   const [ruleError, setRuleError] = useState(false); 
+
+  // 회원가입 완료 모달 on/off
+  const [showCompleteModal, setShowCompleteModal] = useState(false);
 
   // 이메일 인증 버튼
   const handleVerifyEmail = () => {
@@ -130,9 +134,15 @@ export default function SignUpScreen({ navigation }) {
     if (hasError) return;
 
     // TODO: 실제 회원가입 API 호출
-    navigation.navigate("Login");
+    // 완료 모달 띄우기
+    setShowCompleteModal(true);
   };
 
+  // 모달에서 확인 버튼 누르면 로그인 화면으로 이동
+  const handleCompleteOk = () => {
+    setShowCompleteModal(false);
+    navigation.navigate("Login");
+  };
 
   return (
     <View style={styles.container}>
@@ -224,7 +234,7 @@ export default function SignUpScreen({ navigation }) {
           }}
         />
 
-        {/* 비밀번호 규칙 안내문*/}
+        {/* 비밀번호 규칙 안내문 */}
         <Text
           style={[
             styles.ruleText,
@@ -254,6 +264,29 @@ export default function SignUpScreen({ navigation }) {
           onPress={handleSignUp}
         />
       </View>
+
+      {/* 회원가입 완료 모달 */}
+      <Modal
+        transparent
+        visible={showCompleteModal}
+      >
+        <View style={styles.modalBackground}>
+          <View style={styles.modalWrap}>
+            <Text style={styles.modalText}>
+              회원가입이 완료되었습니다.
+            </Text>
+
+            <View style={styles.modalButtonWrap}>
+              <TouchableOpacity
+                style={[styles.modalButton]}
+                onPress={handleCompleteOk}  
+              >
+                <Text style={styles.modalButtonText}>확인</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -345,5 +378,47 @@ const styles = StyleSheet.create({
     width: W * 0.35,
     aspectRatio: AR.greeni,
     marginRight: W * 0.1,
+  },
+
+  // 모달창
+  modalBackground: {
+    flex: 1,
+    backgroundColor: colors.lightGray95,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalWrap: {
+    width: W * 0.7,
+    backgroundColor: colors.ivory,
+    borderRadius: 20,
+    borderWidth: 3,
+    borderColor: colors.greenDark,
+    padding: 0,
+    alignItems: "center",
+    justifyContent: "flex-end",
+    overflow: "hidden",
+  },
+  modalText: {
+    fontSize: 16,
+    fontFamily: "Maplestory_Light",
+    color: colors.brown,
+    textAlign: "center",
+    margin: 30,
+  },
+  modalButtonWrap: {
+    flexDirection: "row",
+    height: 45,
+    width: "100%",
+  },
+  modalButton: {
+    justifyContent: "center",
+    alignItems: "center",
+    width: "100%",
+    backgroundColor: colors.green,
+  },
+  modalButtonText: {
+    color: colors.brown,
+    fontSize: 16,
+    fontFamily: "Maplestory_Light",
   },
 });
