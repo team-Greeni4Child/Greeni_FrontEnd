@@ -96,17 +96,22 @@ const styles = StyleSheet.create({
     position: 'relative',
     justifyContent: 'center',
     alignItems: 'center',
-    aspectRatio: 230/120,
-    width: 230,
-    height: 120,
+    aspectRatio: 250/132,
+    width: 250,
+    height: 132,
     top: H * 0.155,
   },
   bubbleText: {
-    fontSize: 28,
+    fontSize: 24,
+    lineHeight: 24,
     fontFamily: "gangwongyoyuksaeeum",
     color: colors.brown,
     textAlign: 'center',
     maxWidth : 270,
+    paddingtop: 0,
+    paddingBottom: 3,
+    // borderWidth: 2,
+    // borderColor: 'red'
   },
 
   situationWrap: {

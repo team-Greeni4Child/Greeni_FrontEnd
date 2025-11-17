@@ -1,30 +1,76 @@
-import React, { useState, useContext } from "react";
+import React, { useState } from "react";
 import { 
   View, 
   Text, 
   Image, 
   StyleSheet, 
   Dimensions, 
+  TextInput,
+  TouchableOpacity,
+  TouchableWithoutFeedback,
+  Keyboard,
+  Modal
 } from "react-native";
+import DateTimePicker from "react-native-modal-datetime-picker";
+
 import Button from "../components/Button";
 import BackButton from "../components/BackButton";
 import colors from "../theme/colors";
-
-import { ProfileContext } from "../context/ProfileContext";
 
 // 현재 기기의 화면 너비 W, 화면 높이 H
 const { width: W, height: H } = Dimensions.get("window");
 
 export default function SettingsScreen({route, navigation}) {
 
-    const { profiles, setProfiles } = useContext(ProfileContext);
-    const [selectedImage, setSelectedImage] = useState(route.params?.selectedImage || null);
+    const [profile, setProfile] = useState({
+      name: '김 그리니',
+      birthday: "2002.11.28",
+    });
+
+    const [editingField, setEditingField] = useState(null);
+    const [temp, setTemp] = useState("");
+    const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
+    const [isDeleteModalVisible, setDeleteModalVisible] = useState(false);
+    const [isLogoutModalVisible, setLogoutModalVisible] = useState(false);
+
+    const startEdit = (field) => {
+      setEditingField(field);
+      if (field === "name") setTemp(profile.name);
+      if (field === "birthday") setDatePickerVisibility(true);
+    };
+
+    const finishEdit = () => {
+      if (editingField === "name") {
+        setProfile((prev) => ({
+          ...prev,
+          name: temp
+        }));
+      }
+      setEditingField(null);
+      Keyboard.dismiss();
+    }
+
+    const handleDateConfirm = (date) => {
+      const formatted = `${date.getFullYear()}.${String(
+            date.getMonth() + 1
+        ).padStart(2, "0")}.${String(date.getDate()).padStart(2, "0")}`;
+
+        setProfile((prev) => ({ ...prev, birthday: formatted }));
+        setDatePickerVisibility(false);
+        setEditingField(null);
+    };
+
+    const hideDatePicker = () => {
+      setDatePickerVisibility(false);
+      setEditingField(null);
+    }
 
     return (
+        <TouchableWithoutFeedback onPress={finishEdit}>
         <View style={styles.root}>
             <View style={styles.topBackground}>
 
-                {/* 상단 뒤로가기 버튼 및 '역할놀이' 제목 */}
+                {/* 상단 뒤로가기 버튼 및 '설정' 제목 */}
                 <View style={styles.titleWrap}>
                     <BackButton navigation={navigation}
                                 top={H * 0.001}
@@ -37,17 +83,44 @@ export default function SettingsScreen({route, navigation}) {
                   <View style={styles.profile}>
                     <View style={styles.imageWrap}>
                       <Image style={styles.image} source={require("../assets/images/basic_greeni_pink.png")}/>
-                      <Image style={styles.editIcon} source={require("../assets/images/edit_icon.png")}/>
+                      <TouchableOpacity
+                        style={styles.editIconTouch}
+                        onPress={() => navigation.navigate("ProfileImageChange")}
+                      >
+                        <Image style={styles.editIcon} source={require("../assets/images/edit_icon.png")}/>
+                      </TouchableOpacity>
                     </View>
                   </View>
+
                   <View style={styles.profileInfo}>
+
                     <View style={styles.infoRow}>
-                      <Text style={styles.infoLalbe}>이름</Text>
-                      <Text style={styles.infoValue}>김 그리니</Text>
+                      <Text style={styles.infoLabel}>이름</Text>
+                      <View style={styles.infoRight}>
+                        {editingField === "name" ? (
+                          <TextInput
+                            style={[styles.input, { fontFamily: "Maplestory_Light", color: colors.brown, fontSize: 16}]}
+                            value={temp}
+                            onChangeText={setTemp}
+                            autoFocus
+                          />
+                        ) : (
+                          <Text style={styles.infoValue}>{profile.name}</Text>
+                        )}
+                        <TouchableOpacity onPress={() => startEdit("name")}>
+                          <Image style={styles.smallEditIcon} source={require("../assets/images/edit_icon.png")}/>
+                        </TouchableOpacity>
+                      </View>
                     </View>
+
                     <View style={styles.infoRow}>
-                      <Text style={styles.infoLalbe}>생년월일</Text>
-                      <Text style={styles.infoValue}>2002.11.28</Text>
+                      <Text style={styles.infoLabel}>생년월일</Text>
+                      <View style={styles.infoRight}>
+                        <Text style={styles.infoValue}>{profile.birthday}</Text>
+                        <TouchableOpacity onPress={() => startEdit("birthday")}>
+                          <Image style={styles.smallEditIcon} source={require("../assets/images/edit_icon.png")}/>
+                        </TouchableOpacity>
+                      </View>
                     </View>
                   </View>
                 </View>
@@ -74,6 +147,7 @@ export default function SettingsScreen({route, navigation}) {
                         width={345} 
                         height={51} 
                         style={{ marginBottom: 12 }}
+                        onPress={() => navigation.navigate("ProfileSelect")}
                     />
                     <Button 
                         title='프로필 삭제' 
@@ -84,6 +158,7 @@ export default function SettingsScreen({route, navigation}) {
                         width={345} 
                         height={51} 
                         style={{ marginBottom: 12 }}
+                        onPress={() => setDeleteModalVisible(true)}
                     />
                     <Button 
                         title='로그아웃' 
@@ -94,10 +169,92 @@ export default function SettingsScreen({route, navigation}) {
                         width={345} 
                         height={51} 
                         style={{ marginBottom: 12 }}
+                        onPress={() => setLogoutModalVisible(true)}
                     />
                 </View>
             </View>
+
+            <DateTimePicker 
+              isVisible={isDatePickerVisible}
+              mode="date"
+              onConfirm={handleDateConfirm}
+              onCancel={hideDatePicker}
+              maximumDate={new Date()}
+              locale="ko-KR"
+            />
+
+            <Modal
+              transparent
+              visible={isDeleteModalVisible}
+              // animationType="fade"
+              onRequestClose={() => setDeleteModalVisible(false)}
+            >
+              <TouchableOpacity
+                style={styles.modalBackground}
+                activeOpacity={1}
+                onPressOut={() => setDeleteModalVisible(false)}
+              >
+              <TouchableWithoutFeedback>
+                <View style={styles.modalWrap}>
+                  <Text style={styles.modalText}>
+                    정말 프로필을 삭제하시겠습니까?{"\n"}한 번 삭제하면 되돌릴 수 없습니다
+                  </Text>
+                  <View style={styles.modalButtonWrap}>
+                    <TouchableOpacity 
+                      style={[styles.modalButton, styles.leftButton]}
+                      onPress={() => setDeleteModalVisible(false)}
+                    >
+                      <Text style={styles.modalButtonText}>예</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity 
+                      style={[styles.modalButton, styles.rightButton]}
+                      onPress={() => setDeleteModalVisible(false)}
+                    >
+                      <Text style={[styles.modalButtonText, { color: colors.brown }]}>아니오</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </TouchableWithoutFeedback>
+            </TouchableOpacity>
+            </Modal>
+
+            <Modal
+              transparent
+              visible={isLogoutModalVisible}
+              // animationType="fade"
+              onRequestClose={() => setLogoutModalVisible(false)}
+            >
+              <TouchableOpacity
+                style={styles.modalBackground}
+                activeOpacity={1}
+                onPressOut={() => setLogoutModalVisible(false)}
+              >
+              <TouchableWithoutFeedback>
+                <View style={styles.modalWrap}>
+                  <Text style={styles.modalText}>
+                    정말 로그아웃하시겠습니까?
+                  </Text>
+                  <View style={styles.modalButtonWrap}>
+                    <TouchableOpacity 
+                      style={[styles.modalButton, styles.leftButton]}
+                      onPress={() => setLogoutModalVisible(false)}
+                    >
+                      <Text style={styles.modalButtonText}>예</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity 
+                      style={[styles.modalButton, styles.rightButton]}
+                      onPress={() => setLogoutModalVisible(false)}
+                    >
+                      <Text style={[styles.modalButtonText, { color: colors.brown }]}>아니오</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </TouchableWithoutFeedback>
+            </TouchableOpacity>
+            </Modal>
+
         </View>
+        </TouchableWithoutFeedback>
     )
 }
 
@@ -125,7 +282,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 28,
-    fontFamily: "KCC-Murukmuruk",
+    fontFamily: "Maplestory_Bold",
     color: colors.brown,
   },
 
@@ -157,7 +314,12 @@ const styles = StyleSheet.create({
     height: 17.5,
     position: 'absolute',
     bottom: 2,
-    right: 2,
+    right: -4,
+  },
+  editIconTouch: {
+    position: 'absolute',
+    bottom: 2,
+    right: -4
   },
   profileInfo: {
     width: 345,
@@ -179,10 +341,22 @@ const styles = StyleSheet.create({
   infoLabel: {
     color: colors.brown,
     fontSize: 16,
+    fontFamily: "Maplestory_Light"
+  },
+  infoRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6
   },
   infoValue: {
     color: colors.brown,
-    fontSize: 16
+    fontSize: 16,
+    fontFamily: "Maplestory_Light"
+  },
+  smallEditIcon: {
+    width: 16,
+    height: 16,
+    marginLeft: 6
   },
   profileText: {
     fontFamily: "WantedSans-Regular",
@@ -192,4 +366,55 @@ const styles = StyleSheet.create({
   optionWrap: {
     alignItems: "center",
   },
+
+  modalBackground: {
+    flex: 1,
+    backgroundColor: colors.lightGray95,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalWrap: {
+    width: W * 0.8,
+    backgroundColor: colors.ivory,
+    borderRadius: 20,
+    borderWidth: 3,
+    borderColor: colors.pinkDark,
+    paddingTop: 20,
+    paddingHorizontal: 0,
+    paddingBottom: 0,
+    alignItems: 'center',
+    justifyContent: 'flex-end'
+  },
+  modalText: {
+    fontSize: 16,
+    fontFamily: "Maplestory_Light", 
+    color: colors.brown,
+    textAlign: 'center',
+    marginBottom: 20
+  },
+  modalButtonWrap: {
+    flexDirection: 'row',
+    height: 44,
+    width: '100%'
+  },
+  modalButton: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  leftButton: {
+    borderBottomLeftRadius: 20,
+    backgroundColor: colors.ivory,
+    width: '50%'
+  },
+  rightButton: {
+    borderBottomRightRadius: 17,
+    borderLeftWidth: 0,
+    backgroundColor: colors.pink,
+    width: '50%'
+  },
+  modalButtonText: {
+    color: colors.brown,
+    fontSize: 16,
+    fontFamily: "Maplestory_Light"
+  }
 });

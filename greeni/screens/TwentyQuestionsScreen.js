@@ -79,9 +79,7 @@ export default function TwentyQuestionsScreen({navigation}) {
               style={styles.hintBubble}
               resizeMode="stretch"
             >
-              <View style={styles.hintTextWrap}>
-                <Text style={styles.hintText}>{hints[currentHint]}</Text>
-              </View>
+              <Text style={styles.hintText}>{hints[currentHint]}</Text>
             </ImageBackground>
           </View>
         </TouchableOpacity>
@@ -214,23 +212,17 @@ const styles = StyleSheet.create({
   },
   hintContainer: {
     alignItems: "center",
-    justifyContent: "center",
+    justifyContent: "flex-start",
     marginTop: 45,
     left: W * 0.12,
   },  
   hintBubble: {
     minWidth: 220,
     maxWidth: W * 0.6,
-    minHeight: 80,
-    paddingHorizontal: 20,
-    paddingVertical: 15,
+    paddingHorizontal: 40,
+    paddingVertical: 40,
     alignItems: "center",
     justifyContent: "center",
-    resizeMode: "stretch",
-  },
-  hintTextWrap: {
-    justifyContent: 'center',
-    alignItems: 'center'
   },
   hintText: {
     fontSize: 28,
@@ -239,8 +231,6 @@ const styles = StyleSheet.create({
     textAlign: "center",
     lineHeight: 25,
     flexWrap: 'wrap',
-    paddingHorizontal: 30,
-    paddingVertical: 25,
   },
 
   // 그리니

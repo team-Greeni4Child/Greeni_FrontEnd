@@ -10,6 +10,7 @@ export default {
   brown60: "#58453E60",
   lightGray: "#D3D3D3",
   lightGray60: "#D3D3D360",
+  lightGray95: "#D3D3D395",
 
   // Green tones
   green: "#BEEA8B", 
