@@ -20,9 +20,73 @@ const AR = {
   greeni: 509 / 852
 };
 
+// 임시: 가입된 이메일 & 인증코드 (나중에 API 연동 시 교체)
+const MOCK_USER_EMAIL = "aaa";
+const MOCK_VERIFY_CODE = "aaa";
+
 export default function LoginScreen({ navigation }) {
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
+
+  const [emailError, setEmailError] = useState("");
+  const [codeError, setCodeError] = useState("");
+
+  // 인증 버튼 클릭
+  const handleVerifyEmail = () => {
+    setEmailError("");
+    setCodeError("");
+
+    const trimmedEmail = email.trim();
+
+    if (!trimmedEmail) {
+      setEmail("");
+      setEmailError("이메일을 입력해주세요");
+      return;
+    }
+
+    if (trimmedEmail !== MOCK_USER_EMAIL) {
+      setEmail("");
+      setEmailError("가입되지 않은 이메일입니다");
+      return;
+    }
+    // 여기서 실제로는 인증코드 발송 API 호출
+    // 테스트용으로는 아무것도 안 함
+  };
+
+  // 완료 버튼 클릭
+  const handleComplete = () => {
+    setEmailError("");
+    setCodeError("");
+
+    const trimmedEmail = email.trim();
+    const trimmedCode = code.trim();
+
+    let hasError = false;
+
+    if (!trimmedEmail) {
+      setEmail("");
+      setEmailError("이메일을 입력해주세요");
+      hasError = true;
+    }
+
+    if (!trimmedCode) {
+      setCode("");
+      setCodeError("인증코드를 입력해주세요");
+      hasError = true;
+    }
+
+    if (hasError) return;
+
+    // 여기서는 이미 인증을 했다고 가정하고,
+    // 이메일 + 코드 일치 여부만 간단히 체크
+    if (trimmedEmail !== MOCK_USER_EMAIL || trimmedCode !== MOCK_VERIFY_CODE) {
+      setCode("");
+      setCodeError("인증코드가 일치하지 않습니다");
+      return;
+    }
+
+    navigation.navigate("ResetPassword");
+  };    
 
   return (
     <View style={styles.container}>
@@ -37,28 +101,47 @@ export default function LoginScreen({ navigation }) {
 
         {/* 이메일, 인증코드 입력 */}
         <View style={styles.inputsWrap}>
-          <View style={styles.emailWrap}>
+          <View
+            style={[
+              styles.emailWrap,
+              emailError ? { borderBottomColor: "#f36945" } : {},
+            ]}
+          >
             <TextInput
               style={styles.email}
               fontFamily="Maplestory_Light"
-              placeholder="이메일"
-              placeholderTextColor={colors.brown}
+              placeholder={emailError ? emailError : "이메일"}
+              placeholderTextColor={emailError ? "#f36945" : colors.brown}
               value={email}
-              onChangeText={setEmail}
+              onChangeText={(text) => {
+                setEmail(text);
+                // 이메일 입력 시: 이메일 에러 초기화
+                if (emailError) setEmailError("");
+              }}
             />
-            <TouchableOpacity style={styles.verificationButton}>
+            <TouchableOpacity
+              style={styles.verificationButton}
+              onPress={handleVerifyEmail}
+            >
               <Text 
                 style={styles.verificationButtonText}>인증</Text>
             </TouchableOpacity>
           </View>
 
           <TextInput
-            style={styles.code}
+            style={[
+              styles.code,
+              codeError ? { borderBottomColor: "#f36945" } : {},
+            ]}
             fontFamily="Maplestory_Light"
-            placeholder="인증코드"
-            placeholderTextColor={colors.brown}
+            placeholder={codeError ? codeError : "인증코드"}
+            placeholderTextColor={codeError ? "#f36945" : colors.brown}
             value={code}
-            onChangeText={setCode}
+            onChangeText={(text) => {
+              setCode(text);
+              // 인증코드 입력 시: 코드 에러 초기화
+              if (codeError) setCodeError("");
+            }}
           />
         </View>
 
@@ -69,7 +152,7 @@ export default function LoginScreen({ navigation }) {
           height={46}
           borderRadius= {10}
           fontSize={14}
-          onPress={() => navigation.navigate("ResetPassword")}
+          onPress={handleComplete}
         />
       </View>
 
