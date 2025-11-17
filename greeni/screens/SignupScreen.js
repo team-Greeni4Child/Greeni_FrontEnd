@@ -10,7 +10,6 @@ import {
   StyleSheet,
   Image,
   Dimensions,
-  Platform,
 } from "react-native";
 
 const { width: W, height: H } = Dimensions.get("window");
@@ -23,6 +22,9 @@ const AR = {
 const MOCK_EXISTING_EMAILS = ["aaa"];
 const MOCK_VERIFY_CODE = "aaa";
 
+// 비밀번호 규칙 (영문 + 숫자 + ASCII 특수문자 + 8자리 이상)
+const passwordRule = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[!-/:-@[-`{-~]).{8,}$/;
+
 export default function SignUpScreen({ navigation }) {
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
@@ -31,6 +33,9 @@ export default function SignUpScreen({ navigation }) {
 
   const [emailError, setEmailError] = useState("");
   const [codeError, setCodeError] = useState("");
+  const [passwordError, setPasswordError] = useState("");
+  const [checkPasswordError, setCheckPasswordError] = useState("");
+  const [ruleError, setRuleError] = useState(false); 
 
   // 이메일 인증 버튼
   const handleVerifyEmail = () => {
@@ -56,41 +61,78 @@ export default function SignUpScreen({ navigation }) {
     // 테스트용으로는 아무것도 안 함
   };
 
-  // 가입하기 버튼 
+  // 가입하기 버튼
   const handleSignUp = () => {
+    // 에러 초기화
     setEmailError("");
     setCodeError("");
+    setPasswordError("");
+    setCheckPasswordError("");
+    setRuleError(false);
 
     const trimmedEmail = email.trim();
     const trimmedCode = code.trim();
+    const trimmedPw = password.trim();
+    const trimmedCheckPw = CheckPassword.trim();
 
     let hasError = false;
+    let shouldValidateCheckPw = true; // 비밀번호 규칙에 걸리면 false로 바꿈
 
+    // 1) 이메일 검사
     if (!trimmedEmail) {
       setEmail("");
       setEmailError("이메일을 입력해주세요");
       hasError = true;
     }
 
+    // 2) 인증코드 검사 (공란 + 불일치 둘 다 체크)
     if (!trimmedCode) {
       setCode("");
       setCodeError("인증코드를 입력해주세요");
       hasError = true;
-    }
-
-    if (hasError) return;
-
-    // 인증코드 검증 (임시)
-    if (trimmedCode !== MOCK_VERIFY_CODE) {
+    } else if (trimmedCode !== MOCK_VERIFY_CODE) {
       setCode("");
       setCodeError("인증코드가 일치하지 않습니다");
-      return;
+      hasError = true;
     }
 
-    // 나중에 비밀번호 검증 로직 넣고,
-    // 회원가입 완료 시 다음 화면으로 이동
+    // 3) 비밀번호 검사
+    if (!trimmedPw) {
+      // 비밀번호 공란
+      setPassword("");
+      setPasswordError("비밀번호를 입력해주세요");
+      hasError = true;
+      // 이 경우에는 규칙 에러는 아니니까
+      // 비밀번호 확인은 그대로 검사하게 둔다
+    } else if (!passwordRule.test(trimmedPw)) {
+      // 비밀번호 규칙 위반 → 이 경우에는 규칙 경고만 보여주기
+      setPassword("");
+      setCheckPassword("");
+      setRuleError(true);        // 안내문만 빨간색 + Bold
+      hasError = true;
+      shouldValidateCheckPw = false; // 비밀번호 확인 관련 에러는 막기
+    }
+
+    // 4) 비밀번호 확인 검사 (비밀번호 규칙 통과한 경우에만)
+    if (shouldValidateCheckPw) {
+      if (!trimmedCheckPw) {
+        setCheckPassword("");
+        setCheckPasswordError("비밀번호 확인을 입력해주세요");
+        hasError = true;
+      } else if (trimmedPw && trimmedPw !== trimmedCheckPw) {
+        setCheckPassword("");
+        setCheckPasswordError("비밀번호가 일치하지 않습니다");
+        hasError = true;
+      }
+    }
+
+    // 에러 하나라도 있으면 회원가입 중단
+    if (hasError) return;
+
+    // TODO: 실제 회원가입 API 호출
     navigation.navigate("Login");
   };
+
 
   return (
     <View style={styles.container}>
@@ -145,25 +187,54 @@ export default function SignUpScreen({ navigation }) {
 
         {/* 비밀번호 */}
         <TextInput
-          style={styles.input}
-          placeholder="비밀번호"
+          style={[
+            styles.input,
+            passwordError ? { borderBottomColor: "#f36945" } : {},
+          ]}
           fontFamily="Maplestory_Light"
-          placeholderTextColor={colors.brown}
-          value={password}
-          onChangeText={setPassword}
+          placeholder={passwordError ? passwordError : "비밀번호"}
+          placeholderTextColor={passwordError ? "#f36945" : colors.brown}
           secureTextEntry
+          value={password}
+          onChangeText={(text) => {
+            setPassword(text);
+            if (passwordError) setPasswordError("");
+            if (ruleError) setRuleError(false);
+          }}
         />
 
         {/* 비밀번호 확인 */}
         <TextInput
-          style={styles.input}
+          style={[
+            styles.input,
+            checkPasswordError ? { borderBottomColor: "#f36945" } : {},
+          ]}
           fontFamily="Maplestory_Light"
-          placeholder="비밀번호 확인"
-          placeholderTextColor={colors.brown}
-          value={CheckPassword}
-          onChangeText={setCheckPassword}
+          placeholder={
+            checkPasswordError ? checkPasswordError : "비밀번호 확인"
+          }
+          placeholderTextColor={
+            checkPasswordError ? "#f36945" : colors.brown
+          }
           secureTextEntry
+          value={CheckPassword}
+          onChangeText={(text) => {
+            setCheckPassword(text);
+            if (checkPasswordError) setCheckPasswordError("");
+          }}
         />
+
+        {/* 비밀번호 규칙 안내문*/}
+        <Text
+          style={[
+            styles.ruleText,
+            ruleError
+              ? { color: "#f36945", fontFamily: "Maplestory_Bold" }
+              : { fontFamily: "Maplestory_Light" },
+          ]}
+        >
+          ※ 비밀번호는 영문, 숫자, 특수문자 포함 8자리 이상 입력해야 합니다.
+        </Text>
       </View>
 
       {/* 그리니 + 가입하기 버튼 */}
@@ -257,6 +328,11 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     marginBottom: 8,
     color: colors.brown,
+  },
+  ruleText: {
+    fontSize: 10,
+    color: colors.brown,
+    fontFamily: "Maplestory_Light",
   },
   bottomWrap: {
     marginTop: H * 0.03,
