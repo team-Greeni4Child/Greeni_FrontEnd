@@ -9,6 +9,8 @@ import {
   StyleSheet, 
   Image, 
   Dimensions, 
+  TouchableOpacity,
+  Modal,
 } from "react-native";
 
 const { width: W, height: H } = Dimensions.get("window");
@@ -29,6 +31,9 @@ export default function ResetPasswordScreen({ navigation }) {
   const [checkPasswordError, setCheckPasswordError] = useState("");
   const [ruleError, setRuleError] = useState(false); // 비밀번호 규칙 안내문 색상 용
 
+  // ✅ 비밀번호 재설정 완료 모달 on/off
+  const [showCompleteModal, setShowCompleteModal] = useState(false);
+
   const handleComplete = () => {
     setPasswordError("");
     setCheckPasswordError("");
@@ -47,10 +52,10 @@ export default function ResetPasswordScreen({ navigation }) {
       setPasswordError("비밀번호를 입력해주세요");
       hasError = true;
     } else if (!passwordRule.test(trimmedPw)) {
-      // 규칙 위반 
+      // 규칙 위반
       setPassword("");
       setCheckPassword("");
-      setRuleError(true);     
+      setRuleError(true);
       hasError = true;
       shouldValidateCheckPw = false; // 비밀번호 확인 관련 에러 막기
     }
@@ -71,7 +76,13 @@ export default function ResetPasswordScreen({ navigation }) {
     // 에러 있으면 종료
     if (hasError) return;
 
-    // 성공 → 로그인 화면으로 이동
+    // 성공 → 완료 모달 띄우기
+    setShowCompleteModal(true);
+  };
+
+  // ✅ 모달에서 확인 버튼 누르면 로그인 화면으로 이동
+  const handleCompleteOk = () => {
+    setShowCompleteModal(false);
     navigation.navigate("Login");
   };
 
@@ -152,8 +163,8 @@ export default function ResetPasswordScreen({ navigation }) {
 
       <View style={styles.bottomWrap}>
         {/* 그리니 */}
-        <Image 
-          source={require("../assets/images/greeni_shy.png")} 
+        <Image
+          source={require("../assets/images/greeni_shy.png")}
           style={styles.greeni}
           resizeMode="contain"
         />
@@ -161,6 +172,29 @@ export default function ResetPasswordScreen({ navigation }) {
         {/* 오른쪽 공간 (비워둠) */}
         <View style={{ width: W * 0.402 }} />
       </View>
+
+      {/*비밀번호 재설정 완료 모달 */}
+      <Modal
+        transparent
+        visible={showCompleteModal}
+      >
+        <View style={styles.modalBackground}>
+          <View style={styles.modalWrap}>
+            <Text style={styles.modalText}>
+              비밀번호가 재설정되었습니다.
+            </Text>
+
+            <View style={styles.modalButtonWrap}>
+              <TouchableOpacity
+                style={[styles.modalButton]}
+                onPress={handleCompleteOk}  
+              >
+                <Text style={styles.modalButtonText}>확인</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -228,5 +262,47 @@ const styles = StyleSheet.create({
     width: W * 0.35,
     aspectRatio: AR.greeni,
     marginRight: W * 0.04,
+  },
+
+  // 모달창
+  modalBackground: {
+    flex: 1,
+    backgroundColor: colors.lightGray95,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalWrap: {
+    width: W * 0.7,
+    backgroundColor: "white",
+    borderRadius: 20,
+    borderWidth: 3,
+    borderColor: colors.greenDark,
+    padding: 0,
+    alignItems: "center",
+    justifyContent: "flex-end",
+    overflow: "hidden",
+  },
+  modalText: {
+    fontSize: 16,
+    fontFamily: "Maplestory_Light",
+    color: colors.brown,
+    textAlign: "center",
+    margin: 30,
+  },
+  modalButtonWrap: {
+    flexDirection: "row",
+    height: 45,
+    width: "100%",
+  },
+  modalButton: {
+    justifyContent: "center",
+    alignItems: "center",
+    width: "100%",
+    backgroundColor: colors.green,
+  },
+  modalButtonText: {
+    color: colors.brown,
+    fontSize: 16,
+    fontFamily: "Maplestory_Light",
   },
 });

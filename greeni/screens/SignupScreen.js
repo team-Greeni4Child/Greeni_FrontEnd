@@ -389,7 +389,7 @@ const styles = StyleSheet.create({
   },
   modalWrap: {
     width: W * 0.7,
-    backgroundColor: colors.ivory,
+    backgroundColor: "white",
     borderRadius: 20,
     borderWidth: 3,
     borderColor: colors.greenDark,
