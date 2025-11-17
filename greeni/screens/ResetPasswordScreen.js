@@ -29,51 +29,48 @@ export default function ResetPasswordScreen({ navigation }) {
   const [checkPasswordError, setCheckPasswordError] = useState("");
   const [ruleError, setRuleError] = useState(false); // 비밀번호 규칙 안내문 색상 용
 
-  const handleComplete = () => {
-    // 에러 초기화
-    setPasswordError("");
-    setCheckPasswordError("");
-    setRuleError(false);
+const handleComplete = () => {
+  // 에러 초기화
+  setPasswordError("");
+  setCheckPasswordError("");
+  setRuleError(false);
 
-    const trimmedPw = password.trim();
-    const trimmedCheckPw = checkPassword.trim();
+  const trimmedPw = password.trim();
+  const trimmedCheckPw = checkPassword.trim();
 
-    let hasError = false;
+  // 1) 비밀번호 미입력
+  if (!trimmedPw) {
+    setPassword("");
+    setPasswordError("비밀번호를 입력해주세요");
+    return;
+  }
 
-    // 1) 비밀번호 미입력
-    if (!trimmedPw) {
-      setPassword("");
-      setPasswordError("비밀번호를 입력해주세요");
-      hasError = true;
-    }
+  // 2) 비밀번호 규칙 위반이면 → 다른 경고 다 무시하고 이것만
+  if (!passwordRule.test(trimmedPw)) {
+    setPassword("");
+    setCheckPassword("");
+    setRuleError(true);   // 안내문만 빨간색 + Bold
+    return;
+  }
 
-    // 2) 비밀번호 확인 미입력
-    if (!trimmedCheckPw) {
-      setCheckPassword("");
-      setCheckPasswordError("비밀번호 확인을 입력해주세요");
-      hasError = true;
-    }
+  // 3) 비밀번호 확인 미입력
+  if (!trimmedCheckPw) {
+    setCheckPassword("");
+    setCheckPasswordError("비밀번호 확인을 입력해주세요");
+    return;
+  }
 
-    if (hasError) return;
+  // 4) 비밀번호 불일치
+  if (trimmedPw !== trimmedCheckPw) {
+    setCheckPassword("");
+    setCheckPasswordError("비밀번호가 일치하지 않습니다");
+    return;
+  }
 
-    // 3) 비밀번호 규칙 체크 (밑줄은 그대로, 내용만 비우고 안내문만 빨간색)
-    if (!passwordRule.test(trimmedPw)) {
-      setPassword("");
-      setCheckPassword("");
-      setRuleError(true);
-      return;
-    }
+  // 5) 성공 → 로그인 화면으로 이동
+  navigation.navigate("Login");
+};
 
-    // 4) 비밀번호 불일치
-    if (trimmedPw !== trimmedCheckPw) {
-      setCheckPassword("");
-      setCheckPasswordError("비밀번호가 일치하지 않습니다");
-      return;
-    }
-
-    // 5) 성공 → 로그인 화면으로 이동
-    navigation.navigate("Login");
-  };
 
   return (
     <View style={styles.container}>
