@@ -93,11 +93,12 @@ export default function ProfileInfoFormScreen({ route, navigation }) {
             <Image source={selectedImage} style={styles.image} />
           )}
         </View>
-
-        <TextInput
+        <View style={styles.inputWrap}>
+          <TextInput
             style={[
               styles.input,
-              nameError ? { borderBottomColor: '#f36945' } : {},
+              {
+                borderBottomColor: nameError ? '#f36945' : colors.greenDark }
             ]}
             fontFamily="Maplestory_Light"
             placeholder={nameError ? nameError : "이름을 입력해주세요"}
@@ -107,9 +108,8 @@ export default function ProfileInfoFormScreen({ route, navigation }) {
               setName(text);
             }}
             onFocus={() => {
-              if (nameError) {
-                setNameError("");
-              }
+              setNameError("");
+              setName("");
             }}
           />
 
@@ -118,9 +118,12 @@ export default function ProfileInfoFormScreen({ route, navigation }) {
           onPress={showDatePicker}
           style={[
             styles.input,
-            { justifyContent: "center" },
-            birthError ? { borderBottomColor: "#f36945" } : {},
+            { justifyContent: "center", borderBottomColor: birthError ? '#f36945' : colors.greenDark },
           ]}
+          onPressIn={() => {
+            setBirthError("");
+            setBirth("");
+          }}
         >
           <Text
             style={{
@@ -129,24 +132,24 @@ export default function ProfileInfoFormScreen({ route, navigation }) {
               fontFamily: "Maplestory_Light",
             }}
           >
-            {birth
-              ? birth
-              : birthError
-              ? birthError
-              : "생년월일을 선택해주세요"}
-          </Text>
-        </TouchableOpacity>
+              {birth
+                ? birth
+                : birthError
+                ? birthError
+                : "생년월일을 선택해주세요"}
+            </Text>
+          </TouchableOpacity>
 
-        {/* 모달 DatePicker */}
-        <DateTimePicker
-          isVisible={isDatePickerVisible}
-          mode="date"
-          onConfirm={handleConfirm}
-          onCancel={hideDatePicker}
-          maximumDate={new Date()} // 미래 날짜 선택 불가
-          locale="ko-KR"
-        />
-
+          {/* 모달 DatePicker */}
+          <DateTimePicker
+            isVisible={isDatePickerVisible}
+            mode="date"
+            onConfirm={handleConfirm}
+            onCancel={hideDatePicker}
+            maximumDate={new Date()} // 미래 날짜 선택 불가
+            locale="ko-KR"
+          />
+        </View>
       </View>
 
       {/* 생성 버튼 */}
@@ -187,7 +190,7 @@ const styles = StyleSheet.create({
     width: W * 0.9,
     top: -H * 0.15,
     justifyContent: 'center',
-    alignContent: 'center',
+    alignItems: 'center'
   },
   profile: {
     width: W * 0.9,
@@ -204,18 +207,27 @@ const styles = StyleSheet.create({
     resizeMode: 'cover',
   },
   inputWrap: {
+    width: W * 0.88,
+    justifyContent: 'center',
+    alignItems: 'center',
+    alignSelf: 'center',
+    // borderWidth: 2,
+    // borderColor: 'red'
   },
   input: {
     fontSize: 14,
     fontFamily: "Maplestory_Light",
     lineHeight: 20,
+    height: 40,
     letterSpacing: -0.32,
-    width: 345,
+    width: '100%',
     marginBottom: 15,
     paddingTop: 12,
     paddingBottom: Platform.OS ==='ios' ? 5 : 8,
     borderBottomColor: colors.greenDark,
     borderBottomWidth: 2,
+    // borderWidth: 2,
+    // borderColor: 'red'
   },
   errorText: {
     color: "red",

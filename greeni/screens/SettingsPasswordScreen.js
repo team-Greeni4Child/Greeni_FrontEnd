@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { 
   View, 
   Text,
@@ -12,6 +12,7 @@ import { StatusBar } from "expo-status-bar";
 import Button from "../components/Button";
 import BackButton from "../components/BackButton";
 import colors from "../theme/colors";
+import { useFocusEffect } from "@react-navigation/native";
 
 // 현재 기기의 화면 너비 W, 화면 높이 H
 const { width: W, height: H } = Dimensions.get("window");
@@ -19,6 +20,12 @@ const { width: W, height: H } = Dimensions.get("window");
 export default function SettingsPasswordScreen({navigation}) {
 
     const [password, setPassword] = useState("");
+
+    useFocusEffect(
+      useCallback(() => {
+        setPassword("");
+      }, [])
+    );
 
     return (
         <View style={styles.root}>
@@ -95,8 +102,8 @@ const styles = StyleSheet.create({
     marginLeft: 40,
   },
   bubbleText: {
-    fontSize: 17,
-    fontFamily: "WantedSans-Regular",
+    fontSize: 24,
+    fontFamily: "gangwongyoyuksaeeum",
     color: colors.brown,
     textAlign: 'center',
     maxWidth : 270,
@@ -112,7 +119,7 @@ const styles = StyleSheet.create({
   },
   input: {
     fontSize: 14,
-    fontFamily: "WantedSans-Regular",
+    fontFamily: "Maplestory_Light",
     height: 40,
     letterSpacing: -0.32,
     width: 258,
