@@ -19,11 +19,78 @@ const AR = {
   greeni: 509 / 852,
 };
 
+// 임시: 이미 가입된 이메일 / 인증코드 (백엔드 연동 시 교체)
+const MOCK_EXISTING_EMAILS = ["aaa"];
+const MOCK_VERIFY_CODE = "aaa";
+
 export default function SignUpScreen({ navigation }) {
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
   const [password, setPassword] = useState("");
   const [CheckPassword, setCheckPassword] = useState("");
+
+  const [emailError, setEmailError] = useState("");
+  const [codeError, setCodeError] = useState("");
+
+  // 이메일 인증 버튼
+  const handleVerifyEmail = () => {
+    setEmailError("");
+    setCodeError("");
+
+    const trimmedEmail = email.trim();
+
+    if (!trimmedEmail) {
+      setEmail("");
+      setEmailError("이메일을 입력해주세요");
+      return;
+    }
+
+    // 회원가입: 이미 가입된 이메일이면 에러
+    if (MOCK_EXISTING_EMAILS.includes(trimmedEmail)) {
+      setEmail("");
+      setEmailError("이미 가입된 이메일입니다");
+      return;
+    }
+
+    // 여기서 실제로는 인증코드 발송 API 호출
+    // 테스트용으로는 아무것도 안 함
+  };
+
+  // 가입하기 버튼 
+  const handleSignUp = () => {
+    setEmailError("");
+    setCodeError("");
+
+    const trimmedEmail = email.trim();
+    const trimmedCode = code.trim();
+
+    let hasError = false;
+
+    if (!trimmedEmail) {
+      setEmail("");
+      setEmailError("이메일을 입력해주세요");
+      hasError = true;
+    }
+
+    if (!trimmedCode) {
+      setCode("");
+      setCodeError("인증코드를 입력해주세요");
+      hasError = true;
+    }
+
+    if (hasError) return;
+
+    // 인증코드 검증 (임시)
+    if (trimmedCode !== MOCK_VERIFY_CODE) {
+      setCode("");
+      setCodeError("인증코드가 일치하지 않습니다");
+      return;
+    }
+
+    // 나중에 비밀번호 검증 로직 넣고,
+    // 회원가입 완료 시 다음 화면으로 이동
+    navigation.navigate("Login");
+  };
 
   return (
     <View style={styles.container}>
@@ -35,28 +102,45 @@ export default function SignUpScreen({ navigation }) {
         <Text style={styles.title}>회원가입</Text>
 
         {/* 이메일 + 인증 버튼 */}
-        <View style={styles.emailWrap}>
+        <View
+          style={[
+            styles.emailWrap,
+            emailError ? { borderBottomColor: "#f36945" } : {},
+          ]}
+        >
           <TextInput
             style={styles.email}
             fontFamily="Maplestory_Light"
-            placeholder="이메일"
-            placeholderTextColor={colors.brown}
+            placeholder={emailError ? emailError : "이메일"}
+            placeholderTextColor={emailError ? "#f36945" : colors.brown}
             value={email}
-            onChangeText={setEmail}
+            onChangeText={(text) => {
+              setEmail(text);
+              if (emailError) setEmailError("");
+            }}
           />
-          <TouchableOpacity style={styles.verificationButton}>
-            <Text style={styles.verificationButtonText }>인증</Text>
+          <TouchableOpacity
+            style={styles.verificationButton}
+            onPress={handleVerifyEmail}
+          >
+            <Text style={styles.verificationButtonText}>인증</Text>
           </TouchableOpacity>
         </View>
 
         {/* 인증코드 */}
         <TextInput
-          style={styles.input}
+          style={[
+            styles.input,
+            codeError ? { borderBottomColor: "#f36945" } : {},
+          ]}
           fontFamily="Maplestory_Light"
-          placeholder="인증코드"
-          placeholderTextColor={colors.brown}
+          placeholder={codeError ? codeError : "인증코드"}
+          placeholderTextColor={codeError ? "#f36945" : colors.brown}
           value={code}
-          onChangeText={setCode}
+          onChangeText={(text) => {
+            setCode(text);
+            if (codeError) setCodeError("");
+          }}
         />
 
         {/* 비밀번호 */}
@@ -94,9 +178,9 @@ export default function SignUpScreen({ navigation }) {
           title="가입하기"
           width={W * 0.35}
           height={46}
-          borderRadius= {10}
+          borderRadius={10}
           fontSize={14}
-          onPress={() => navigation.navigate("Login")}
+          onPress={handleSignUp}
         />
       </View>
     </View>
@@ -111,7 +195,7 @@ const styles = StyleSheet.create({
   },
   backButton: {
     position: "absolute",
-    top: 80,   
+    top: 80,
     left: 25,
   },
   backIcon: {
@@ -137,7 +221,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
     margin: 20,
   },
- emailWrap: {
+  emailWrap: {
     flexDirection: "row",
     borderBottomWidth: 2,
     borderBottomColor: colors.greenDark,
@@ -151,8 +235,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     color: colors.brown,
   },
-  verificationButton:{
-    //bottom: Platform.OS === "ios" ? 4 : -4,
+  verificationButton: {
     backgroundColor: colors.pink,
     borderRadius: 5,
     height: 30,
@@ -177,12 +260,12 @@ const styles = StyleSheet.create({
   },
   bottomWrap: {
     marginTop: H * 0.03,
-    flexDirection: "row",    
+    flexDirection: "row",
     alignItems: "flex-start",
   },
   greeni: {
-    width: W * 0.35,         
-    aspectRatio: AR.greeni,   
-    marginRight: W * 0.1, 
+    width: W * 0.35,
+    aspectRatio: AR.greeni,
+    marginRight: W * 0.1,
   },
 });
