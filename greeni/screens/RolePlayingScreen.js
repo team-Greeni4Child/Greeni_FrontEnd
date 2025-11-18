@@ -38,6 +38,7 @@ export default function RolePlayingScreen({navigation}) {
               <ImageBackground
                 style={styles.bubble}
                 source={require("../assets/images/bubble_role.png")}
+                resizeMode="stretch"
               >
                 <Text style={styles.bubbleText}>밑에 있는 세가지 상황 중에{"\n"} 하나를 골라줘</Text>
               </ImageBackground>
@@ -93,25 +94,19 @@ const styles = StyleSheet.create({
     top: -H * 0.002
   },
   bubble: {
-    position: 'relative',
-    justifyContent: 'center',
-    alignItems: 'center',
-    aspectRatio: 250/132,
-    width: 250,
-    height: 132,
-    top: H * 0.155,
+    top : 130,
+    maxWidth: W * 0.85, 
+    paddingHorizontal: 40,
+    paddingVertical: 50,
+    alignItems: "center",
+    justifyContent: "center",
   },
   bubbleText: {
-    fontSize: 24,
-    lineHeight: 24,
-    fontFamily: "gangwongyoyuksaeeum",
+    fontSize: 28,
     color: colors.brown,
-    textAlign: 'center',
-    maxWidth : 270,
-    paddingtop: 0,
-    paddingBottom: 3,
-    // borderWidth: 2,
-    // borderColor: 'red'
+    fontFamily: "gangwongyoyuksaeeum",
+    textAlign: "center",
+    lineHeight: 26,
   },
 
   situationWrap: {

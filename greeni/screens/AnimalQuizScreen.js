@@ -50,6 +50,7 @@ export default function AnimalQuizScreen({navigation}) {
               <ImageBackground
                 style={styles.bubble}
                 source={require("../assets/images/bubble_animal.png")}
+                resizeMode="stretch"
               >
                 <Text style={styles.bubbleText}>
                   {mode === 'image'
@@ -116,21 +117,22 @@ const styles = StyleSheet.create({
     aspectRatio: 90/140,
     width: 90,
     height: 140,
-    top: 0, left: -W * 0.25,
+    top: 0, 
+    left: -W * 0.25,
   },
   bubble: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    aspectRatio: 270/110,
-    width: 270,
-    height: 110,
-    resizeMode: 'contain',
+    maxWidth: W * 0.85, 
+    paddingHorizontal: 40,
+    paddingVertical: 50,
+    alignItems: "center",
+    justifyContent: "center",
   },
   bubbleText: {
-    fontSize: 26,
-    fontFamily: "gangwongyoyuksaeeum",
+    fontSize: 28,
     color: colors.brown,
-    textAlign: 'center',
+    fontFamily: "gangwongyoyuksaeeum",
+    textAlign: "center",
+    lineHeight: 26,
   },
 
   quizWrap: {
