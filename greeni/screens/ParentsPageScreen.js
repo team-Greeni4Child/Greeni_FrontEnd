@@ -128,7 +128,9 @@ export default function ParentsPageScreen({route, navigation}) {
               </View>
               {/* 활동 요약 영역 */}
               <View style={styles.bottomWrap}>
-                <TouchableOpacity style={styles.summaryButton}>
+                <TouchableOpacity 
+                  style={styles.summaryButton}
+                  onPress={() => navigation.navigate("Summary")}>
                   <View style={styles.summaryHeader}>
                     <Text style={styles.summaryTitle}>활동 요약</Text>
                      <Image
