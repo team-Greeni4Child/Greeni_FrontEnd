@@ -25,6 +25,7 @@ import SettingsPasswordScreen from "./screens/SettingsPasswordScreen";
 import SettingsScreen from "./screens/SettingsScreen";
 import ParentsPageScreen from "./screens/ParentsPageScreen";
 import ProfileImageChangeScreen from "./screens/ProfileImageChangeScreen";
+import SummaryScreen from "./screens/SummaryScreen";
 
 export const AuthContext = createContext();
 
@@ -70,6 +71,7 @@ function MainStack() {
       <Stack.Screen name="Settings" component={SettingsScreen}/>
       <Stack.Screen name="ParentsPage" component={ParentsPageScreen}/>
       <Stack.Screen name="ProfileImageChange" component={ProfileImageChangeScreen}/>
+      <Stack.Screen name="Summary" component={SummaryScreen}/>
       {/* 나중에 다른 페이지 추가 */}
     </Stack.Navigator>
   );
