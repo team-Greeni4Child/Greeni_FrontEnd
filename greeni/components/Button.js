@@ -57,6 +57,13 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
+
+        // 그림자
+        //shadowColor: "#000",
+        //shadowOffset: { width: 0, height: 4 },
+        //shadowOpacity: 0.15,
+        //shadowRadius: 6,
+        //elevation: 4,         
     },
     title: {
         fontFamily: "Maplestory_Bold",
