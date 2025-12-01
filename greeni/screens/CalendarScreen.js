@@ -122,21 +122,19 @@ export default function CalendarScreen({ navigation }) {
 
       {/* 상단 타이틀/말풍선/그리니 영역 */}
       <View style={styles.headerWrap}>
-        <View style={styles.speechRow}>
-          <ImageBackground
-            source={require("../assets/images/bubble_home.png")}
-            style={styles.bubble}
-            resizeMode="stretch"
-          >
-            <Text style={styles.bubbleText}>예전에 쓴 일기를 볼 수 있어요</Text>
-          </ImageBackground>
+        <ImageBackground
+          source={require("../assets/images/bubble_calendar.png")}
+          style={styles.bubble}
+          resizeMode="stretch"
+        >
+          <Text style={styles.bubbleText}>예전에 쓴 일기를 볼 수 있어요</Text>
+        </ImageBackground>
 
-          <Image
+        <Image
             source={require("../assets/images/greeni_shy.png")}
-            style={styles.greeni}
-            resizeMode="contain"
-          />
-        </View>
+          style={styles.greeni}
+          resizeMode="contain"
+        />
 
         {/* 월 이동/표시 */}
         <View style={styles.monthRow}>
@@ -223,49 +221,43 @@ const styles = StyleSheet.create({
   root: {
     flex: 1,
     alignItems: "center",
-    justifyContent: "center", 
+    justifyContent: "flex-start", 
     backgroundColor: colors.ivory,
-  },
-
-  // --- 상단 ---
-  headerWrap: {
+    paddingTop: 120,
   },
   title: {
     position: "absolute",
-    alignItems: "center",
     top: 80,
     fontFamily: "Maplestory_Bold",
     fontSize: 24,
     color: colors.brown,
   },
-  speechRow: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    marginTop: 8,
-    marginBottom: 10,
+  // --- 상단 ---
+  headerWrap: {
+    width: W,
+    height: H * 0.25,
+    //backgroundColor:"red",
   },
   bubble: {
-    flex: 1,
-    paddingHorizontal: 20,
-    paddingVertical: 14,
+    maxWidth: W * 0.75, 
+    paddingHorizontal: 30,
+    paddingVertical: 50,
+    alignItems: "center",
     justifyContent: "center",
-    width: 280,
-    height: 100,
     top: -30,
-    minHeight: 48,
-    marginRight: 8,
+    right: -80,
   },
   bubbleText: {
-    width: 250,
     fontSize: 28,
-    fontFamily: "gangwongyoyuksaeeum",
     color: colors.brown,
+    fontFamily: "gangwongyoyuksaeeum",
+    textAlign: "center",
+    lineHeight: 26,
   },
   greeni: {
-    width: 80,
-    height: 80,
-    marginTop: 20,
-    left: -180,
+    height: H * 0.15,
+    left: -50,
+    top: -50,
   },
   monthRow: {
     marginTop: 2,
@@ -273,9 +265,18 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     gap: 18,
+    left:80,
+    top: -90,
   },
-  arrowBtn: { paddingHorizontal: 12, paddingVertical: 4 },
-  arrowText: { fontSize: 24, color: colors.brown, fontFamily: "Maplestory_Bold" },
+  arrowBtn: { 
+    paddingHorizontal: 12, 
+    paddingVertical: 4 
+  },
+  arrowText: { 
+    fontSize: 24, 
+    color: colors.brown, 
+    fontFamily: "Maplestory_Bold" 
+  },
   monthText: {
     fontSize: 18,
     fontFamily: "Maplestory_Bold",
@@ -310,7 +311,7 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginBottom: 12,
+    marginBottom: 10,
   },
   cell: {
     width: CELL_W,

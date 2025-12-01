@@ -10,7 +10,7 @@ import {
   StyleSheet,
   Image,
   Dimensions,
-  Platform,
+  Modal,
 } from "react-native";
 
 const { width: W, height: H } = Dimensions.get("window");
@@ -19,11 +19,130 @@ const AR = {
   greeni: 509 / 852,
 };
 
+// 임시: 이미 가입된 이메일 / 인증코드 (백엔드 연동 시 교체)
+const MOCK_EXISTING_EMAILS = ["aaa"];
+const MOCK_VERIFY_CODE = "aaa";
+
+// 비밀번호 규칙 (영문 + 숫자 + ASCII 특수문자 + 8자리 이상)
+const passwordRule = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[!-/:-@[-`{-~]).{8,}$/;
+
 export default function SignUpScreen({ navigation }) {
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
   const [password, setPassword] = useState("");
   const [CheckPassword, setCheckPassword] = useState("");
+
+  const [emailError, setEmailError] = useState("");
+  const [codeError, setCodeError] = useState("");
+  const [passwordError, setPasswordError] = useState("");
+  const [checkPasswordError, setCheckPasswordError] = useState("");
+  const [ruleError, setRuleError] = useState(false); 
+
+  // 회원가입 완료 모달 on/off
+  const [showCompleteModal, setShowCompleteModal] = useState(false);
+
+  // 이메일 인증 버튼
+  const handleVerifyEmail = () => {
+    setEmailError("");
+    setCodeError("");
+
+    const trimmedEmail = email.trim();
+
+    if (!trimmedEmail) {
+      setEmail("");
+      setEmailError("이메일을 입력해주세요");
+      return;
+    }
+
+    // 회원가입: 이미 가입된 이메일이면 에러
+    if (MOCK_EXISTING_EMAILS.includes(trimmedEmail)) {
+      setEmail("");
+      setEmailError("이미 가입된 이메일입니다");
+      return;
+    }
+
+    // 여기서 실제로는 인증코드 발송 API 호출
+    // 테스트용으로는 아무것도 안 함
+  };
+
+  // 가입하기 버튼
+  const handleSignUp = () => {
+    // 에러 초기화
+    setEmailError("");
+    setCodeError("");
+    setPasswordError("");
+    setCheckPasswordError("");
+    setRuleError(false);
+
+    const trimmedEmail = email.trim();
+    const trimmedCode = code.trim();
+    const trimmedPw = password.trim();
+    const trimmedCheckPw = CheckPassword.trim();
+
+    let hasError = false;
+    let shouldValidateCheckPw = true; // 비밀번호 규칙에 걸리면 false로 바꿈
+
+    // 1) 이메일 검사
+    if (!trimmedEmail) {
+      setEmail("");
+      setEmailError("이메일을 입력해주세요");
+      hasError = true;
+    }
+
+    // 2) 인증코드 검사 (공란 + 불일치 둘 다 체크)
+    if (!trimmedCode) {
+      setCode("");
+      setCodeError("인증코드를 입력해주세요");
+      hasError = true;
+    } else if (trimmedCode !== MOCK_VERIFY_CODE) {
+      setCode("");
+      setCodeError("인증코드가 일치하지 않습니다");
+      hasError = true;
+    }
+
+    // 3) 비밀번호 검사
+    if (!trimmedPw) {
+      // 비밀번호 공란
+      setPassword("");
+      setPasswordError("비밀번호를 입력해주세요");
+      hasError = true;
+      // 이 경우에는 규칙 에러는 아니니까
+      // 비밀번호 확인은 그대로 검사하게 둔다
+    } else if (!passwordRule.test(trimmedPw)) {
+      // 비밀번호 규칙 위반 → 이 경우에는 규칙 경고만 보여주기
+      setPassword("");
+      setCheckPassword("");
+      setRuleError(true);        // 안내문만 빨간색 + Bold
+      hasError = true;
+      shouldValidateCheckPw = false; // 비밀번호 확인 관련 에러는 막기
+    }
+
+    // 4) 비밀번호 확인 검사 (비밀번호 규칙 통과한 경우에만)
+    if (shouldValidateCheckPw) {
+      if (!trimmedCheckPw) {
+        setCheckPassword("");
+        setCheckPasswordError("비밀번호 확인을 입력해주세요");
+        hasError = true;
+      } else if (trimmedPw && trimmedPw !== trimmedCheckPw) {
+        setCheckPassword("");
+        setCheckPasswordError("비밀번호가 일치하지 않습니다");
+        hasError = true;
+      }
+    }
+
+    // 에러 하나라도 있으면 회원가입 중단
+    if (hasError) return;
+
+    // TODO: 실제 회원가입 API 호출
+    // 완료 모달 띄우기
+    setShowCompleteModal(true);
+  };
+
+  // 모달에서 확인 버튼 누르면 로그인 화면으로 이동
+  const handleCompleteOk = () => {
+    setShowCompleteModal(false);
+    navigation.navigate("Login");
+  };
 
   return (
     <View style={styles.container}>
@@ -35,51 +154,97 @@ export default function SignUpScreen({ navigation }) {
         <Text style={styles.title}>회원가입</Text>
 
         {/* 이메일 + 인증 버튼 */}
-        <View style={styles.emailWrap}>
+        <View
+          style={[
+            styles.emailWrap,
+            emailError ? { borderBottomColor: "#f36945" } : {},
+          ]}
+        >
           <TextInput
             style={styles.email}
             fontFamily="Maplestory_Light"
-            placeholder="이메일"
-            placeholderTextColor={colors.brown}
+            placeholder={emailError ? emailError : "이메일"}
+            placeholderTextColor={emailError ? "#f36945" : colors.brown}
             value={email}
-            onChangeText={setEmail}
+            onChangeText={(text) => {
+              setEmail(text);
+              if (emailError) setEmailError("");
+            }}
           />
-          <TouchableOpacity style={styles.verificationButton}>
-            <Text style={styles.verificationButtonText }>인증</Text>
+          <TouchableOpacity
+            style={styles.verificationButton}
+            onPress={handleVerifyEmail}
+          >
+            <Text style={styles.verificationButtonText}>인증</Text>
           </TouchableOpacity>
         </View>
 
         {/* 인증코드 */}
         <TextInput
-          style={styles.input}
+          style={[
+            styles.input,
+            codeError ? { borderBottomColor: "#f36945" } : {},
+          ]}
           fontFamily="Maplestory_Light"
-          placeholder="인증코드"
-          placeholderTextColor={colors.brown}
+          placeholder={codeError ? codeError : "인증코드"}
+          placeholderTextColor={codeError ? "#f36945" : colors.brown}
           value={code}
-          onChangeText={setCode}
+          onChangeText={(text) => {
+            setCode(text);
+            if (codeError) setCodeError("");
+          }}
         />
 
         {/* 비밀번호 */}
         <TextInput
-          style={styles.input}
-          placeholder="비밀번호"
+          style={[
+            styles.input,
+            passwordError ? { borderBottomColor: "#f36945" } : {},
+          ]}
           fontFamily="Maplestory_Light"
-          placeholderTextColor={colors.brown}
-          value={password}
-          onChangeText={setPassword}
+          placeholder={passwordError ? passwordError : "비밀번호"}
+          placeholderTextColor={passwordError ? "#f36945" : colors.brown}
           secureTextEntry
+          value={password}
+          onChangeText={(text) => {
+            setPassword(text);
+            if (passwordError) setPasswordError("");
+            if (ruleError) setRuleError(false);
+          }}
         />
 
         {/* 비밀번호 확인 */}
         <TextInput
-          style={styles.input}
+          style={[
+            styles.input,
+            checkPasswordError ? { borderBottomColor: "#f36945" } : {},
+          ]}
           fontFamily="Maplestory_Light"
-          placeholder="비밀번호 확인"
-          placeholderTextColor={colors.brown}
-          value={CheckPassword}
-          onChangeText={setCheckPassword}
+          placeholder={
+            checkPasswordError ? checkPasswordError : "비밀번호 확인"
+          }
+          placeholderTextColor={
+            checkPasswordError ? "#f36945" : colors.brown
+          }
           secureTextEntry
+          value={CheckPassword}
+          onChangeText={(text) => {
+            setCheckPassword(text);
+            if (checkPasswordError) setCheckPasswordError("");
+          }}
         />
+
+        {/* 비밀번호 규칙 안내문 */}
+        <Text
+          style={[
+            styles.ruleText,
+            ruleError
+              ? { color: "#f36945", fontFamily: "Maplestory_Bold" }
+              : { fontFamily: "Maplestory_Light" },
+          ]}
+        >
+          ※ 비밀번호는 영문, 숫자, 특수문자 포함 8자리 이상 입력해야 합니다.
+        </Text>
       </View>
 
       {/* 그리니 + 가입하기 버튼 */}
@@ -94,11 +259,34 @@ export default function SignUpScreen({ navigation }) {
           title="가입하기"
           width={W * 0.35}
           height={46}
-          borderRadius= {10}
+          borderRadius={10}
           fontSize={14}
-          onPress={() => navigation.navigate("Login")}
+          onPress={handleSignUp}
         />
       </View>
+
+      {/* 회원가입 완료 모달 */}
+      <Modal
+        transparent
+        visible={showCompleteModal}
+      >
+        <View style={styles.modalBackground}>
+          <View style={styles.modalWrap}>
+            <Text style={styles.modalText}>
+              회원가입이 완료되었습니다.
+            </Text>
+
+            <View style={styles.modalButtonWrap}>
+              <TouchableOpacity
+                style={[styles.modalButton]}
+                onPress={handleCompleteOk}  
+              >
+                <Text style={styles.modalButtonText}>확인</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -111,7 +299,7 @@ const styles = StyleSheet.create({
   },
   backButton: {
     position: "absolute",
-    top: 80,   
+    top: 80,
     left: 25,
   },
   backIcon: {
@@ -125,7 +313,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.white,
     borderRadius: 21,
     padding: 20,
-    paddingBottom: 50,
+    paddingBottom: 40,
     borderWidth: 2,
     borderColor: colors.greenDark,
     justifyContent: "space-between",
@@ -137,7 +325,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
     margin: 20,
   },
- emailWrap: {
+  emailWrap: {
     flexDirection: "row",
     borderBottomWidth: 2,
     borderBottomColor: colors.greenDark,
@@ -151,8 +339,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     color: colors.brown,
   },
-  verificationButton:{
-    //bottom: Platform.OS === "ios" ? 4 : -4,
+  verificationButton: {
     backgroundColor: colors.pink,
     borderRadius: 5,
     height: 30,
@@ -175,14 +362,63 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     color: colors.brown,
   },
+  ruleText: {
+    fontSize: 10,
+    height: 30,
+    verticalAlign: "bottom",
+    color: colors.brown,
+    fontFamily: "Maplestory_Light",
+  },
   bottomWrap: {
     marginTop: H * 0.03,
-    flexDirection: "row",    
+    flexDirection: "row",
     alignItems: "flex-start",
   },
   greeni: {
-    width: W * 0.35,         
-    aspectRatio: AR.greeni,   
-    marginRight: W * 0.1, 
+    width: W * 0.35,
+    aspectRatio: AR.greeni,
+    marginRight: W * 0.1,
+  },
+
+  // 모달창
+  modalBackground: {
+    flex: 1,
+    backgroundColor: colors.lightGray95,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalWrap: {
+    width: W * 0.7,
+    backgroundColor: "white",
+    borderRadius: 20,
+    borderWidth: 3,
+    borderColor: colors.greenDark,
+    padding: 0,
+    alignItems: "center",
+    justifyContent: "flex-end",
+    overflow: "hidden",
+  },
+  modalText: {
+    fontSize: 16,
+    fontFamily: "Maplestory_Light",
+    color: colors.brown,
+    textAlign: "center",
+    margin: 30,
+  },
+  modalButtonWrap: {
+    flexDirection: "row",
+    height: 45,
+    width: "100%",
+  },
+  modalButton: {
+    justifyContent: "center",
+    alignItems: "center",
+    width: "100%",
+    backgroundColor: colors.green,
+  },
+  modalButtonText: {
+    color: colors.brown,
+    fontSize: 16,
+    fontFamily: "Maplestory_Light",
   },
 });

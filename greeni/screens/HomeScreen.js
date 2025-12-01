@@ -56,7 +56,7 @@ export default function HomeScreen({ navigation }) {
         resizeMode="stretch"
       >
         <Text style={styles.bubbleText}>
-          안녕 나는 그리니야!{"\n"}오늘은 또 어떤 하루를 보냈어?
+          안녕 나는 그리니야!{"\n"}오늘은 또 어떤 하루를 보냈어? 배고프면 밥을 먹고 움직이자. 내일을 또 살아가야 하니까 말이야...
         </Text>
       </ImageBackground>
 
@@ -133,7 +133,7 @@ const styles = StyleSheet.create({
     bottom: -10,
     maxWidth: W * 0.85, 
     paddingHorizontal: 40,
-    paddingVertical: 50,
+    paddingVertical: 60,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -142,7 +142,7 @@ const styles = StyleSheet.create({
     color: colors.brown,
     fontFamily: "gangwongyoyuksaeeum",
     textAlign: "center",
-    lineHeight: 25,
+    lineHeight: 26,
   },
 
   greeni: {

@@ -18,7 +18,7 @@ const { width: W, height: H } = Dimensions.get("window");
 export default function TwentyQuestionsScreen({navigation}) {
 
   const hints = [
-    "나는 회색이야!",
+    "나는 세상에서 가장 긴 코를 갖고있어!",
     "나는 귀가 커!",
     "내 코는 길어!",
     "나는 물을 좋아해!",
@@ -69,29 +69,25 @@ export default function TwentyQuestionsScreen({navigation}) {
 
         </View>
 
-        {/* 문제 + 힌트 */}
+        {/* 문제 */}
         <TouchableOpacity style={styles.questionsWrap} onPress={handleNextHint}>
           <Text style={styles.questionText}>ㅋㄲㄹ</Text>
-
-          <View style={styles.hintContainer}>
-            <ImageBackground
-              source={require("../assets/images/bubble_20.png")}
-              style={styles.hintBubble}
-              resizeMode="stretch"
-            >
-              <Text style={styles.hintText}>{hints[currentHint]}</Text>
-            </ImageBackground>
-          </View>
         </TouchableOpacity>
 
-
-        {/* greeni */}
+        {/* greeni  + 힌트*/}
         <View style={styles.greeniWrap}>
           <Image style={styles.greeni} source={require("../assets/images/20_greeni_big.png")}/>
+        
+          <ImageBackground
+            source={require("../assets/images/bubble_20.png")}
+            style={styles.hintBubble}
+            resizeMode="stretch"
+          >
+            <Text style={styles.hintText}>{hints[currentHint]}</Text>
+          </ImageBackground>
         </View>
 
-        <MicButton />
-      
+        <MicButton /> 
     </View>
   );
 }
@@ -207,35 +203,29 @@ const styles = StyleSheet.create({
     fontSize: 40,
     color: colors.brown,
     fontFamily: "Maplestory_Light",
-    top: H * 0.07,
     fontWeight: 'bold',
-  },
-  hintContainer: {
-    alignItems: "center",
-    justifyContent: "flex-start",
-    marginTop: 45,
-    left: W * 0.12,
-  },  
+  }, 
   hintBubble: {
-    minWidth: 220,
-    maxWidth: W * 0.6,
-    paddingHorizontal: 40,
-    paddingVertical: 40,
+    maxWidth: W * 0.65, 
+    paddingHorizontal: 30,
+    paddingVertical: 30,
     alignItems: "center",
     justifyContent: "center",
+    top: -45
+
   },
   hintText: {
     fontSize: 28,
-    fontFamily: "gangwongyoyuksaeeum",
     color: colors.brown,
+    fontFamily: "gangwongyoyuksaeeum",
     textAlign: "center",
-    lineHeight: 25,
-    flexWrap: 'wrap',
+    lineHeight: 26,
   },
 
   // 그리니
   greeniWrap: {
     position: "absolute",
+    flexDirection: "row",
     top: H * 0.53,
     left: W * 0.1,
     zIndex: 3

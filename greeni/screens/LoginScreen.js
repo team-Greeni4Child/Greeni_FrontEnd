@@ -19,10 +19,68 @@ const AR = {
   greeni: 509 / 852
 };
 
+// 임시: 가입된 이메일/비밀번호 목록 (나중에 API 연동 시 수정)
+const MOCK_USERS = {
+  "pputtymin@gmail.com": "minseo2002.",
+  "aaa": "aaa",
+};
+
 export default function LoginScreen({ navigation }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const {setStep} = useContext(AuthContext);
+
+  // 에러 상태
+  const [emailError, setEmailError] = useState("");
+  const [passwordError, setPasswordError] = useState("");
+
+  const { setStep } = useContext(AuthContext);
+
+  const handleLogin = () => {
+    // 이전 에러 초기화
+    setEmailError("");
+    setPasswordError("");
+
+    const trimmedEmail = email.trim();
+    const trimmedPassword = password.trim();
+
+    let hasError = false;
+
+    // 1) 이메일 미입력
+    if (!trimmedEmail) {
+      setEmail(""); // 입력값 비우기
+      setEmailError("이메일을 입력해주세요");
+      hasError = true;
+    }
+
+    // 2) 비밀번호 미입력
+    if (!trimmedPassword) {
+      setPassword("");
+      setPasswordError("비밀번호를 입력해주세요");
+      hasError = true;
+    }
+
+    // 이메일이나 비밀번호가 비어있으면 여기서 종료
+    if (hasError) return;
+
+    // 3) 가입되지 않은 이메일
+    const registeredPassword = MOCK_USERS[trimmedEmail];
+    if (!registeredPassword) {
+      setEmail("");
+      setPassword("");
+      setEmailError("가입되지 않은 이메일입니다");
+      return;
+    }
+
+    // 4) 이메일은 맞지만 비밀번호가 틀림
+    if (registeredPassword !== trimmedPassword) {
+      setPassword("");
+      setPasswordError("비밀번호가 일치하지 않습니다");
+      return;
+    }
+
+    // 5) 로그인 성공
+    setStep("profile");
+  };
 
   return (
     <View style={styles.container}>
@@ -34,23 +92,35 @@ export default function LoginScreen({ navigation }) {
 
         {/* 이메일, 비밀번호 입력 */}
         <View style={styles.inputsWrap}>
-            <TextInput
-            style={styles.input}
+          <TextInput
+            style={[
+              styles.input,
+              emailError ? { borderBottomColor: "#f36945" } : {},
+            ]}
             fontFamily="Maplestory_Light"
-            placeholder="이메일"
-            placeholderTextColor={colors.brown}
+            placeholder={emailError ? emailError : "이메일"}
+            placeholderTextColor={emailError ? "#f36945" : colors.brown}
             value={email}
-            onChangeText={setEmail}
-            />
-            <TextInput
-            style={styles.input}
+            onChangeText={(text) => {
+              setEmail(text);
+              if (emailError) setEmailError("");
+            }}
+          />
+          <TextInput
+            style={[
+              styles.input,
+              passwordError ? { borderBottomColor: "#f36945" } : {},
+            ]}
             fontFamily="Maplestory_Light"
-            placeholder="비밀번호"
-            placeholderTextColor={colors.brown}
+            placeholder={passwordError ? passwordError : "비밀번호"}
+            placeholderTextColor={passwordError ? "#f36945" : colors.brown}
             value={password}
-            onChangeText={setPassword}
+            onChangeText={(text) => {
+              setPassword(text);
+              if (passwordError) setPasswordError("");
+            }}
             secureTextEntry
-            />
+          />
         </View>
 
         {/* 로그인 버튼 */}
@@ -58,18 +128,18 @@ export default function LoginScreen({ navigation }) {
           title="로그인"
           width="100%"
           height={46}
-          borderRadius= {10}
+          borderRadius={10}
           fontSize={14}
-          onPress={() => setStep("profile")}
+          onPress={handleLogin}
         />
       </View>   
 
       <View style={styles.bottomWrap}>
         {/* 그리니 */}
         <Image 
-            source={require("../assets/images/greeni_shy.png")} 
-            style={styles.greeni}
-            resizeMode="contain"
+          source={require("../assets/images/greeni_shy.png")} 
+          style={styles.greeni}
+          resizeMode="contain"
         />
 
         {/* 비밀번호 찾기, 회원가입 하기 */}

@@ -9,7 +9,7 @@ const { width: W, height: H } = Dimensions.get("window");
 // 원본 비율(레이아웃 안정화)
 const AR = {
   cloud: 522 / 234,   // ≈2.23
-  rain: 606 / 605,    // ≈1.00
+  //rain: 606 / 605,    // ≈1.00
   greeni: 169 / 311,  // ≈0.54
   ground: 1145 / 210, // ≈5.45
   sun: 117 / 117      // 1
@@ -46,7 +46,7 @@ export default function SplashScreen({ onDone }) {
       Animated.parallel([
         // 비: 아래로 떨어지며 서서히 사라짐
         Animated.timing(rainDropY, {
-          toValue: H * 0.06,
+          toValue: H * 0.5, //0.06
           duration: DURATION,
           easing: EASE,
           useNativeDriver: true,
@@ -184,9 +184,9 @@ const styles = StyleSheet.create({
   rain: {
     position: "absolute",
     zIndex: 4,
-    top: H * 0.09,
+    //top: 0,
     width: W * 1.5,
-    aspectRatio: AR.rain,
+    //aspectRatio: AR.rain,
   },
 
   titleWrap: {
