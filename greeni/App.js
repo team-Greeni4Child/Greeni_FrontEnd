@@ -1,4 +1,5 @@
 import React, { useState, createContext } from "react";
+import { Text, TextInput } from "react-native";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { ProfileProvider } from "./context/ProfileContext";
@@ -30,6 +31,12 @@ import SummaryScreen from "./screens/SummaryScreen";
 export const AuthContext = createContext();
 
 const Stack = createNativeStackNavigator();
+
+// 텍스트 스케일링 막음. 폰트 사이즈 고정
+Text.defaultProps = Text.defaultProps || {};
+Text.defaultProps.allowFontScaling = false;
+TextInput.defaultProps = TextInput.defaultProps || {};
+TextInput.defaultProps.allowFontScaling = false;
 
 /* 1. 로그인 관련 스택 */
 function AuthStack() {
