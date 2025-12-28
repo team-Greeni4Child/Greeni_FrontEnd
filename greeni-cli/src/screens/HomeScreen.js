@@ -19,7 +19,7 @@ import { useFocusEffect } from "@react-navigation/native";
 const { width: W, height: H } = Dimensions.get("window");
 
 export default function HomeScreen({ navigation }) {
-  const [tab, setTab] = useState(1);
+  const [tab, setTab] = useState(0);
 
   // "오늘 일기 작성 완료" 여부 (나중에 API/스토리지로 대체)
   const [hasWrittenTodayDiary, setHasWrittenTodayDiary] = useState(true);
@@ -91,9 +91,10 @@ export default function HomeScreen({ navigation }) {
         state={tab}
         onTabPress={(i) => {
           setTab(i);
-          if (i === 0) navigation.navigate("Calendar");
-          if (i === 1) navigation.navigate("Home");
-          if (i === 2) navigation.navigate("MyPage");
+          if (i === 0) navigation.navigate("Home");
+          if (i === 1) navigation.navigate("Calendar");
+          if (i === 2) navigation.navigate("Statistics");
+          if (i === 3) navigation.navigate("MyPage");
         }}
       />
 
