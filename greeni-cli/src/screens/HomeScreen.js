@@ -208,6 +208,12 @@ const styles = StyleSheet.create({
     borderColor: colors.greenDark,
     alignItems: "center",
     justifyContent: "center",
+    // 그림자
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    elevation: 4,
   },
   button: {
     width: W * 0.38,
@@ -218,6 +224,12 @@ const styles = StyleSheet.create({
     borderColor: colors.greenDark,
     alignItems: "center",
     justifyContent: "center",
+    // 그림자
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    elevation: 4,    
   },
   icon: {
     height: "50%",
