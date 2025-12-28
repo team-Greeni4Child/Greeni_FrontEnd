@@ -218,9 +218,9 @@ const styles = StyleSheet.create({
   ground: {
     position: "absolute",
     zIndex: 2,
-    bottom: -H * 0.03,
-    left: -W * 2,
-    width: W * 4,
+    bottom: -H * 0.18,
+    left: -W * 1.49,
+    width: W * 3,
     aspectRatio: AR.ground,
   },
 });
