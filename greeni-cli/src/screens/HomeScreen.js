@@ -77,7 +77,7 @@ export default function HomeScreen({ navigation }) {
       <View style={styles.grid}>
         {/* 일기 */}
         <TouchableOpacity
-          style={[styles.button, { backgroundColor: colors.pink }]}
+          style={[styles.diaryButton, { backgroundColor: colors.pink }]}
           onPress={() => navigation.navigate("Diary")}
         >
           <Image
@@ -99,21 +99,9 @@ export default function HomeScreen({ navigation }) {
           <Text style={styles.buttonText}>스무고개</Text>
         </TouchableOpacity>
 
-        {/* 동물퀴즈 */}
-        <TouchableOpacity
-          style={[styles.button, { backgroundColor: colors.green }]}
-          onPress={() => navigation.navigate("AnimalQuiz")}
-        >
-          <Image
-            source={require("../assets/images/icon_animal.png")}
-            style={styles.icon}
-          />
-          <Text style={styles.buttonText}>동물퀴즈</Text>
-        </TouchableOpacity>
-
         {/* 역할놀이 */}
         <TouchableOpacity
-          style={[styles.button, { backgroundColor: colors.pink }]}
+          style={[styles.button, { backgroundColor: "#E1EE95" }]}
           onPress={() => navigation.navigate("RolePlaying")}
         >
           <Image
@@ -168,6 +156,16 @@ const styles = StyleSheet.create({
     width: W * 0.85,
     marginTop: 10,
     marginBottom: H * 0.15,
+  },
+  diaryButton: {
+    width: W * 0.38 * 2  + 16,
+    height: W * 0.38,
+    margin: 8,
+    borderRadius: 15,
+    borderWidth: 2,     
+    borderColor: colors.greenDark,
+    alignItems: "center",
+    justifyContent: "center",
   },
   button: {
     width: W * 0.38,
