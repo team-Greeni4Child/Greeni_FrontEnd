@@ -218,7 +218,7 @@ const styles = StyleSheet.create({
   ground: {
     position: "absolute",
     zIndex: 2,
-    bottom: -H * 0.18,
+    bottom: -H * 0.13,
     left: -W * 1.49,
     width: W * 3,
     aspectRatio: AR.ground,

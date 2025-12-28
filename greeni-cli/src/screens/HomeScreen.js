@@ -37,6 +37,12 @@ export default function HomeScreen({ navigation }) {
 
   return (
     <View style={styles.root}>
+      {/* 그리니 */}
+      <Image
+        source={require("../assets/images/pond.png")}
+        style={styles.pond}
+        resizeMode="cover"
+      /> 
 
       {/* 네비게이션 바 */}
       <NavigationBar
@@ -127,6 +133,12 @@ const styles = StyleSheet.create({
     backgroundColor: colors.ivory,
     justifyContent: "flex-end", 
     alignItems: "center",
+  },
+  pond:{
+    position: "absolute",
+    top: H * 0.2,
+    width: W ,
+    height: H * 1.2,   
   },
 
   bubble: {
