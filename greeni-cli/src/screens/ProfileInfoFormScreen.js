@@ -43,7 +43,12 @@ export default function ProfileInfoFormScreen({ route, navigation }) {
 
     if (!nameRegex.test(name)) {
       setName("");
-      setNameError("20자 이내의 영문, 한글로만 입력 가능합니다.");
+      if (name.length == 0) {
+        setNameError("이름을 입력해주세요")
+      }
+      else {
+        setNameError("20자 이내의 영문, 한글로만 입력 가능합니다.");
+      }
       valid = false;
     } else {
       setNameError("");
@@ -83,7 +88,7 @@ export default function ProfileInfoFormScreen({ route, navigation }) {
         <BackButton navigation={navigation}
                     top={H  *0.001}
                     left={W * 0.05}/>
-        <Text style={styles.title}>프로필 만들기</Text>
+        <Text style={styles.title}>프로필 정보 입력</Text>
       </View>
 
       {/* 프로필 이미지 + 입력 영역 */}
@@ -148,6 +153,7 @@ export default function ProfileInfoFormScreen({ route, navigation }) {
             onCancel={hideDatePicker}
             maximumDate={new Date()} // 미래 날짜 선택 불가
             locale="ko-KR"
+            display="spinner"
           />
         </View>
       </View>
