@@ -59,15 +59,15 @@ export default function StatisticsScreen({route, navigation}) {
                     {/* 출석 */}
                     <View style={styles.attendanceWrap}>
                         <View style={styles.attendanceTextWrap}>
-                            <Text>OO이는 100일 출석했고</Text>
-                            <Text>우리는 함께 99일의 일기를 작성했어!</Text>
+                            <Text style={{fontFamily: "gangwongyoyuksaeeum", fontSize: 24,}}>OO이는 100일 출석했고</Text>
+                            <Text style={{fontFamily: "gangwongyoyuksaeeum", fontSize: 24,}}>우리는 함께 99일의 일기를 작성했어!</Text>
                         </View>
                     </View>
 
                     {/* 감정 */}
                     <View style={styles.emotionWrap}>
                         <View style={styles.emotionTitleWrap}>
-                            <Text>이번달 감정</Text>
+                            <Text style={{fontFamily: "Maplestory_Bold", fontSize: 18, color:colors.brown,}}>이번달 감정</Text>
                         </View>
                         <View style={styles.emotionDetailsWrap}>
                             <View style={styles.emotionVander}>
@@ -79,11 +79,11 @@ export default function StatisticsScreen({route, navigation}) {
                               />
                             </View>
                             <View style={styles.emotionCountWrap}>
-                                <Text>기쁨 2</Text>
-                                <Text>슬픔 3</Text>
-                                <Text>화남 5</Text>
-                                <Text>놀람 4</Text>
-                                <Text>불안 3</Text>
+                                <Text style={{fontFamily: "gangwongyoyuksaeeum", fontSize: 24,}}>기쁨 2</Text>
+                                <Text style={{fontFamily: "gangwongyoyuksaeeum", fontSize: 24,}}>슬픔 3</Text>
+                                <Text style={{fontFamily: "gangwongyoyuksaeeum", fontSize: 24,}}>화남 5</Text>
+                                <Text style={{fontFamily: "gangwongyoyuksaeeum", fontSize: 24,}}>놀람 4</Text>
+                                <Text style={{fontFamily: "gangwongyoyuksaeeum", fontSize: 24,}}>불안 3</Text>
                             </View>
                         </View>
                     </View>
@@ -91,10 +91,10 @@ export default function StatisticsScreen({route, navigation}) {
                     {/* 키워드 */}
                     <View style={styles.keywordWrap}>
                         <View style={styles.keywordTitle}>
-                            <Text>일기 오늘의 키워드</Text>
+                            <Text style={{fontFamily: "Maplestory_Bold", fontSize: 18, color:colors.brown,}}>일기 오늘의 키워드</Text>
                         </View>
                         <View style={styles.keywordContent}>
-                            <Text>파앤피</Text>
+                            <Text style={{fontFamily: "gangwongyoyuksaeeum", fontSize: 38,}}>파앤피</Text>
                         </View>
                     </View>
 
@@ -117,13 +117,13 @@ export default function StatisticsScreen({route, navigation}) {
                               resizeMode="contain"
                             />
                             <View style={styles.bubble}>
-                              <Text style={styles.bubbleText}>오늘 그리니는 역할놀이에서 환자 역할을 했어요.</Text>
+                              <Text style={styles.bubbleText}>오늘 그리니는 역할놀이에서{"\n"}환자 역할을 했어요.</Text>
                             </View>
                           </View>
 
                           <View style={styles.chatRight}>
                             <View style={styles.bubble}>
-                              <Text style={styles.bubbleText}>다섯고개 20문제 중에서 5문제를 틀렸어요.</Text>
+                              <Text style={styles.bubbleText}>다섯고개 20문제 중에서 5문제를{"\n"}틀렸어요.</Text>
                             </View>
                             <Image 
                               source={require("../assets/images/20_greeni_big.png")}
@@ -193,9 +193,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: colors.white,
     borderRadius: 10,
-    // fontSize: 18,
-    // fontFamily: "gangwongyoyuksaeeum",
-    // color: colors.brown,
+    fontSize: 18,
+    fontFamily: "gangwongyoyuksaeeum",
+    color: colors.brown,
     borderWidth: 2,
     borderColor: colors.green,
   },
@@ -203,6 +203,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     // borderWidth: 2,
     // borderColor: 'red'
+    fontSize: 18,
+    fontFamily: "gangwongyoyuksaeeum",
+    color: colors.brown,
   },
   emotionWrap: {
     borderWidth: 2,
@@ -221,6 +224,9 @@ const styles = StyleSheet.create({
     // borderColor: 'red',
     width: '77%',
     alignItems: 'flex-start',
+    fontFamily: "Maplestory_Bold", // 시안은 굵게
+    fontSize: 18,
+    color: colors.brown,
   },
   emotionDetailsWrap: {
     // borderWidth: 2,
@@ -286,7 +292,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     width: '100%',
     height: '20%',
-    marginLeft: 20,
+    marginLeft: 30,
     // borderWidth: 2,
     // borderColor: 'red'
   },
@@ -347,6 +353,11 @@ const styles = StyleSheet.create({
     // borderColor: 'red'
   },
   bubbleText: {
-    // textAlign: 'center'
+    // textAlign: 'center',
+    // paddingVertical: 5,
+    paddingHorizontal: 5,
+    fontSize: 20,
+    fontFamily: "gangwongyoyuksaeeum",
+    color: colors.brown,
   }
 })
