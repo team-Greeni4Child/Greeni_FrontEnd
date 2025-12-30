@@ -96,7 +96,7 @@ export default function HomeScreen({ navigation }) {
         {/* 동물퀴즈 */}
         <TouchableOpacity
           style={[styles.button, { backgroundColor: colors.green }]}
-          onPress={() => navigation.navigate("AnimalQuiz")}
+          onPress={() => navigation.navigate("Statistics")}
         >
           <Image
             source={require("../assets/images/icon_animal.png")}

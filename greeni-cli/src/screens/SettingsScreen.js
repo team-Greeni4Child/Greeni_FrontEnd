@@ -93,7 +93,6 @@ export default function SettingsScreen({route, navigation}) {
                   </View>
 
                   <View style={styles.profileInfo}>
-
                     <View style={styles.infoRow}>
                       <Text style={styles.infoLabel}>이름</Text>
                       <View style={styles.infoRight}>
@@ -127,17 +126,6 @@ export default function SettingsScreen({route, navigation}) {
 
 
                 <View style={styles.optionWrap}>
-                    <Button 
-                        title='부모페이지 가기' 
-                        backgroundColor={colors.ivory} 
-                        borderRadius={10} 
-                        borderWidth={2} 
-                        borderColor={colors.pinkDark} 
-                        width={345} 
-                        height={51} 
-                        style={{ marginBottom: 12 }}
-                        onPress={() => navigation.navigate("ParentsPage")}
-                    />
                     <Button 
                         title='프로필 전환' 
                         backgroundColor={colors.ivory} 
@@ -181,6 +169,7 @@ export default function SettingsScreen({route, navigation}) {
               onCancel={hideDatePicker}
               maximumDate={new Date()}
               locale="ko-KR"
+              display="spinner"
             />
 
             <Modal
@@ -258,6 +247,7 @@ export default function SettingsScreen({route, navigation}) {
     )
 }
 
+
 const styles = StyleSheet.create({
   root: {
     flex: 1,
@@ -277,7 +267,7 @@ const styles = StyleSheet.create({
 
   titleWrap: {
     alignItems: "center",
-    marginBottom: 30,
+    marginBottom: 45,
     width: W,
   },
   title: {
@@ -288,14 +278,16 @@ const styles = StyleSheet.create({
 
   profileWrap: {
     alignItems: "center",
-    marginBottom: 40,
+    marginBottom: 45,
+    // borderWidth: 2,
+    // borderColor: 'green'
   },
   profile: {
     width: 104,
     height: 104,
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: 15,
+    marginBottom: 45,
   },
   imageWrap: {
     position: 'relative',
@@ -323,7 +315,7 @@ const styles = StyleSheet.create({
   },
   profileInfo: {
     width: 345,
-    height: 115,
+    height: 135,
     borderRadius: 20,
     borderWidth: 3,
     borderColor: colors.pinkDark,
@@ -336,7 +328,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginVertical: 6,
+    marginVertical: 15,
   },
   infoLabel: {
     color: colors.brown,
@@ -365,6 +357,8 @@ const styles = StyleSheet.create({
 
   optionWrap: {
     alignItems: "center",
+    // borderWidth: 2,
+    // borderColor: 'red'
   },
 
   modalBackground: {
@@ -375,6 +369,7 @@ const styles = StyleSheet.create({
   },
   modalWrap: {
     width: W * 0.8,
+    height: 150,
     backgroundColor: colors.ivory,
     borderRadius: 20,
     borderWidth: 3,
@@ -390,7 +385,7 @@ const styles = StyleSheet.create({
     fontFamily: "Maplestory_Light", 
     color: colors.brown,
     textAlign: 'center',
-    marginBottom: 20
+    marginBottom: 30,
   },
   modalButtonWrap: {
     flexDirection: 'row',

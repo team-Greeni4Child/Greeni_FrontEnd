@@ -27,6 +27,7 @@ import SettingsScreen from "./screens/SettingsScreen";
 import ParentsPageScreen from "./screens/ParentsPageScreen";
 import ProfileImageChangeScreen from "./screens/ProfileImageChangeScreen";
 import SummaryScreen from "./screens/SummaryScreen";
+import StatisticsScreen from "./screens/StatisticsScreen";
 
 export const AuthContext = createContext();
 
@@ -79,6 +80,7 @@ function MainStack() {
       <Stack.Screen name="ParentsPage" component={ParentsPageScreen}/>
       <Stack.Screen name="ProfileImageChange" component={ProfileImageChangeScreen}/>
       <Stack.Screen name="Summary" component={SummaryScreen}/>
+      <Stack.Screen name="Statistics" component={StatisticsScreen}/>
       {/* 나중에 다른 페이지 추가 */}
     </Stack.Navigator>
   );
