@@ -2,14 +2,6 @@ import React, { useMemo, useState, useCallback } from "react";
 import { View, Image, StyleSheet } from "react-native";
 import colors from "../theme/colors";
 
-/**
- * props:
- *  - emotions: Array<string>  // 예: ["joy", "sad", "angry", ...] 또는 네가 쓰는 key들
- *  - sourceMap: Record<string, any> // key -> require("...") 매핑
- *  - max: number (default 31)
- *  - seed: number (default 1234)  // 같은 달/같은 사용자면 고정 추천
- *  - style: any (optional)
- */
 export default function EmotionVander({
   emotions = [],
   sourceMap = {},
@@ -24,7 +16,7 @@ export default function EmotionVander({
     setBox({ w: width, h: height });
   }, []);
 
-  // ✅ deterministic random (리렌더되어도 위치가 “랜덤하게” 튀지 않게)
+  // deterministic random
   const mulberry32 = (a) => {
     return function () {
       let t = (a += 0x6d2b79f5);
@@ -34,45 +26,81 @@ export default function EmotionVander({
     };
   };
 
-  // ✅ 개수 늘수록 크기가 줄어들게 (최대 31 기준)
+  // ✅ 개수 늘수록 더 작아지게
   const baseSize = useMemo(() => {
     const minWH = Math.min(box.w, box.h);
     if (!minWH) return 0;
 
-    const maxSize = minWH * 0.62; // 처음엔 큼
-    const minSize = minWH * 0.22; // 많아지면 작게
-    const t = max <= 1 ? 1 : Math.min(1, Math.max(0, (emotions.length - 1) / (max - 1)));
+    const maxSize = minWH * 0.52;
+    const minSize = minWH * 0.16;
+    const t =
+      max <= 1
+        ? 1
+        : Math.min(1, Math.max(0, (emotions.length - 1) / (max - 1)));
     return maxSize - (maxSize - minSize) * t;
   }, [box.w, box.h, emotions.length, max]);
 
-  // ✅ “첫 번째 사진처럼” 겹치면서 한쪽(오른쪽-아래 쪽)에 쌓이는 배치
+  // ✅ 겹치지 않게 + 아래에서부터 쌓이게 + 회전/스케일 랜덤
   const placed = useMemo(() => {
     if (!box.w || !box.h || !baseSize) return [];
 
-    const rand = mulberry32(seed);
-    const pad = 8;
+    const pad = 6;
+    const items = [];
 
-    return emotions.map((key, i) => {
-      // 아이콘마다 크기를 약간씩 다르게
-      const rSize = 0.82 + rand() * 0.38; // 0.82 ~ 1.20
-      const size = Math.max(16, baseSize * rSize);
+    const count = emotions.length;
+    const minCell = Math.max(18, baseSize * 0.95);
+    const cols = Math.max(1, Math.floor((box.w - pad * 2) / minCell));
+    const cellW = (box.w - pad * 2) / cols;
+    const cellH = cellW;
+    const rows = Math.max(1, Math.ceil(count / cols));
 
-      // 배치 가능 범위
-      const maxX = Math.max(0, box.w - size - pad);
-      const maxY = Math.max(0, box.h - size - pad);
+    for (let i = 0; i < count; i++) {
+      const key = emotions[i];
+      const rand = mulberry32(seed + i);
 
-      // ✅ 오른쪽/아래로 bias 주기 (0.55~1.0 영역 위주)
-      const rx = 0.55 + rand() * 0.45;
-      const ry = 0.55 + rand() * 0.45;
+      const rowFromBottom = Math.floor(i / cols);
+      const row = rows - 1 - rowFromBottom;
+      const col = i % cols;
 
-      const x = pad + maxX * rx;
-      const y = pad + maxY * ry;
+      const jitterX = (rand() - 0.5) * (cellW * 0.25);
+      const jitterY = (rand() - 0.5) * (cellH * 0.25);
 
-      // 위에 쌓이는 느낌 (나중에 들어온 게 위로)
-      const zIndex = 10 + i;
+      const size = Math.max(16, cellW * (0.65 + rand() * 0.3));
 
-      return { key, x, y, size, zIndex };
-    });
+      let x = pad + col * cellW + (cellW - size) / 2 + jitterX;
+      let y = pad + row * cellH + (cellH - size) / 2 + jitterY;
+
+      x = Math.max(pad, Math.min(x, box.w - size - pad));
+      y = Math.max(pad, Math.min(y, box.h - size - pad));
+
+      // ✅ 회전 더 자유롭게:
+      // - 대부분은 "자연스러운 각도" (-25~+25)
+      // - 일부는 크게 돌아감 (최대 180도까지 가능)
+      const r = rand();
+      let rotate;
+      if (r < 0.75) {
+        // 75%: 자연스럽게
+        rotate = (rand() * 50) - 25; // -25 ~ +25
+      } else {
+        // 25%: 크게 (부호도 랜덤)
+        const sign = rand() < 0.5 ? -1 : 1;
+        rotate = sign * (60 + rand() * 120); // 60 ~ 180
+      }
+
+      const scale = 0.98 + rand() * 0.06;
+
+      items.push({
+        key,
+        x,
+        y,
+        size,
+        rotate,
+        scale,
+        zIndex: 10 + i,
+      });
+    }
+
+    return items;
   }, [box.w, box.h, baseSize, emotions, seed]);
 
   return (
@@ -94,6 +122,7 @@ export default function EmotionVander({
                 left: p.x,
                 top: p.y,
                 zIndex: p.zIndex,
+                transform: [{ rotate: `${p.rotate}deg` }, { scale: p.scale }],
               },
             ]}
           />
@@ -110,7 +139,7 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: colors.pink,
     borderRadius: 10,
-    backgroundColor: colors.ivory, // 너가 쓰던 배경과 맞춤
+    backgroundColor: colors.ivory,
     overflow: "hidden",
     position: "relative",
   },
