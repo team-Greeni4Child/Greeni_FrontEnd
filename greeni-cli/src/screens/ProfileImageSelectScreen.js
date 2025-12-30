@@ -91,7 +91,7 @@ export default function ProfileImageSelectScreen({ navigation }) {
         <BackButton navigation={navigation}
                     top={H * 0.001}
                     left={W * 0.05}/>
-        <Text style={styles.title}>프로필 만들기</Text>
+        <Text style={styles.title}>프로필 이미지 선택</Text>
       </View>
 
       {/* 프로필 이미지 선택 */}
