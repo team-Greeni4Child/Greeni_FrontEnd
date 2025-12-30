@@ -79,9 +79,9 @@ export default function HomeScreen({ navigation }) {
         </View>
       </Modal>
 
-      {/* 그리니 */}
+      {/* 연못 */}
       <Image
-        source={require("../assets/images/pond.png")}
+        source={require("../assets/images/pond_home.png")}
         style={styles.pond}
         resizeMode="cover"
       />
