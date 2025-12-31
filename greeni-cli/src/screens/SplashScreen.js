@@ -95,7 +95,7 @@ export default function SplashScreen({ onDone }) {
       ]),
     ]).start(({ finished }) => {
       // 애니메이션이 끝나면 상위(App.js)로 알려서 다음 화면으로 전환
-      if (finished && typeof onDone === "function") onDone();
+      if (false && finished && typeof onDone === "function") onDone();
     });
   };
 
@@ -138,10 +138,15 @@ export default function SplashScreen({ onDone }) {
           resizeMode="contain"
         />
 
-        {/* 꽃 */}
+        {/* 연꽃들 */}
         <Animated.Image
           source={require("../assets/images/flower.png")}
-          style={styles.flower}
+          style={styles.flower1}
+          resizeMode="contain"
+        />
+        <Animated.Image
+          source={require("../assets/images/flower.png")}
+          style={styles.flower2}
           resizeMode="contain"
         />
 
@@ -268,27 +273,26 @@ const styles = StyleSheet.create({
   pondWrap: {
     position: "absolute",
     zIndex: 2,
-    bottom: -H * 0.03,   // 필요하면 -0.02~-0.08 사이에서 조절
+    bottom: -H * 0.08,  
     alignSelf: "center",
-    width: W * 1.22,     // 연못 크기(시안처럼 보이게 조절)
+    width: W * 1.22,    
     aspectRatio: AR.pond,
   },
   pond: {
     position: "absolute",
     left: 0,
     top: 0,
-    width: "100%",
-    height: "100%",
+    width: "110%",
+    height: "110%",
   },
 
-  /*** ✅ pondWrap(연못) 기준 배치: 잎/꽃/그리니 ***/
   // 큰 연잎(그리니 발판)
   leaf1: {
     position: "absolute",
     zIndex: 3,
-    left: "6%",
-    bottom: "8%",
-    width: "66%",
+    left: "11%",
+    bottom: "42%",
+    width: "50%",
     aspectRatio: AR.leaf1,
   },
 
@@ -296,9 +300,9 @@ const styles = StyleSheet.create({
   leaf4: {
     position: "absolute",
     zIndex: 2,
-    right: "-18%",
-    bottom: "-10%",
-    width: "62%",
+    right: "-2%",
+    bottom: "10%",
+    width: "35%",
     aspectRatio: AR.leaf4,
   },
 
@@ -306,9 +310,9 @@ const styles = StyleSheet.create({
   leaf2: {
     position: "absolute",
     zIndex: 2,
-    left: "48%",
-    bottom: "6%",
-    width: "18%",
+    left: "53%",
+    bottom: "43%",
+    width: "15%",
     aspectRatio: AR.leaf2,
   },
 
@@ -316,19 +320,27 @@ const styles = StyleSheet.create({
   leaf3: {
     position: "absolute",
     zIndex: 2,
-    left: "36%",
-    bottom: "2%",
-    width: "14%",
+    left: "40%",
+    bottom: "36%",
+    width: "9%",
     aspectRatio: AR.leaf3,
   },
 
-  // 꽃(오른쪽)
-  flower: {
+  // 꽃
+  flower1: {
     position: "absolute",
     zIndex: 3,
-    right: "10%",
-    bottom: "12%",
-    width: "18%",
+    right: "18%",
+    bottom: "55%",
+    width: "19%",
+    aspectRatio: AR.flower,
+  },
+  flower2: {
+    position: "absolute",
+    zIndex: 5,
+    left: "10%",
+    bottom: "33%",
+    width: "12%",
     aspectRatio: AR.flower,
   },
 
@@ -336,8 +348,8 @@ const styles = StyleSheet.create({
   greeni: {
     position: "absolute",
     zIndex: 4,
-    left: "8%",
-    bottom: "18%",
+    left: "18%",
+    bottom: "30%",
     width: "26%",
     aspectRatio: AR.greeniUmbrella,
   },
