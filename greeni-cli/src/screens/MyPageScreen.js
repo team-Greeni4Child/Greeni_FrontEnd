@@ -50,7 +50,7 @@ const TEST_BADGES = [
 ];
 
 export default function MyPageScreen({ navigation }) {
-  const [tab, setTab] = useState(2);
+  const [tab, setTab] = useState(3);
 
   // 뒤로가기 → 앱 종료
   useEffect(() => {
@@ -74,9 +74,10 @@ export default function MyPageScreen({ navigation }) {
         state={tab}
         onTabPress={(i) => {
           setTab(i);
-          if (i === 0) navigation.navigate("Calendar");
-          if (i === 1) navigation.navigate("Home");
-          if (i === 2) navigation.navigate("MyPage");
+          if (i === 0) navigation.navigate("Home");
+          if (i === 1) navigation.navigate("Calendar");
+          if (i === 2) navigation.navigate("Statistics");
+          if (i === 3) navigation.navigate("MyPage");
         }}
       />
 

@@ -11,10 +11,19 @@ import colors from "../theme/colors";
 
 const { width: W, height: H } = Dimensions.get("window");
 
-export default function NavigationBar({ state = 1, onTabPress }) {
-  const animValues = [0, 1, 2].map(() => useRef(new Animated.Value(0)).current);
-  const dentAnimValues = [0, 1, 2].map(() => useRef(new Animated.Value(0)).current);
-  const dotAnimValues = [0, 1, 2].map(() => useRef(new Animated.Value(0)).current);
+export default function NavigationBar({ state = 0, onTabPress }) {
+  // 탭 개수 = 4
+  const TAB_COUNT = 4;
+
+  const animValues = Array.from({ length: TAB_COUNT }).map(
+    () => useRef(new Animated.Value(0)).current
+  );
+  const dentAnimValues = Array.from({ length: TAB_COUNT }).map(
+    () => useRef(new Animated.Value(0)).current
+  );
+  const dotAnimValues = Array.from({ length: TAB_COUNT }).map(
+    () => useRef(new Animated.Value(0)).current
+  );
 
   useEffect(() => {
     // dent 이동
@@ -43,14 +52,19 @@ export default function NavigationBar({ state = 1, onTabPress }) {
     });
   }, [state]);
 
+  // 🔹 순서: home, calendar, statistics, mypage
   const icons = [
+    {
+      default: require("../assets/images/tab_home.png"),
+      active: require("../assets/images/tab_home_active.png"),
+    },
     {
       default: require("../assets/images/tab_calendar.png"),
       active: require("../assets/images/tab_calendar_active.png"),
     },
     {
-      default: require("../assets/images/tab_home.png"),
-      active: require("../assets/images/tab_home_active.png"),
+      default: require("../assets/images/tab_statistics.png"),
+      active: require("../assets/images/tab_statistics_active.png"),
     },
     {
       default: require("../assets/images/tab_mypage.png"),
@@ -63,10 +77,9 @@ export default function NavigationBar({ state = 1, onTabPress }) {
       {icons.map((icon, i) => {
         const isActive = state === i;
 
-        // dent 
         const dentTranslateY = dentAnimValues[i].interpolate({
           inputRange: [0, 1],
-          outputRange: [-80, -18], 
+          outputRange: [-80, -18],
         });
 
         return (
@@ -83,7 +96,7 @@ export default function NavigationBar({ state = 1, onTabPress }) {
                 justifyContent: "center",
               }}
             >
-              {/*凹 도형 이미지 */}
+              {/* 凹 도형 */}
               <Animated.Image
                 source={require("../assets/images/dent.png")}
                 style={[
@@ -121,10 +134,10 @@ const styles = StyleSheet.create({
   container: {
     position: "absolute",
     bottom: H * 0.06,
-    left: W * 0.1, // 센터 정렬
-    width: W * 0.8,
+    left: W * 0.05,
+    width: W * 0.9,
     height: 60,
-    paddingHorizontal: 30,
+    paddingHorizontal: 20,
     backgroundColor: colors.green,
     borderRadius: 30,
     flexDirection: "row",
@@ -138,11 +151,11 @@ const styles = StyleSheet.create({
   },
   dent: {
     position: "absolute",
-    width: W * 0.28,
+    width: W * 0.22, // 4개 탭 기준으로 축소
   },
   icon: {
-    width: W * 0.07,
-    height: W * 0.07,
+    width: W * 0.065,
+    height: W * 0.065,
   },
   dot: {
     position: "absolute",
