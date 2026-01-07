@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import colors from "../theme/colors";
 import BackButton from "../components/BackButton";
 import Button from "../components/Button";
@@ -12,6 +12,7 @@ import {
   Dimensions, 
   Platform,
 } from "react-native";
+import { Color } from "react-native/types_generated/Libraries/Animated/AnimatedExports";
 
 const { width: W, height: H } = Dimensions.get("window");
 
@@ -24,12 +25,53 @@ const AR = {
 const MOCK_USER_EMAIL = "aaa";
 const MOCK_VERIFY_CODE = "aaa";
 
+const DEFAULT_EXPIRE_SECONDS = 3 ;//* 60; // 인증번호 유효시간 3분
+
 export default function LoginScreen({ navigation }) {
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
 
   const [emailError, setEmailError] = useState("");
   const [codeError, setCodeError] = useState("");
+
+  const [secondsLeft, setSecondsLeft] = useState(null); // null이면 미표시
+  const [isExpired, setIsExpired] = useState(false);
+  const timerRef = useRef(null);
+
+  const clearTimer = () => {
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+  };
+
+  const startTimer = (sec) => {
+    clearTimer();
+    setIsExpired(false);
+    setSecondsLeft(sec);
+
+    timerRef.current = setInterval(() => {
+      setSecondsLeft((prev) => {
+        if (prev === null) return null;
+        if (prev <= 1) {
+          clearTimer();
+          setIsExpired(true);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  };
+
+  useEffect(() => {
+    return () => clearTimer(); // 화면 unmount 시 정리
+  }, []);
+
+  const formatMMSS = (sec) => {
+    const m = String(Math.floor(sec / 60)).padStart(1, "0");
+    const s = String(sec % 60).padStart(2, "0");
+    return `${m}:${s}`;
+  };
 
   // 인증 버튼 클릭
   const handleVerifyEmail = () => {
@@ -49,8 +91,12 @@ export default function LoginScreen({ navigation }) {
       setEmailError("가입되지 않은 이메일입니다");
       return;
     }
-    // 여기서 실제로는 인증코드 발송 API 호출
-    // 테스트용으로는 아무것도 안 함
+    // 인증코드 발송 API 호출
+    // 성공했다고 가정하고 타이머 시작
+    startTimer(DEFAULT_EXPIRE_SECONDS);
+
+    // 인증 버튼을 다시 눌렀을 때 인증코드 입력칸을 비움
+    setCode("");
   };
 
   // 완료 버튼 클릭
@@ -77,7 +123,13 @@ export default function LoginScreen({ navigation }) {
 
     if (hasError) return;
 
-    // 여기서는 이미 인증을 했다고 가정하고,
+    // 인증코드 만료
+    if (secondsLeft === 0 || isExpired) {
+      setCode("");
+      setCodeError("인증코드가 만료되었습니다");
+      return;
+    }
+
     // 이메일 + 코드 일치 여부만 간단히 체크
     if (trimmedEmail !== MOCK_USER_EMAIL || trimmedCode !== MOCK_VERIFY_CODE) {
       setCode("");
@@ -86,7 +138,7 @@ export default function LoginScreen({ navigation }) {
     }
 
     navigation.navigate("ResetPassword");
-  };    
+  };
 
   return (
     <View style={styles.container}>
@@ -122,27 +174,43 @@ export default function LoginScreen({ navigation }) {
             <TouchableOpacity
               style={styles.verificationButton}
               onPress={handleVerifyEmail}
+              activeOpacity={0.6}
             >
-              <Text 
-                style={styles.verificationButtonText}>인증</Text>
+              <Text style={styles.verificationButtonText}>인증</Text>
             </TouchableOpacity>
           </View>
 
-          <TextInput
+          {/* 인증코드 입력칸 + 오른쪽 유효시간 */}
+          <View
             style={[
-              styles.code,
+              styles.codeWrap,
               codeError ? { borderBottomColor: "#f36945" } : {},
             ]}
-            fontFamily="Maplestory_Light"
-            placeholder={codeError ? codeError : "인증코드"}
-            placeholderTextColor={codeError ? "#f36945" : colors.brown}
-            value={code}
-            onChangeText={(text) => {
-              setCode(text);
-              // 인증코드 입력 시: 코드 에러 초기화
-              if (codeError) setCodeError("");
-            }}
-          />
+          >
+            <TextInput
+              style={styles.codeInput}
+              fontFamily="Maplestory_Light"
+              placeholder={codeError ? codeError : "인증코드"}
+              placeholderTextColor={codeError ? "#f36945" : colors.brown}
+              value={code}
+              onChangeText={(text) => {
+                setCode(text);
+                // 인증코드 입력 시: 코드 에러 초기화
+                if (codeError) setCodeError("");
+              }}
+            />
+
+            {/* 인증코드 유효시간 타이머 */}
+            {secondsLeft !== null ? (
+              isExpired ? (
+                <Text style={styles.expiredText}>만료</Text>
+              ) : (
+                <Text style={styles.timerText}>{formatMMSS(secondsLeft)}</Text>
+              )
+            ) : (
+              <View style={styles.timerPlaceholder} />
+            )}
+          </View>
         </View>
 
         {/* 완료 버튼 */}
@@ -162,7 +230,7 @@ export default function LoginScreen({ navigation }) {
           source={require("../assets/images/greeni_shy.png")} 
           style={styles.greeni}
           resizeMode="contain"
-         />
+        />
 
         {/* 오른쪽 공간 (비워둠) */}
         <View style={{ width: W * 0.402 }} />
@@ -212,6 +280,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 2,
     borderBottomColor: colors.greenDark,
     marginBottom: 8,
+    alignItems: "center", //인증버튼 위치 이상한 기종 있으면 이거 지우기
   },
   email: {
     width: "75%",
@@ -221,30 +290,56 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     color: colors.brown,
   },
-  verificationButton:{
-    //bottom: Platform.OS === "ios" ? 4 : -4,
+  verificationButton: {
     backgroundColor: colors.pink,
     borderRadius: 5,
     height: 30,
-    paddingHorizontal: 20,
+    width: 60,
     alignItems: "center",
     justifyContent: "center",
   },
-  verificationButtonText:{
+  verificationButtonText: {
     fontSize: 12,
     fontFamily: "Maplestory_Light",
     color: colors.brown,
   },
-  code: {
-    width: "100%",
+
+  // 인증코드 입력 + 타이머
+  codeWrap: {
+    flexDirection: "row",
+    alignItems: "center",
     borderBottomWidth: 2,
     borderBottomColor: colors.greenDark,
+    marginBottom: 8,
+  },
+  codeInput: {
+    width: "75%",
+    height: 35,
     fontSize: 14,
     fontFamily: "Maplestory_Light",
     paddingVertical: 8,
-    marginBottom: 8,
     color: colors.brown,
   },
+  timerText: {
+    width: 60,
+    textAlign: "center",
+    fontSize: 12,
+    fontFamily: "Maplestory_Light",
+    color: colors.brown,
+    paddingBottom: 2,
+  },
+  expiredText: {
+    width: 60,
+    textAlign: "center",
+    fontSize: 12,
+    fontFamily: "Maplestory_Light",
+    color: "#f36945",
+    paddingBottom: 2,
+  },
+  timerPlaceholder: {
+    width: 60,
+  },
+
   bottomWrap: {
     marginTop: H * 0.08,
     flexDirection: "row",    
