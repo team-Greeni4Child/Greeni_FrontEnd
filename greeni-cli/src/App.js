@@ -16,7 +16,7 @@ import ProfileInfoFormScreen from "./screens/ProfileInfoFormScreen";
 import HomeScreen from "./screens/HomeScreen";
 import DiaryScreen from "./screens/DiaryScreen";
 import DiaryDrawScreen from "./screens/DiaryDrawScreen";
-import TwentyQuestionsScreen from "./screens/TwentyQuestionsScreen";
+import FiveQuestionsScreen from "./screens/FiveQuestionsScreen";
 import AnimalQuizScreen from "./screens/AnimalQuizScreen";
 import RolePlayingScreen from "./screens/RolePlayingScreen";
 import CalendarScreen from "./screens/CalendarScreen";
@@ -25,7 +25,6 @@ import MyPageScreen from "./screens/MyPageScreen";
 import SettingsPasswordScreen from "./screens/SettingsPasswordScreen";
 import SettingsScreen from "./screens/SettingsScreen";
 import ParentsPageScreen from "./screens/ParentsPageScreen";
-import ProfileImageChangeScreen from "./screens/ProfileImageChangeScreen";
 import SummaryScreen from "./screens/SummaryScreen";
 import StatisticsScreen from "./screens/StatisticsScreen";
 
@@ -69,7 +68,7 @@ function MainStack() {
       <Stack.Screen name="Home" component={HomeScreen} />
       <Stack.Screen name="Diary" component={DiaryScreen} />
       <Stack.Screen name="DiaryDraw" component={DiaryDrawScreen} />
-      <Stack.Screen name="TwentyQuestions" component={TwentyQuestionsScreen} />
+      <Stack.Screen name="FiveQuestions" component={FiveQuestionsScreen} />
       <Stack.Screen name="AnimalQuiz" component={AnimalQuizScreen} />
       <Stack.Screen name="RolePlaying" component={RolePlayingScreen} />
       <Stack.Screen name="Calendar" component={CalendarScreen}/>
@@ -78,7 +77,7 @@ function MainStack() {
       <Stack.Screen name="SettingsPassword" component={SettingsPasswordScreen}/>
       <Stack.Screen name="Settings" component={SettingsScreen}/>
       <Stack.Screen name="ParentsPage" component={ParentsPageScreen}/>
-      <Stack.Screen name="ProfileImageChange" component={ProfileImageChangeScreen}/>
+      <Stack.Screen name="ProfileImageSelectFromSettings" component={ProfileImageSelectScreen} />
       <Stack.Screen name="Summary" component={SummaryScreen}/>
       <Stack.Screen name="Statistics" component={StatisticsScreen}/>
       {/* 나중에 다른 페이지 추가 */}
