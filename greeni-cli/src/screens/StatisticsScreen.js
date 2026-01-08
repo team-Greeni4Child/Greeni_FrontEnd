@@ -32,7 +32,7 @@ const emotionSourceMap = {
 };
 
 // 예시 데이터 (하루하루 쌓이면 배열에 push)
-const monthEmotions = ["sad", "angry", "happy", "surprised", "anxiety"];
+const monthEmotions = ["sad", "angry", "happy", "surprised", "anxiety", "sad", "angry", "happy", "surprised", "anxiety", "angry", "happy", "surprised", "anxiety","angry", "happy", "surprised", "anxiety",];
 
 export default function StatisticsScreen({route, navigation}) {
 
@@ -49,6 +49,12 @@ export default function StatisticsScreen({route, navigation}) {
                     <Text style={styles.title}>통계</Text>
                 </View>
             </View>
+            {/* <View style={styles.titleWrap}>
+                <BackButton navigation={navigation}
+                    top={H * 0.001}
+                    left={W * 0.05}/>
+                <Text style={styles.title}>통계</Text>
+            </View> */}
 
             <View style={{ flex: 1, width: W }}>
                 <ScrollView
@@ -56,11 +62,29 @@ export default function StatisticsScreen({route, navigation}) {
                     contentContainerStyle={{ alignItems: 'center', paddingBottom: 20 }}
                     showsVerticalScrollIndicator={false}
                 >
-                    {/* 출석 */}
+                    {/* 출석 버전 1 */}
                     <View style={styles.attendanceWrap}>
+                        <Image style={styles.greeniFace} source={require("../assets/images/greeni_face.png")}/>
                         <View style={styles.attendanceTextWrap}>
-                            <Text style={{fontFamily: "gangwongyoyuksaeeum", fontSize: 24,}}>OO이는 100일 출석했고</Text>
-                            <Text style={{fontFamily: "gangwongyoyuksaeeum", fontSize: 24,}}>우리는 함께 99일의 일기를 작성했어!</Text>
+                            <Text style={{fontFamily: "gangwongyoyuksaeeum", fontSize: 28,}}>OO이는 100일 출석했고</Text>
+                            <Text style={{fontFamily: "gangwongyoyuksaeeum", fontSize: 28,}}>우리는 함께 99일의 일기를 작성했어!</Text>
+                        </View>
+                    </View>
+                    {/* 출석 버전 2 */}
+                    <View style={styles.attendanceWrap}>
+                        <Image style={styles.greeniFace} source={require("../assets/images/greeni_face.png")}/>
+                        <View style={styles.attendanceTextWrap}>
+                          <Text style={styles.attendanceText}>
+                            OO이는{" "}
+                            <Text style={styles.attendanceNumber}>100</Text>
+                            일 출석했고
+                          </Text>
+
+                          <Text style={styles.attendanceText}>
+                            우리는 함께{" "}
+                            <Text style={styles.attendanceNumber}>99</Text>
+                            일의 일기를 작성했어!
+                          </Text>
                         </View>
                     </View>
 
@@ -135,11 +159,11 @@ export default function StatisticsScreen({route, navigation}) {
                           <View style={styles.chatLeft}>
                             <Image 
                               source={require("../assets/images/quiz_greeni_big.png")}
-                              style={styles.greeni}
+                              style={[styles.greeni, { width: 80, height: 85 }]}
                               resizeMode="contain"
                             />
                             <View style={styles.bubble}>
-                              <Text style={styles.bubbleText}>동물퀴즈 10문제를 모두 맞혔어요.</Text>
+                              <Text style={[styles.bubbleText, { paddingTop: 10, paddingBottom: 10, textAlign: 'center' }]}>동물퀴즈 10문제를 모두 맞혔어요.</Text>
                             </View>
                           </View>
                         </View>
@@ -172,6 +196,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 45,
     width: W,
+    zIndex: 1
   },
   title: {
     fontSize: 28,
@@ -182,7 +207,7 @@ const styles = StyleSheet.create({
   statisticsScrollWrap: {
     flex: 1,
     width: W,
-    marginTop: H * 0.025,
+    marginTop: H * 0.001,
   },
   attendanceWrap: {
     height: 153,
@@ -198,14 +223,33 @@ const styles = StyleSheet.create({
     color: colors.brown,
     borderWidth: 2,
     borderColor: colors.green,
+    marginTop: 30,
+    position: 'relative',
+    overflow: 'visible'
+  },
+  greeniFace: {
+    position: 'absolute',
+    left: -10,
+    top: -28,
+    width: 76,
+    height: 66.34,
+    resizeMode: 'contain'
   },
   attendanceTextWrap: {
     alignItems: 'center',
-    // borderWidth: 2,
-    // borderColor: 'red'
     fontSize: 18,
     fontFamily: "gangwongyoyuksaeeum",
     color: colors.brown,
+  },
+  attendanceText: {
+    fontFamily: "gangwongyoyuksaeeum",
+    fontSize: 24,
+    textAlign: "center",
+  },
+
+  attendanceNumber: {
+    fontFamily: "gangwongyoyuksaeeum",
+    fontSize: 34,
   },
   emotionWrap: {
     borderWidth: 2,
@@ -220,35 +264,34 @@ const styles = StyleSheet.create({
     borderRadius: 10,
   },
   emotionTitleWrap: {
-    // borderWidth: 2,
-    // borderColor: 'red',
     width: '77%',
     alignItems: 'flex-start',
     fontFamily: "Maplestory_Bold", // 시안은 굵게
     fontSize: 18,
     color: colors.brown,
+    marginLeft: -40,
+    marginBottom: 5
   },
   emotionDetailsWrap: {
-    // borderWidth: 2,
-    // borderColor: 'blue',
-    width: '90%',
+    width: '100%',
     height: '75%',
     flexDirection: 'row',
     justifyContent: 'center',
-    alignItems: 'center'
+    alignItems: 'center',
   },
   emotionVander: {
     borderWidth: 2,
     borderColor: colors.pink,
-    width: '45%',
+    width: '70%',
     height: '90%',
+    marginRight: 20,
     borderRadius: 10,
     backgroundColor: colors.ivory
   },
   emotionCountWrap: {
     // borderWidth: 2,
     // borderColor: 'black',
-    width: '45%',
+    width: '15%',
     height: '90%',
     justifyContent: 'center',
     alignItems: 'center'
@@ -264,81 +307,82 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: colors.white,
     borderRadius: 10,
+    paddingVertical: 16
   },
   keywordTitle: {
-
+    alignSelf: 'flex-start',
+    marginLeft: 15,
+    marginBottom: 0
   },
   keywordContent: {
-
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center'
   },
   summaryWrap: {
     borderWidth: 2,
     borderColor: colors.pink,
-    height: 267,
+    height: 300,
     width: '90%',
     flexDirection: 'column',
-    marginBottom: 100,
+    marginBottom: 120,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: colors.white,
     borderRadius: 10,
   },
-  // summaryButton: {
-  //   justifyContent: "space-between",
-  // },
   summaryHeader: {
     flexDirection: "row",
     justifyContent: "flex-start",
     alignItems: "center",
     width: '100%',
-    height: '20%',
+    paddingTop: 20,
     marginLeft: 30,
-    // borderWidth: 2,
-    // borderColor: 'red'
   },
   summaryTitle: {
-    fontFamily: "Maplestory_Bold", // 시안은 굵게
+    fontFamily: "Maplestory_Bold",
     fontSize: 18,
     color: colors.brown,
     marginRight: 6,
-    // borderWidth: 2,
-    // borderColor: 'blue'
   },
   nextArrow: {
-    // borderWidth: 2,
-    // borderColor: 'red',
     width: 8,
     height: 15,
     aspectRatio: 7/12,
     resizeMode: 'contain',
-    // borderWidth: 2,
-    // borderColor: 'green'
   },
   summaryContent: {
+    flex : 1,
     width: '100%',
     height: '80%',
     justifyContent: 'center',
+    alignItems: 'center',
+    paddingTop: 44,
+    paddingBottom: 28,
   },
   chatLeft: {
     width: '100%',
     height: '30%',
     flexDirection: 'row',
     justifyContent: "flex-start",
-    
-    marginBottom: 10,
+    alignItems: 'center',
+    marginBottom: 20,
   },
   chatRight: {
     width: '100%',
     height: '30%',
     flexDirection: 'row',
     justifyContent: "flex-end",
-    marginBottom: 10,
+    alignItems: 'center',
+    marginBottom: 20,
   },
   greeni: {
     width: '20%',
-    height: '100%',
-    marginLeft : 5,
-    marginRight : 5
+    height: '120%',
+    marginLeft : 15,
+    marginRight : 15,
+    // borderWidth: 2,
+    // borderColor: 'red'
   },
   bubble: {
     backgroundColor: colors.pink,
@@ -349,12 +393,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 6,
     maxWidth: '70%',
     flexShrink: 1,
-    // borderWidth: 2,
-    // borderColor: 'red'
   },
   bubbleText: {
-    // textAlign: 'center',
-    // paddingVertical: 5,
     paddingHorizontal: 5,
     fontSize: 20,
     fontFamily: "gangwongyoyuksaeeum",
