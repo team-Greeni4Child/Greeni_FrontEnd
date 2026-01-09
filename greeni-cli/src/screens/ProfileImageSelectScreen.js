@@ -46,10 +46,12 @@ function Profile({ image, onPress, selected }) {
   );
 }
 
-export default function ProfileImageSelectScreen({ navigation }) {
+export default function ProfileImageSelectScreen({ navigation, route }) {
   // 선택한 이미지의 index
   const [selectedIndex, setSelectedIndex] = useState(null);
   const [uploadImage, setUploadImage] = useState(null);
+
+  const nextScreen = route?.params?.nextScreen ?? "ProfileInfoForm";
 
   const handleSelect = async (index) => {
     if (index === profileImages.length - 1) {
@@ -114,10 +116,16 @@ export default function ProfileImageSelectScreen({ navigation }) {
       {/* 이미지 선택하면 다음 버튼 활성화, 선택 안 하면 회색으로 비활성화 */}
       <View style={styles.bottomWrap}>
         <Button
-          title="다음"
+          title="선택"
           onPress={() =>{
             const selected = getSelectedImage();
             if (!selected) return;
+            const onSelectImage = route?.params?.onSelectImage;
+            if (typeof onSelectImage === "function") {
+              onSelectImage(selected);
+              navigation.goBack();
+              return;
+            }
             navigation.navigate("ProfileInfoForm", { selectedImage: selected });
           }}
           icon={require("../assets/images/next.png")}

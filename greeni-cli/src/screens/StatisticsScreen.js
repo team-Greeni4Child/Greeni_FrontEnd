@@ -34,7 +34,7 @@ const emotionSourceMap = {
 
 
 // 예시 데이터 (하루하루 쌓이면 배열에 push)
-const monthEmotions = ["sad", "angry", "happy", "surprised", "anxiety"];
+const monthEmotions = ["sad", "angry", "happy", "surprised", "anxiety", "sad", "angry", "happy", "surprised", "anxiety", "angry", "happy", "surprised", "anxiety","angry", "happy", "surprised", "anxiety",];
 
 export default function StatisticsScreen({route, navigation}) {
 
@@ -63,6 +63,12 @@ export default function StatisticsScreen({route, navigation}) {
                     <Text style={styles.title}>통계</Text>
                 </View>
             </View>
+            {/* <View style={styles.titleWrap}>
+                <BackButton navigation={navigation}
+                    top={H * 0.001}
+                    left={W * 0.05}/>
+                <Text style={styles.title}>통계</Text>
+            </View> */}
 
             <View style={{ flex: 1, width: W }}>
                 <ScrollView
@@ -72,9 +78,19 @@ export default function StatisticsScreen({route, navigation}) {
                 >
                     {/* 출석 */}
                     <View style={styles.attendanceWrap}>
+                        <Image style={styles.greeniFace} source={require("../assets/images/greeni_face.png")}/>
                         <View style={styles.attendanceTextWrap}>
-                            <Text style={{fontFamily: "gangwongyoyuksaeeum", fontSize: 24,}}>OO이는 100일 출석했고</Text>
-                            <Text style={{fontFamily: "gangwongyoyuksaeeum", fontSize: 24,}}>우리는 함께 99일의 일기를 작성했어!</Text>
+                          <Text style={styles.attendanceText}>
+                            OO이는{" "}
+                            <Text style={styles.attendanceNumber}>100</Text>
+                            일 출석했고
+                          </Text>
+
+                          <Text style={styles.attendanceText}>
+                            함께{" "}
+                            <Text style={styles.attendanceNumber}>99</Text>
+                            일의 일기를 작성했어!
+                          </Text>
                         </View>
                     </View>
 
@@ -108,7 +124,7 @@ export default function StatisticsScreen({route, navigation}) {
                             <Text style={{fontFamily: "Maplestory_Bold", fontSize: 18, color:colors.brown,}}>일기 오늘의 키워드</Text>
                         </View>
                         <View style={styles.keywordContent}>
-                            <Text style={{fontFamily: "gangwongyoyuksaeeum", fontSize: 38,}}>파앤피</Text>
+                            <Text style={{fontFamily: "gangwongyoyuksaeeum", fontSize: 50,}}>파앤피</Text>
                         </View>
                     </View>
 
@@ -126,7 +142,7 @@ export default function StatisticsScreen({route, navigation}) {
                         <View style={styles.summaryContent}>
                           <View style={styles.chatLeft}>
                             <Image 
-                              source={require("../assets/images/settings_greeni_big.png")}
+                              source={require("../assets/images/mustache_greeni_big.png")}
                               style={styles.greeni}
                               resizeMode="contain"
                             />
@@ -149,11 +165,11 @@ export default function StatisticsScreen({route, navigation}) {
                           <View style={styles.chatLeft}>
                             <Image 
                               source={require("../assets/images/quiz_greeni_big.png")}
-                              style={styles.greeni}
+                              style={[styles.greeni, { width: 80, height: 85 }]}
                               resizeMode="contain"
                             />
                             <View style={styles.bubble}>
-                              <Text style={styles.bubbleText}>동물퀴즈 10문제를 모두 맞혔어요.</Text>
+                              <Text style={[styles.bubbleText, { paddingTop: 10, paddingBottom: 10, textAlign: 'center' }]}>동물퀴즈 10문제를 모두 맞혔어요.</Text>
                             </View>
                           </View>
                         </View>
@@ -172,20 +188,24 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   topBackground: {
+    position: 'absolute',
     width: W,
-    height: H * 0.17,
+    height: H * 0.14,
     backgroundColor: colors.pink,
     borderBottomLeftRadius: 30,
     borderBottomRightRadius: 30,
     alignItems: "center",
     justifyContent: "flex-start",
     paddingTop: H * 0.08,
+    zIndex: 1
   },
 
   titleWrap: {
     alignItems: "center",
     marginBottom: 45,
+    height: 35,
     width: W,
+    zIndex: 2
   },
   title: {
     fontSize: 28,
@@ -196,7 +216,6 @@ const styles = StyleSheet.create({
   statisticsScrollWrap: {
     flex: 1,
     width: W,
-    marginTop: H * 0.025,
   },
   attendanceWrap: {
     height: 153,
@@ -212,18 +231,40 @@ const styles = StyleSheet.create({
     color: colors.brown,
     borderWidth: 2,
     borderColor: colors.green,
+    marginTop: 30 + H * 0.14,
+    position: 'relative',
+    overflow: 'visible',
+    paddingBottom: 10
+  },
+  greeniFace: {
+    position: 'absolute',
+    left: -10,
+    top: -20,
+    width: 76,
+    height: 66.34,
+    resizeMode: 'contain'
   },
   attendanceTextWrap: {
     alignItems: 'center',
-    // borderWidth: 2,
-    // borderColor: 'red'
     fontSize: 18,
     fontFamily: "gangwongyoyuksaeeum",
     color: colors.brown,
   },
+  attendanceText: {
+    fontFamily: "gangwongyoyuksaeeum",
+    fontSize: 28,
+    textAlign: "center",
+    color: colors.brown
+  },
+
+  attendanceNumber: {
+    fontFamily: "gangwongyoyuksaeeum",
+    fontSize: 40,
+    color: "#7BA845"
+  },
   emotionWrap: {
     borderWidth: 2,
-    borderColor: colors.pink,
+    borderColor: colors.pinkDark,
     height: 267,
     width: '90%',
     flexDirection: 'column',
@@ -234,38 +275,36 @@ const styles = StyleSheet.create({
     borderRadius: 10,
   },
   emotionTitleWrap: {
-    // borderWidth: 2,
-    // borderColor: 'red',
     width: '77%',
     alignItems: 'flex-start',
     fontFamily: "Maplestory_Bold", // 시안은 굵게
     fontSize: 18,
     color: colors.brown,
+    marginLeft: -40,
+    marginBottom: 5
   },
   emotionDetailsWrap: {
-    // borderWidth: 2,
-    // borderColor: 'blue',
-    width: '90%',
+    width: '100%',
     height: '75%',
     flexDirection: 'row',
     justifyContent: 'center',
-    alignItems: 'center'
+    alignItems: 'center',
   },
   emotionVander: {
     borderWidth: 2,
-    borderColor: colors.pink,
-    width: '45%',
+    borderColor: colors.pinkDark,
+    width: '70%',
     height: '90%',
+    marginRight: 20,
     borderRadius: 10,
     backgroundColor: colors.ivory
   },
   emotionCountWrap: {
-    // borderWidth: 2,
-    // borderColor: 'black',
-    width: '45%',
+    width: '15%',
     height: '90%',
     justifyContent: 'center',
-    alignItems: 'center'
+    alignItems: 'center',
+    right: 4
   },
   keywordWrap: {
     borderWidth: 2,
@@ -278,81 +317,83 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: colors.white,
     borderRadius: 10,
+    paddingVertical: 16
   },
   keywordTitle: {
-
+    alignSelf: 'flex-start',
+    marginLeft: 15,
+    marginBottom: 0
   },
   keywordContent: {
-
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    fontSize: 34,
   },
   summaryWrap: {
     borderWidth: 2,
-    borderColor: colors.pink,
-    height: 267,
+    borderColor: colors.pinkDark,
+    height: 300,
     width: '90%',
     flexDirection: 'column',
-    marginBottom: 100,
+    marginBottom: 120,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: colors.white,
     borderRadius: 10,
   },
-  // summaryButton: {
-  //   justifyContent: "space-between",
-  // },
   summaryHeader: {
     flexDirection: "row",
     justifyContent: "flex-start",
     alignItems: "center",
     width: '100%',
-    height: '20%',
+    paddingTop: 20,
     marginLeft: 30,
-    // borderWidth: 2,
-    // borderColor: 'red'
   },
   summaryTitle: {
-    fontFamily: "Maplestory_Bold", // 시안은 굵게
+    fontFamily: "Maplestory_Bold",
     fontSize: 18,
     color: colors.brown,
     marginRight: 6,
-    // borderWidth: 2,
-    // borderColor: 'blue'
   },
   nextArrow: {
-    // borderWidth: 2,
-    // borderColor: 'red',
     width: 8,
     height: 15,
     aspectRatio: 7/12,
     resizeMode: 'contain',
-    // borderWidth: 2,
-    // borderColor: 'green'
   },
   summaryContent: {
+    flex : 1,
     width: '100%',
     height: '80%',
     justifyContent: 'center',
+    alignItems: 'center',
+    paddingTop: 44,
+    paddingBottom: 28,
   },
   chatLeft: {
     width: '100%',
     height: '30%',
     flexDirection: 'row',
     justifyContent: "flex-start",
-    
-    marginBottom: 10,
+    alignItems: 'center',
+    marginBottom: 20,
   },
   chatRight: {
     width: '100%',
     height: '30%',
     flexDirection: 'row',
     justifyContent: "flex-end",
-    marginBottom: 10,
+    alignItems: 'center',
+    marginBottom: 20,
   },
   greeni: {
     width: '20%',
-    height: '100%',
-    marginLeft : 5,
-    marginRight : 5
+    height: '120%',
+    marginLeft : 15,
+    marginRight : 15,
+    // borderWidth: 2,
+    // borderColor: 'red'
   },
   bubble: {
     backgroundColor: colors.pink,
@@ -363,12 +404,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 6,
     maxWidth: '70%',
     flexShrink: 1,
-    // borderWidth: 2,
-    // borderColor: 'red'
   },
   bubbleText: {
-    // textAlign: 'center',
-    // paddingVertical: 5,
     paddingHorizontal: 5,
     fontSize: 20,
     fontFamily: "gangwongyoyuksaeeum",

@@ -130,16 +130,16 @@ export default function HomeScreen({ navigation }) {
           <Text style={styles.buttonText}>일기</Text>
         </TouchableOpacity>
 
-        {/* 스무고개 */}
+        {/* 다섯고개 */}
         <TouchableOpacity
           style={[styles.button, { backgroundColor: colors.green }]}
-          onPress={() => navigation.navigate("TwentyQuestions")}
+          onPress={() => navigation.navigate("FiveQuestions")}
         >
           <Image
             source={require("../assets/images/icon_twenty.png")}
             style={styles.icon}
           />
-          <Text style={styles.buttonText}>스무고개</Text>
+          <Text style={styles.buttonText}>다섯고개</Text>
         </TouchableOpacity>
 
         {/* 역할놀이 */}
