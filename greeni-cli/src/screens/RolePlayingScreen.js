@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { 
   View, 
   Text, 
@@ -18,9 +18,24 @@ import MicButton from "../components/MicButton";
 const { width: W, height: H } = Dimensions.get("window");
 
 export default function RolePlayingScreen({navigation}) {
+
+  const [selectedSituation, setSelectedSituation] = useState(null);
+  const bubbleText = useMemo(() => {
+    if (!selectedSituation) {
+      return `밑에 있는 세가지 상황 중에\n하나를 골라줘`;
+    }
+    if (selectedSituation === "shop") return '어서 오세요.\n신선 과일가게입니다!';
+    if (selectedSituation === "teacher") return '안녕!\n오늘은 선생님과 이야기해보자.';
+    if (selectedSituation === "friend") return '만나서 반가워!\n나랑 같이 놀자~';
+  }, [selectedSituation]);
+
+  const handleSituation = (key) => {
+    setSelectedSituation(key);
+  };
+
     return (
         <View style={styles.root}>
-            <StatusBar style="dark-content" />
+          <View style={styles.topBackground} />
 
              {/* 상단 뒤로가기 버튼 및 '역할놀이' 제목 */}
             <View style={styles.titleWrap}>
@@ -31,25 +46,34 @@ export default function RolePlayingScreen({navigation}) {
             </View>
 
               {/*  */}
-            <View style={styles.greeniWrap}>
-              <Image
-                style={styles.greeni}
-                source={require("../assets/images/mustache_greeni_big.png")}/>
+            <View style={[styles.greeniWrap,
+              selectedSituation ? styles.greeniWrapSelected : styles.greeniWrap,
+            ]}>
               <ImageBackground
-                style={styles.bubble}
-                source={require("../assets/images/bubble_role.png")}
+                style={[styles.bubble,
+                  selectedSituation ? styles.bubbleSelected : styles.bubble
+                ]}
+                source={require("../assets/images/bubble_diary.png")}
                 resizeMode="stretch"
               >
-                <Text style={styles.bubbleText}>밑에 있는 세가지 상황 중에{"\n"} 하나를 골라줘</Text>
+                <Text style={[styles.bubbleText.
+                  selectedSituation ? styles.bubbleTextSelected : styles.bubbleText
+                ]}>{bubbleText}</Text>
               </ImageBackground>
+              <Image
+                style={[styles.greeni,
+                  selectedSituation ? styles.greeniSelected : styles.greeni
+                ]}
+                source={require("../assets/images/mustache_greeni_big.png")}/>
             </View>
 
-
-            <View style={styles.situationWrap}>
-              <Button title='가게 주인과 손님' backgroundColor={colors.white} borderRadius={10} borderWidth={2} borderColor={colors.greenDark} width={345} height={51} style={{ marginBottom: 12 }}></Button>
-              <Button title='선생님과 아이' backgroundColor={colors.white} borderRadius={10} borderWidth={2} borderColor={colors.greenDark} width={345} height={51} style={{ marginBottom: 12 }}></Button>
-              <Button title='친구 사이' backgroundColor={colors.white} borderRadius={10} borderWidth={2} borderColor={colors.greenDark} width={345} height={51} style={{ marginBottom: 12 }}></Button>
+            {!selectedSituation && (
+              <View style={styles.situationWrap}>
+              <Button title='가게 주인과 손님' backgroundColor={colors.white} borderRadius={10} borderWidth={2} borderColor={colors.greenDark} width={345} height={51} style={{ marginBottom: 12 }} onPress={() => handleSituation("shop")}></Button>
+              <Button title='선생님과 아이' backgroundColor={colors.white} borderRadius={10} borderWidth={2} borderColor={colors.greenDark} width={345} height={51} style={{ marginBottom: 12 }} onPress={() => handleSituation("teacher")}></Button>
+              <Button title='친구 사이' backgroundColor={colors.white} borderRadius={10} borderWidth={2} borderColor={colors.greenDark} width={345} height={51} style={{ marginBottom: 12 }} onPress={() => handleSituation("friend")}></Button>
             </View>
+            )}
 
 
             <MicButton />
@@ -64,6 +88,16 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: colors.ivory, 
+  },
+  topBackground: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    height: H * 0.14,
+    backgroundColor: colors.pink, 
+    borderBottomLeftRadius: 30,
+    borderBottomRightRadius: 30,
   },
 
   titleWrap: {
@@ -81,25 +115,24 @@ const styles = StyleSheet.create({
   // 그리니가 말하는 부분을 감싸는 Wrapper
   greeniWrap: {
     position: 'absolute',
-    flexDirection: 'column',
     top: H * 0.17,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  greeni: {
-    position: 'absolute',
-    aspectRatio: 80/110,
-    width:80,
-    height: 110,
-    top: -H * 0.002
+  greeniWrapSelected: {
+    top: H * 0.20,
   },
   bubble: {
-    top : 130,
     maxWidth: W * 0.85, 
     paddingHorizontal: 40,
     paddingVertical: 50,
     alignItems: "center",
     justifyContent: "center",
+  },
+  bubbleSelected: {
+    paddingHorizontal: 40,
+    paddingVertical: 50,
+    marginTop: 30
   },
   bubbleText: {
     fontSize: 28,
@@ -107,6 +140,21 @@ const styles = StyleSheet.create({
     fontFamily: "gangwongyoyuksaeeum",
     textAlign: "center",
     lineHeight: 26,
+  },
+  bubbleTextSelected: {
+    fontSize: 20,
+    lineHeight: 24,
+  },
+  greeni: {
+    aspectRatio: 80/110,
+    width:80,
+    height: 110,
+  },
+  greeniSelected: {
+    aspectRatio: 120/165,
+    width: 120,
+    height: 165,
+    marginTop: 20,
   },
 
   situationWrap: {

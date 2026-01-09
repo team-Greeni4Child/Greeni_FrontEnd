@@ -39,12 +39,12 @@ export default function TwentyQuestionsScreen({navigation}) {
     <View style={styles.root}>
       <View style={styles.topBackground} />
 
-        {/* 상단 뒤로가기 버튼 및 '스무고개' 제목 */}
+        {/* 상단 뒤로가기 버튼 및 '다섯고개' 제목 */}
         <View style={styles.titleWrap}>
           <BackButton navigation={navigation}
                       top={H * 0.001}
                       left={W * 0.05}/>
-          <Text style={styles.title}>스무고개</Text>
+          <Text style={styles.title}>다섯고개</Text>
         </View>
 
         {/* 점수/힌트 진행도 */}

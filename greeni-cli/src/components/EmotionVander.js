@@ -1,13 +1,30 @@
 import React, { useMemo, useState, useCallback } from "react";
 import { View, Image, StyleSheet } from "react-native";
-import colors from "../theme/colors";
+
+const mulberry32 = (a) => {
+  return function () {
+    let t = (a += 0x6d2b79f5);
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+};
+
+const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
 
 export default function EmotionVander({
-  emotions = [],
+  emotions = [],       // 오래된 → 최근 순(권장)
   sourceMap = {},
   max = 31,
   seed = 1234,
   style,
+  gap = 2,
+  padding = 6,
+
+  // ✅ 튜닝(추천 기본값)
+  xSamples = 120,      // 후보 x 샘플 개수
+  leftBias = 0.75,     // 0~1 (1에 가까울수록 왼쪽 선호 강함)
+  compressPasses = 12, // 전체 배치 후 "왼쪽으로 밀고 다시 떨어뜨리기" 반복 횟수
 }) {
   const [box, setBox] = useState({ w: 0, h: 0 });
 
@@ -16,118 +33,229 @@ export default function EmotionVander({
     setBox({ w: width, h: height });
   }, []);
 
-  // deterministic random
-  const mulberry32 = (a) => {
-    return function () {
-      let t = (a += 0x6d2b79f5);
-      t = Math.imul(t ^ (t >>> 15), t | 1);
-      t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-    };
-  };
+  const displayEmotions = useMemo(() => {
+    if (emotions.length <= max) return emotions;
+    return emotions.slice(-max); // 최근 max개
+  }, [emotions, max]);
 
-  // ✅ 개수 늘수록 더 작아지게
   const baseSize = useMemo(() => {
     const minWH = Math.min(box.w, box.h);
     if (!minWH) return 0;
 
-    const maxSize = minWH * 0.52;
+    const n = displayEmotions.length;
+    const maxSize = minWH * 0.42;
     const minSize = minWH * 0.16;
-    const t =
-      max <= 1
-        ? 1
-        : Math.min(1, Math.max(0, (emotions.length - 1) / (max - 1)));
+    const t = max <= 1 ? 1 : clamp((n - 1) / (max - 1), 0, 1);
     return maxSize - (maxSize - minSize) * t;
-  }, [box.w, box.h, emotions.length, max]);
+  }, [box.w, box.h, displayEmotions.length, max]);
 
-  // ✅ 겹치지 않게 + 아래에서부터 쌓이게 + 회전/스케일 랜덤
   const placed = useMemo(() => {
-    if (!box.w || !box.h || !baseSize) return [];
+    const w = box.w, h = box.h;
+    const n = displayEmotions.length;
+    if (!w || !h || !baseSize || n === 0) return [];
 
-    const pad = 6;
-    const items = [];
+    const rng = mulberry32(seed);
 
-    const count = emotions.length;
-    const minCell = Math.max(18, baseSize * 0.95);
-    const cols = Math.max(1, Math.floor((box.w - pad * 2) / minCell));
-    const cellW = (box.w - pad * 2) / cols;
-    const cellH = cellW;
-    const rows = Math.max(1, Math.ceil(count / cols));
+    const collides = (cand, items, ignoreIdx = -1) => {
+      for (let k = 0; k < items.length; k++) {
+        if (k === ignoreIdx) continue;
+        const it = items[k];
+        const dx = cand.cx - it.cx;
+        const dy = cand.cy - it.cy;
+        const rr = cand.r + it.r + gap;
+        if (dx * dx + dy * dy < rr * rr) return true;
+      }
+      return false;
+    };
 
-    for (let i = 0; i < count; i++) {
-      const key = emotions[i];
-      const rand = mulberry32(seed + i);
+    // “이 cx에서 바닥/다른 원 위로 떨어뜨렸을 때” 최종 cy 계산
+    const settleY = (cx, r, items, ignoreIdx = -1) => {
+      const bottom = h - padding - r;
+      let cy = bottom;
 
-      const rowFromBottom = Math.floor(i / cols);
-      const row = rows - 1 - rowFromBottom;
-      const col = i % cols;
+      for (let k = 0; k < items.length; k++) {
+        if (k === ignoreIdx) continue;
+        const it = items[k];
+        const dx = cx - it.cx;
+        const minDist = r + it.r + gap;
 
-      const jitterX = (rand() - 0.5) * (cellW * 0.25);
-      const jitterY = (rand() - 0.5) * (cellH * 0.25);
+        if (Math.abs(dx) >= minDist) continue;
 
-      const size = Math.max(16, cellW * (0.65 + rand() * 0.3));
-
-      let x = pad + col * cellW + (cellW - size) / 2 + jitterX;
-      let y = pad + row * cellH + (cellH - size) / 2 + jitterY;
-
-      x = Math.max(pad, Math.min(x, box.w - size - pad));
-      y = Math.max(pad, Math.min(y, box.h - size - pad));
-
-      // ✅ 회전 더 자유롭게:
-      // - 대부분은 "자연스러운 각도" (-25~+25)
-      // - 일부는 크게 돌아감 (최대 180도까지 가능)
-      const r = rand();
-      let rotate;
-      if (r < 0.75) {
-        // 75%: 자연스럽게
-        rotate = (rand() * 50) - 25; // -25 ~ +25
-      } else {
-        // 25%: 크게 (부호도 랜덤)
-        const sign = rand() < 0.5 ? -1 : 1;
-        rotate = sign * (60 + rand() * 120); // 60 ~ 180
+        const dy = Math.sqrt(minDist * minDist - dx * dx);
+        const candidateCy = it.cy - dy;
+        if (candidateCy < cy) cy = candidateCy;
       }
 
-      const scale = 0.98 + rand() * 0.06;
+      const top = padding + r;
+      return Math.max(top, Math.min(cy, bottom));
+    };
+
+    // ✅ 왼쪽으로 밀어보는 “압축 이동” (한 개 아이템을 조금씩 왼쪽으로 이동하며 더 아래로 떨어뜨림)
+    const pushLeftAndSettle = (items, idx) => {
+      const it = items[idx];
+      const r = it.r;
+      const minX = padding + r;
+
+      let best = { cx: it.cx, cy: it.cy };
+      let improved = false;
+
+      // 현재 위치에서 왼쪽으로 여러 스텝 시도
+      const steps = 22;
+      const maxShift = Math.min(60, w * 0.35); // 한 번에 너무 멀리 밀지 않기
+      for (let s = 1; s <= steps; s++) {
+        const cx = Math.max(minX, it.cx - (maxShift * s) / steps);
+        const cy = settleY(cx, r, items, idx);
+        const cand = { cx, cy, r };
+
+        if (collides(cand, items, idx)) continue;
+
+        // 평가 기준:
+        // 1) 더 아래(cy가 더 큼)면 무조건 좋음
+        // 2) 아래는 같거나 비슷하면 더 왼쪽(cx가 작음)이 좋음
+        const downBetter = cand.cy > best.cy + 0.5;
+        const leftBetter = Math.abs(cand.cy - best.cy) <= 0.5 && cand.cx < best.cx - 0.5;
+
+        if (downBetter || leftBetter) {
+          best = { cx: cand.cx, cy: cand.cy };
+          improved = true;
+        }
+      }
+
+      if (improved) {
+        it.cx = best.cx;
+        it.cy = best.cy;
+      }
+    };
+
+    const items = [];
+
+    // 1) 먼저 “중력 + 왼쪽 선호”로 하나씩 배치
+    for (let i = 0; i < n; i++) {
+      const key = displayEmotions[i];
+      if (!sourceMap[key]) continue;
+
+      // 크기 랜덤
+      let size = baseSize * (0.65 + rng() * 0.4);
+      size = Math.max(16, Math.min(size, Math.min(w, h) * 0.55));
+      const r = size / 2;
+
+      // 회전/스케일
+      const rr = rng();
+      let rotate;
+      if (rr < 0.78) rotate = rng() * 60 - 30;
+      else rotate = rng() * 360 - 180;
+      const scale = 0.95 + rng() * 0.12;
+
+      const minX = padding + r;
+      const maxX = w - padding - r;
+
+      let best = null;
+      let bestScore = -Infinity;
+
+      for (let t = 0; t < xSamples; t++) {
+        // ✅ 왼쪽 편향 샘플링: u^p는 0쪽(왼쪽)에 더 몰림
+        const u = rng();
+        const p = 1 + leftBias * 5; // 1~6
+        const biased = Math.pow(u, p); // 0에 몰림
+        const cx = minX + biased * (maxX - minX);
+
+        const cy = settleY(cx, r, items);
+        const cand = { cx, cy, r };
+        if (collides(cand, items)) continue;
+
+        // 점수: 아래(cy) 우선, 그 다음 왼쪽(-cx)
+        // cy 범위가 커서 영향이 크므로, x는 약하게만 반영
+        const score = cy * 1000 - cx * 2;
+        if (score > bestScore) {
+          bestScore = score;
+          best = cand;
+        }
+      }
+
+      // 자리 못 찾으면 조금 줄여 재시도
+      if (!best) {
+        let local = Math.max(14, size * 0.9);
+        for (let pass = 0; pass < 3 && !best; pass++) {
+          const lr = local / 2;
+          const minX2 = padding + lr;
+          const maxX2 = w - padding - lr;
+
+          for (let t = 0; t < xSamples; t++) {
+            const u = rng();
+            const p = 1 + leftBias * 5;
+            const cx = minX2 + Math.pow(u, p) * (maxX2 - minX2);
+            const cy = settleY(cx, lr, items);
+            const cand = { cx, cy, r: lr };
+            if (collides(cand, items)) continue;
+
+            const score = cy * 1000 - cx * 2;
+            if (score > bestScore) {
+              bestScore = score;
+              best = cand;
+              size = local;
+            }
+          }
+          local *= 0.92;
+        }
+      }
+
+      if (!best) continue;
 
       items.push({
         key,
-        x,
-        y,
         size,
+        r: size / 2,
+        cx: best.cx,
+        cy: best.cy,
         rotate,
         scale,
         zIndex: 10 + i,
       });
     }
 
-    return items;
-  }, [box.w, box.h, baseSize, emotions, seed]);
+    // 2) ✅ 전체 “압축”: 왼쪽으로 밀고 다시 떨어뜨리기를 여러 번 반복
+    for (let pass = 0; pass < compressPasses; pass++) {
+      // 오래된 것부터(아래에 깔린 것) 먼저 밀어두면 안정적
+      for (let i = 0; i < items.length; i++) {
+        pushLeftAndSettle(items, i);
+      }
+    }
+
+    // 렌더용 변환
+    return items.map((it) => ({
+      key: it.key,
+      size: it.size,
+      x: it.cx - it.size / 2,
+      y: it.cy - it.size / 2,
+      rotate: it.rotate,
+      scale: it.scale,
+      zIndex: it.zIndex,
+    }));
+  }, [
+    box.w, box.h, baseSize, displayEmotions, sourceMap,
+    seed, gap, padding, xSamples, leftBias, compressPasses
+  ]);
 
   return (
     <View onLayout={onLayout} style={[styles.container, style]}>
-      {placed.map((p, idx) => {
-        const src = sourceMap[p.key];
-        if (!src) return null;
-
-        return (
-          <Image
-            key={`${p.key}-${idx}`}
-            source={src}
-            resizeMode="contain"
-            style={[
-              styles.face,
-              {
-                width: p.size,
-                height: p.size,
-                left: p.x,
-                top: p.y,
-                zIndex: p.zIndex,
-                transform: [{ rotate: `${p.rotate}deg` }, { scale: p.scale }],
-              },
-            ]}
-          />
-        );
-      })}
+      {placed.map((p, idx) => (
+        <Image
+          key={`${p.key}-${idx}`}
+          source={sourceMap[p.key]}
+          resizeMode="contain"
+          style={[
+            styles.face,
+            {
+              width: p.size,
+              height: p.size,
+              left: p.x,
+              top: p.y,
+              zIndex: p.zIndex,
+              transform: [{ rotate: `${p.rotate}deg` }, { scale: p.scale }],
+            },
+          ]}
+        />
+      ))}
     </View>
   );
 }
@@ -136,14 +264,8 @@ const styles = StyleSheet.create({
   container: {
     width: "100%",
     height: "100%",
-    borderWidth: 2,
-    borderColor: colors.pink,
-    borderRadius: 10,
-    backgroundColor: colors.ivory,
     overflow: "hidden",
     position: "relative",
   },
-  face: {
-    position: "absolute",
-  },
+  face: { position: "absolute" },
 });
