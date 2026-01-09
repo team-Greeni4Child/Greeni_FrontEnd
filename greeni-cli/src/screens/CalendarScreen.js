@@ -51,7 +51,7 @@ export default function CalendarScreen({ navigation }) {
   const today = new Date();
   const [year, setYear] = useState(today.getFullYear());
   const [month, setMonth] = useState(today.getMonth()); // 0~11
-  const [tab, setTab] = useState(0);
+  const [tab, setTab] = useState(1);
 
   // 서버에서 가져올 실제 "일기 쓴 날짜들" 
   // 형식: "YYYY-MM-DD" 문자열 배열로 관리
@@ -112,9 +112,10 @@ export default function CalendarScreen({ navigation }) {
         state={tab}
         onTabPress={(i) => {
           setTab(i);
-          if (i === 0) navigation.navigate("Calendar");
-          if (i === 1) navigation.navigate("Home");
-          if (i === 2) navigation.navigate("MyPage");
+          if (i === 0) navigation.navigate("Home");
+          if (i === 1) navigation.navigate("Calendar");
+          if (i === 2) navigation.navigate("Statistics");
+          if (i === 3) navigation.navigate("MyPage");
         }}
       />
       

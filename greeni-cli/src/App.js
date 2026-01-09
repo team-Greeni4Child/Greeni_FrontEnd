@@ -115,7 +115,7 @@ export default function App() {
             </Stack.Screen>
           </Stack.Navigator>
         ) : step === "auth" ? (
-          <AuthStack  />
+          <MainStack  />
         ) : step === "profile" ? (
           <ProfileStack />
         ) : (

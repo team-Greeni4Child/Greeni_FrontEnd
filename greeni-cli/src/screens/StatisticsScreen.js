@@ -31,15 +31,29 @@ const emotionSourceMap = {
   anxiety: require("../assets/images/anxiety.png"),
 };
 
+
+
 // 예시 데이터 (하루하루 쌓이면 배열에 push)
 const monthEmotions = ["sad", "angry", "happy", "surprised", "anxiety", "sad", "angry", "happy", "surprised", "anxiety", "angry", "happy", "surprised", "anxiety","angry", "happy", "surprised", "anxiety",];
 
 export default function StatisticsScreen({route, navigation}) {
 
-    // const [tab, setTab] = useState(2);
+    const [tab, setTab] = useState(2);
 
     return (
         <View style={styles.root}>
+
+          {/* 하단 네비게이션 바 */}
+          <NavigationBar
+            state={tab}
+            onTabPress={(i) => {
+              setTab(i);
+              if (i === 0) navigation.navigate("Home");
+              if (i === 1) navigation.navigate("Calendar");
+              if (i === 2) navigation.navigate("Statistics");
+              if (i === 3) navigation.navigate("MyPage");
+            }}
+          />  
 
             <View style={styles.topBackground}>
                 <View style={styles.titleWrap}>
