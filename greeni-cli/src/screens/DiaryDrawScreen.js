@@ -11,7 +11,9 @@ export default function DiaryDrawScreen({ navigation }) {
   return (
     <View style={styles.root}>
       <View style={styles.topBar}>
-        <BackButton navigation={navigation} />    
+        <BackButton navigation={navigation}
+          top={H * 0.08}
+        />    
 
         {/* 제목 */}
         <Text style={styles.title}>일기쓰기</Text>
@@ -72,11 +74,11 @@ const styles = StyleSheet.create({
     flexDirection: "column",
     alignItems: "center",
     justifyContent: "start",
-    paddingTop: 80,
+    paddingTop: H * 0.08,
   },
   title: {
     fontFamily: "Maplestory_Bold",
-    fontSize: 24,
+    fontSize: 28,
     color: colors.brown,
   },
   tools: {
