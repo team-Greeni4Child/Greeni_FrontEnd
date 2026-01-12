@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import colors from "../theme/colors";
 import BackButton from "../components/BackButton";
 import Button from "../components/Button";
@@ -26,6 +26,11 @@ const MOCK_VERIFY_CODE = "aaa";
 // 비밀번호 규칙 (영문 + 숫자 + ASCII 특수문자 + 8자리 이상)
 const passwordRule = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[!-/:-@[-`{-~]).{8,}$/;
 
+// 인증번호 유효시간 3분
+const DEFAULT_EXPIRE_SECONDS = 3 * 60;
+// 재전송 쿨타임(10초)
+const RESEND_COOLDOWN_SECONDS = 10;
+
 export default function SignUpScreen({ navigation }) {
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
@@ -41,8 +46,82 @@ export default function SignUpScreen({ navigation }) {
   // 회원가입 완료 모달 on/off
   const [showCompleteModal, setShowCompleteModal] = useState(false);
 
+  // 인증코드 유효시간 타이머
+  const [secondsLeft, setSecondsLeft] = useState(null); // null이면 미표시
+  const [isExpired, setIsExpired] = useState(false);
+  const timerRef = useRef(null);
+
+  // 인증 버튼 쿨타임 + 문구
+  const [isVerifyDisabled, setIsVerifyDisabled] = useState(false);
+  const [verifyLabel, setVerifyLabel] = useState("인증");
+  const cooldownRef = useRef(null);
+
+  const clearTimer = () => {
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+  };
+
+  const clearCooldown = () => {
+    if (cooldownRef.current) {
+      clearTimeout(cooldownRef.current);
+      cooldownRef.current = null;
+    }
+  };
+
+  const startCooldown = () => {
+    setIsVerifyDisabled(true);
+    setVerifyLabel("전송됨");
+
+    clearCooldown();
+    cooldownRef.current = setTimeout(() => {
+      setIsVerifyDisabled(false);
+      setVerifyLabel("재전송");
+    }, RESEND_COOLDOWN_SECONDS * 1000);
+  };
+
+  const startTimer = (sec) => {
+    clearTimer();
+    setIsExpired(false);
+    setSecondsLeft(sec);
+
+    timerRef.current = setInterval(() => {
+      setSecondsLeft((prev) => {
+        if (prev === null) return null;
+
+        if (prev <= 1) {
+          clearTimer();
+          setIsExpired(true);
+
+          // 만료 후: 버튼은 재전송 가능 상태로
+          setIsVerifyDisabled(false);
+          setVerifyLabel("재전송");
+
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  };
+
+  useEffect(() => {
+    return () => {
+      clearTimer();
+      clearCooldown();
+    };
+  }, []);
+
+  const formatMMSS = (sec) => {
+    const m = String(Math.floor(sec / 60)).padStart(1, "0");
+    const s = String(sec % 60).padStart(2, "0");
+    return `${m}:${s}`;
+  };
+
   // 이메일 인증 버튼
   const handleVerifyEmail = () => {
+    if (isVerifyDisabled) return;
+
     setEmailError("");
     setCodeError("");
 
@@ -62,7 +141,14 @@ export default function SignUpScreen({ navigation }) {
     }
 
     // 여기서 실제로는 인증코드 발송 API 호출
-    // 테스트용으로는 아무것도 안 함
+    // 성공했다고 가정하고 타이머 시작
+    startTimer(DEFAULT_EXPIRE_SECONDS);
+
+    // 전송 직후: 전송됨 (10초 후 재전송으로 변경)
+    startCooldown();
+
+    // 재전송 버튼을 누르면 인증코드 입력칸을 비움
+    setCode("");
   };
 
   // 가입하기 버튼
@@ -97,6 +183,12 @@ export default function SignUpScreen({ navigation }) {
     } else if (trimmedCode !== MOCK_VERIFY_CODE) {
       setCode("");
       setCodeError("인증코드가 일치하지 않습니다");
+      hasError = true;
+    }
+    // 2-1) 인증코드 만료 검사 (타이머가 시작된 적이 있을 때만)
+    if (secondsLeft !== null && (secondsLeft === 0 || isExpired)) {
+      setCode("");
+      setCodeError("인증코드가 만료되었습니다");
       hasError = true;
     }
 
@@ -171,29 +263,49 @@ export default function SignUpScreen({ navigation }) {
               if (emailError) setEmailError("");
             }}
           />
+
           <TouchableOpacity
-            style={styles.verificationButton}
+            style={[
+              styles.verificationButton,
+              isVerifyDisabled && styles.verificationButtonDisabled,
+            ]}
             onPress={handleVerifyEmail}
+            activeOpacity={0.6}
+            disabled={isVerifyDisabled}
           >
-            <Text style={styles.verificationButtonText}>인증</Text>
+            <Text style={styles.verificationButtonText}>{verifyLabel}</Text>
           </TouchableOpacity>
         </View>
 
-        {/* 인증코드 */}
-        <TextInput
+        {/* 인증코드 입력칸 + 오른쪽 유효시간 */}
+        <View
           style={[
-            styles.input,
+            styles.codeWrap,
             codeError ? { borderBottomColor: "#f36945" } : {},
           ]}
-          fontFamily="Maplestory_Light"
-          placeholder={codeError ? codeError : "인증코드"}
-          placeholderTextColor={codeError ? "#f36945" : colors.brown}
-          value={code}
-          onChangeText={(text) => {
-            setCode(text);
-            if (codeError) setCodeError("");
-          }}
-        />
+        >
+          <TextInput
+            style={styles.codeInput}
+            fontFamily="Maplestory_Light"
+            placeholder={codeError ? codeError : "인증코드"}
+            placeholderTextColor={codeError ? "#f36945" : colors.brown}
+            value={code}
+            onChangeText={(text) => {
+              setCode(text);
+              if (codeError) setCodeError("");
+            }}
+          />
+
+          {secondsLeft !== null ? (
+            isExpired ? (
+              <Text style={styles.expiredText}>만료</Text>
+            ) : (
+              <Text style={styles.timerText}>{formatMMSS(secondsLeft)}</Text>
+            )
+          ) : (
+            <View style={styles.timerPlaceholder} />
+          )}
+        </View>
 
         {/* 비밀번호 */}
         <TextInput
@@ -330,6 +442,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 2,
     borderBottomColor: colors.greenDark,
     marginBottom: 8,
+    alignItems: "center",
   },
   email: {
     width: "75%",
@@ -343,15 +456,55 @@ const styles = StyleSheet.create({
     backgroundColor: colors.pink,
     borderRadius: 5,
     height: 30,
-    paddingHorizontal: 20,
+    width: 60, 
     alignItems: "center",
     justifyContent: "center",
+  },
+  verificationButtonDisabled: {
+    backgroundColor: colors.lightGray95,
   },
   verificationButtonText: {
     fontSize: 12,
     fontFamily: "Maplestory_Light",
     color: colors.brown,
   },
+
+  // 인증코드 입력 + 타이머
+  codeWrap: {
+    flexDirection: "row",
+    alignItems: "center",
+    borderBottomWidth: 2,
+    borderBottomColor: colors.greenDark,
+    marginBottom: 8,
+  },
+  codeInput: {
+    width: "75%",
+    height: 35,
+    fontSize: 14,
+    fontFamily: "Maplestory_Light",
+    paddingVertical: 8,
+    color: colors.brown,
+  },
+  timerText: {
+    width: 60,
+    textAlign: "center",
+    fontSize: 12,
+    fontFamily: "Maplestory_Light",
+    color: colors.brown,
+    paddingBottom: 2,
+  },
+  expiredText: {
+    width: 60,
+    textAlign: "center",
+    fontSize: 12,
+    fontFamily: "Maplestory_Light",
+    color: "#f36945",
+    paddingBottom: 2,
+  },
+  timerPlaceholder: {
+    width: 60,
+  },
+
   input: {
     width: "100%",
     borderBottomWidth: 2,
