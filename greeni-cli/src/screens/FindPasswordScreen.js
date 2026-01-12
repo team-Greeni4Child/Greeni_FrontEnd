@@ -12,7 +12,6 @@ import {
   Dimensions, 
   Platform,
 } from "react-native";
-import { Color } from "react-native/types_generated/Libraries/Animated/AnimatedExports";
 
 const { width: W, height: H } = Dimensions.get("window");
 
@@ -25,7 +24,10 @@ const AR = {
 const MOCK_USER_EMAIL = "aaa";
 const MOCK_VERIFY_CODE = "aaa";
 
-const DEFAULT_EXPIRE_SECONDS = 3 ;//* 60; // 인증번호 유효시간 3분
+// 인증번호 유효시간 3분
+const DEFAULT_EXPIRE_SECONDS = 3 * 60;
+// 재전송 쿨타임(10초)
+const RESEND_COOLDOWN_SECONDS = 10;
 
 export default function LoginScreen({ navigation }) {
   const [email, setEmail] = useState("");
@@ -34,15 +36,39 @@ export default function LoginScreen({ navigation }) {
   const [emailError, setEmailError] = useState("");
   const [codeError, setCodeError] = useState("");
 
+  // 인증코드 유효시간 타이머
   const [secondsLeft, setSecondsLeft] = useState(null); // null이면 미표시
   const [isExpired, setIsExpired] = useState(false);
   const timerRef = useRef(null);
+
+  // 인증 버튼 쿨타임 + 문구
+  const [isVerifyDisabled, setIsVerifyDisabled] = useState(false);
+  const [verifyLabel, setVerifyLabel] = useState("인증");
+  const cooldownRef = useRef(null);
 
   const clearTimer = () => {
     if (timerRef.current) {
       clearInterval(timerRef.current);
       timerRef.current = null;
     }
+  };
+
+  const clearCooldown = () => {
+    if (cooldownRef.current) {
+      clearTimeout(cooldownRef.current);
+      cooldownRef.current = null;
+    }
+  };
+
+  const startCooldown = () => {
+    setIsVerifyDisabled(true);
+    setVerifyLabel("전송됨");
+
+    clearCooldown();
+    cooldownRef.current = setTimeout(() => {
+      setIsVerifyDisabled(false);
+      setVerifyLabel("재전송");
+    }, RESEND_COOLDOWN_SECONDS * 1000);
   };
 
   const startTimer = (sec) => {
@@ -53,9 +79,15 @@ export default function LoginScreen({ navigation }) {
     timerRef.current = setInterval(() => {
       setSecondsLeft((prev) => {
         if (prev === null) return null;
+
         if (prev <= 1) {
           clearTimer();
           setIsExpired(true);
+
+          // 만료 후: 버튼은 재전송 가능 상태로
+          setIsVerifyDisabled(false);
+          setVerifyLabel("재전송");
+
           return 0;
         }
         return prev - 1;
@@ -64,7 +96,10 @@ export default function LoginScreen({ navigation }) {
   };
 
   useEffect(() => {
-    return () => clearTimer(); // 화면 unmount 시 정리
+    return () => {
+      clearTimer();
+      clearCooldown();
+    };
   }, []);
 
   const formatMMSS = (sec) => {
@@ -75,6 +110,8 @@ export default function LoginScreen({ navigation }) {
 
   // 인증 버튼 클릭
   const handleVerifyEmail = () => {
+    if (isVerifyDisabled) return;
+
     setEmailError("");
     setCodeError("");
 
@@ -95,7 +132,10 @@ export default function LoginScreen({ navigation }) {
     // 성공했다고 가정하고 타이머 시작
     startTimer(DEFAULT_EXPIRE_SECONDS);
 
-    // 인증 버튼을 다시 눌렀을 때 인증코드 입력칸을 비움
+    // 전송 직후: 전송됨 (10초 후 재전송으로 변경)
+    startCooldown();
+
+    // 재전송 버튼을 누르면 인증코드 입력칸을 비움
     setCode("");
   };
 
@@ -171,12 +211,17 @@ export default function LoginScreen({ navigation }) {
                 if (emailError) setEmailError("");
               }}
             />
+
             <TouchableOpacity
-              style={styles.verificationButton}
+              style={[
+                styles.verificationButton,
+                isVerifyDisabled && styles.verificationButtonDisabled,
+              ]}
               onPress={handleVerifyEmail}
               activeOpacity={0.6}
+              disabled={isVerifyDisabled}
             >
-              <Text style={styles.verificationButtonText}>인증</Text>
+              <Text style={styles.verificationButtonText}>{verifyLabel}</Text>
             </TouchableOpacity>
           </View>
 
@@ -297,6 +342,9 @@ const styles = StyleSheet.create({
     width: 60,
     alignItems: "center",
     justifyContent: "center",
+  },
+  verificationButtonDisabled: {
+    backgroundColor: colors.lightGray95,
   },
   verificationButtonText: {
     fontSize: 12,
