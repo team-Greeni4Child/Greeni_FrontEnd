@@ -1,6 +1,8 @@
 import React, { useMemo, useState, useCallback } from "react";
 import { View, Image, StyleSheet } from "react-native";
 
+// 난수 생성기
+// 같은 Seed(a)면 배치 결과가 항상 동일하게
 const mulberry32 = (a) => {
   return function () {
     let t = (a += 0x6d2b79f5);
@@ -10,24 +12,26 @@ const mulberry32 = (a) => {
   };
 };
 
+// 어떤 값을 min~max 사이로 강제 제한
 const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
 
 export default function EmotionVander({
-  emotions = [],       // 오래된 → 최근 순(권장)
-  sourceMap = {},
+  emotions = [],       // old → new, 감정 키 배열
+  sourceMap = {},      // 감정 키 -> 이미지 source 매핑
   max = 31,
   seed = 1234,
   style,
-  gap = 2,
-  padding = 6,
+  gap = 0,             // 감정 이미지끼리 최소 간격
+  padding = 0,         // 컨테이너 가장자리와 이미지 사이 여백
 
-  // ✅ 튜닝(추천 기본값)
-  xSamples = 120,      // 후보 x 샘플 개수
-  leftBias = 0.75,     // 0~1 (1에 가까울수록 왼쪽 선호 강함)
+  // 튜닝(추천 기본값)
+  xSamples = 120,      // 후보 x 샘플 개수 (클수록 더 좋은 자리 찾음)
+  leftBias = 0.75,     // 0~1 (1에 가까울수록 왼쪽 선호)
   compressPasses = 12, // 전체 배치 후 "왼쪽으로 밀고 다시 떨어뜨리기" 반복 횟수
 }) {
-  const [box, setBox] = useState({ w: 0, h: 0 });
+  const [box, setBox] = useState({ w: 0, h: 0 }); // 컨테이너 크기 측정 상태
 
+  // 실제 렌더된 크기
   const onLayout = useCallback((e) => {
     const { width, height } = e.nativeEvent.layout;
     setBox({ w: width, h: height });
@@ -35,16 +39,17 @@ export default function EmotionVander({
 
   const displayEmotions = useMemo(() => {
     if (emotions.length <= max) return emotions;
-    return emotions.slice(-max); // 최근 max개
+    return emotions.slice(-max); // emotions 개수가 max 넘으면 최근 max개 디스플레이
   }, [emotions, max]);
 
+  // 감정 많아질수록 작아지게
   const baseSize = useMemo(() => {
     const minWH = Math.min(box.w, box.h);
     if (!minWH) return 0;
 
     const n = displayEmotions.length;
-    const maxSize = minWH * 0.42;
-    const minSize = minWH * 0.16;
+    const maxSize = minWH * 0.42; // 감정 적을 때는 최대 크기 maxSize
+    const minSize = minWH * 0.16; // 감정 많을 때는 최소 크기 minSize
     const t = max <= 1 ? 1 : clamp((n - 1) / (max - 1), 0, 1);
     return maxSize - (maxSize - minSize) * t;
   }, [box.w, box.h, displayEmotions.length, max]);
@@ -56,6 +61,7 @@ export default function EmotionVander({
 
     const rng = mulberry32(seed);
 
+    // 겹침 검사 함수
     const collides = (cand, items, ignoreIdx = -1) => {
       for (let k = 0; k < items.length; k++) {
         if (k === ignoreIdx) continue;
@@ -68,7 +74,7 @@ export default function EmotionVander({
       return false;
     };
 
-    // “이 cx에서 바닥/다른 원 위로 떨어뜨렸을 때” 최종 cy 계산
+    // 중력 함수
     const settleY = (cx, r, items, ignoreIdx = -1) => {
       const bottom = h - padding - r;
       let cy = bottom;
@@ -90,7 +96,7 @@ export default function EmotionVander({
       return Math.max(top, Math.min(cy, bottom));
     };
 
-    // ✅ 왼쪽으로 밀어보는 “압축 이동” (한 개 아이템을 조금씩 왼쪽으로 이동하며 더 아래로 떨어뜨림)
+    // 압축 함수
     const pushLeftAndSettle = (items, idx) => {
       const it = items[idx];
       const r = it.r;
@@ -139,7 +145,7 @@ export default function EmotionVander({
       size = Math.max(16, Math.min(size, Math.min(w, h) * 0.55));
       const r = size / 2;
 
-      // 회전/스케일
+      // 회전/스케일 랜덤
       const rr = rng();
       let rotate;
       if (rr < 0.78) rotate = rng() * 60 - 30;
@@ -153,7 +159,7 @@ export default function EmotionVander({
       let bestScore = -Infinity;
 
       for (let t = 0; t < xSamples; t++) {
-        // ✅ 왼쪽 편향 샘플링: u^p는 0쪽(왼쪽)에 더 몰림
+        // 왼쪽 편향 샘플링: u^p는 0쪽(왼쪽)에 더 몰림
         const u = rng();
         const p = 1 + leftBias * 5; // 1~6
         const biased = Math.pow(u, p); // 0에 몰림
@@ -213,7 +219,7 @@ export default function EmotionVander({
       });
     }
 
-    // 2) ✅ 전체 “압축”: 왼쪽으로 밀고 다시 떨어뜨리기를 여러 번 반복
+    // 2) 전체 “압축”: 왼쪽으로 밀고 다시 떨어뜨리기를 여러 번 반복
     for (let pass = 0; pass < compressPasses; pass++) {
       // 오래된 것부터(아래에 깔린 것) 먼저 밀어두면 안정적
       for (let i = 0; i < items.length; i++) {
