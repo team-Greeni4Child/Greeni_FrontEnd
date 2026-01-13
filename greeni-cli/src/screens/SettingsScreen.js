@@ -104,7 +104,7 @@ export default function SettingsScreen({ route, navigation }) {
                   style={styles.editIconTouch}
                   onPress={() =>
                     navigation.navigate("ProfileImageSelectFromSettings", {
-                      onSlectImage: (img) => {
+                      onSelectImage: (img) => {
                         setProfile((prev) => ({ ...prev, image: img }));
                       },
                     })
@@ -147,6 +147,7 @@ export default function SettingsScreen({ route, navigation }) {
                         style={[
                           styles.infoValue,
                           editEnabled && styles.editableValue,
+                          editEnabled && styles.editableUnderline,
                         ]}
                       >
                         {profile.name}
@@ -168,6 +169,7 @@ export default function SettingsScreen({ route, navigation }) {
                       style={[
                         styles.infoValue,
                         editEnabled && styles.editableValue,
+                        editEnabled && styles.editableUnderline,
                       ]}
                     >
                       {profile.birthday}
@@ -409,19 +411,20 @@ const styles = StyleSheet.create({
     color: colors.brown,
     fontSize: 16,
     fontFamily: "Maplestory_Light",
-    borderBottomWidth: 1,
-    borderBottomColor: colors.pinkDark
   },
 
   editableValue: {
     opacity: 0.9,
   },
 
+  editableUnderline: {
+    borderBottomColor: colors.pinkDark,
+    borderBottomWidth: 1
+  },
+
   input: {
     minWidth: 90,
     textAlign: "right",
-    borderWidth: 2,
-    borderColor: 'red'
   },
 
   bottomEditIconTouch: {
