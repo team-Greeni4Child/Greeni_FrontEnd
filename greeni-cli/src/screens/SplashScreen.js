@@ -37,7 +37,7 @@ export default function SplashScreen({ onDone }) {
   const sunY       = useRef(new Animated.Value(-H * 0.12)).current;  // 위에서 시작
 
   useEffect(() => {
-    //runScene();
+    runScene();
   }, []);
 
   const runScene = () => {
