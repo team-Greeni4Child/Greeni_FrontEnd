@@ -22,7 +22,7 @@ export default function HomeScreen({ navigation }) {
   const [tab, setTab] = useState(0);
 
   // "오늘 일기 작성 완료" 여부 (나중에 API/스토리지로 대체)
-  const [hasWrittenTodayDiary, setHasWrittenTodayDiary] = useState(true);
+  const [hasWrittenTodayDiary, setHasWrittenTodayDiary] = useState(false);
 
   // 안내 모달 on/off
   const [showDiaryModal, setShowDiaryModal] = useState(false);

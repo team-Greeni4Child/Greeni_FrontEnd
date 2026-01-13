@@ -103,54 +103,16 @@ export default function SplashScreen({ onDone }) {
     <View style={styles.root}>
       <StatusBar style="dark" />
 
-      {/* ground + greeni만 수정: 연못(pond)을 기준으로 잎/꽃/그리니를 종속 */}
+      {/* 연못, 연잎, 연꽃, 그리니*/}
       <View style={styles.pondWrap}>
-        {/* 연못 */}
-        <Animated.Image
-          source={require("../assets/images/pond.png")}
-          style={styles.pond}
-          resizeMode="contain"
-        />
-
-        {/* 큰 연잎(그리니 아래) */}
-        <Animated.Image
-          source={require("../assets/images/leaf1.png")}
-          style={styles.leaf1}
-          resizeMode="contain"
-        />
-
-        {/* 오른쪽 아래 큰 연잎(부분) */}
-        <Animated.Image
-          source={require("../assets/images/leaf4.png")}
-          style={styles.leaf4}
-          resizeMode="contain"
-        />
-
-        {/* 작은 연잎들 */}
-        <Animated.Image
-          source={require("../assets/images/leaf2.png")}
-          style={styles.leaf2}
-          resizeMode="contain"
-        />
-        <Animated.Image
-          source={require("../assets/images/leaf3.png")}
-          style={styles.leaf3}
-          resizeMode="contain"
-        />
-
-        {/* 꽃 */}
-        <Animated.Image
-          source={require("../assets/images/flower.png")}
-          style={styles.flower}
-          resizeMode="contain"
-        />
-
-        {/* 그리니(연못 기준) */}
-        <Animated.Image
-          source={require("../assets/images/umbrella_greeni_big.png")}
-          style={styles.greeni}
-          resizeMode="contain"
-        />
+        <Animated.Image source={require("../assets/images/pond.png")} style={styles.pond} resizeMode="contain" />
+        <Animated.Image source={require("../assets/images/leaf1.png")} style={styles.leaf1} resizeMode="contain" />
+        <Animated.Image source={require("../assets/images/leaf4.png")} style={styles.leaf4} resizeMode="contain" />
+        <Animated.Image source={require("../assets/images/leaf2.png")} style={styles.leaf2} resizeMode="contain" />
+        <Animated.Image source={require("../assets/images/leaf3.png")} style={styles.leaf3} resizeMode="contain" />
+        <Animated.Image source={require("../assets/images/flower.png")} style={styles.flower1} resizeMode="contain" />
+        <Animated.Image source={require("../assets/images/flower.png")} style={styles.flower2} resizeMode="contain" />
+        <Animated.Image source={require("../assets/images/umbrella_greeni_big.png")} style={styles.greeni} resizeMode="contain" />
       </View>
 
       {/* 비 */}
@@ -210,23 +172,24 @@ const styles = StyleSheet.create({
   cloud1: {
     position: "absolute",
     zIndex: 6,
-    top: -H * 0.08,
-    left: -W * 0.4,
-    width: W * 1.7,
+    top: -H * 0.16,
+    left: -H * 0.3,
+    width: W * 1.9,
+    height: H * 0.4,
     aspectRatio: AR.cloud,
   },
   cloud2: {
     position: "absolute",
     zIndex: 6,
-    top: -H * 0.02,
-    left: W * 0.2,
-    width: W * 1.1,
+    top: H * 0.005,
+    left: W * 0.25,
+    width: W * 1,
     aspectRatio: AR.cloud,
   },
   cloud3: {
     position: "absolute",
     zIndex: 6,
-    top: H * 0.05,
+    top: H * 0.06,
     left: -W * 0.2,
     width: W * 0.8,
     aspectRatio: AR.cloud,
@@ -247,6 +210,7 @@ const styles = StyleSheet.create({
     width: W * 1.5,
   },
 
+  /* 타이틀 */
   titleWrap: {
     position: "absolute",
     zIndex: 7,
@@ -264,31 +228,30 @@ const styles = StyleSheet.create({
     color: colors.brown,
   },
 
-  /*** 연못 ***/
+  /* 연못 */
   pondWrap: {
     position: "absolute",
     zIndex: 2,
-    bottom: -H * 0.03,   // 필요하면 -0.02~-0.08 사이에서 조절
+    bottom: -H * 0.08,  
     alignSelf: "center",
-    width: W * 1.22,     // 연못 크기(시안처럼 보이게 조절)
+    width: W * 1.22,    
     aspectRatio: AR.pond,
   },
   pond: {
     position: "absolute",
     left: 0,
     top: 0,
-    width: "100%",
-    height: "100%",
+    width: "110%",
+    height: "110%",
   },
 
-  /*** ✅ pondWrap(연못) 기준 배치: 잎/꽃/그리니 ***/
   // 큰 연잎(그리니 발판)
   leaf1: {
     position: "absolute",
     zIndex: 3,
-    left: "6%",
-    bottom: "8%",
-    width: "66%",
+    left: "11%",
+    bottom: "42%",
+    width: "50%",
     aspectRatio: AR.leaf1,
   },
 
@@ -296,48 +259,56 @@ const styles = StyleSheet.create({
   leaf4: {
     position: "absolute",
     zIndex: 2,
-    right: "-18%",
-    bottom: "-10%",
-    width: "62%",
+    right: "-2%",
+    bottom: "10%",
+    width: "35%",
     aspectRatio: AR.leaf4,
   },
 
-  // 작은 연잎(중앙 하단 쪽)
+  // 작은 연잎(중앙에서 오른쪽)
   leaf2: {
     position: "absolute",
     zIndex: 2,
-    left: "48%",
-    bottom: "6%",
-    width: "18%",
+    left: "53%",
+    bottom: "43%",
+    width: "15%",
     aspectRatio: AR.leaf2,
   },
 
-  // 작은 연잎(더 아래쪽)
+  // 가장 작은 연잎(더 아래쪽)
   leaf3: {
     position: "absolute",
     zIndex: 2,
-    left: "36%",
-    bottom: "2%",
-    width: "14%",
+    left: "40%",
+    bottom: "36%",
+    width: "9%",
     aspectRatio: AR.leaf3,
   },
 
-  // 꽃(오른쪽)
-  flower: {
+  // 큰 꽃
+  flower1: {
     position: "absolute",
     zIndex: 3,
-    right: "10%",
-    bottom: "12%",
-    width: "18%",
+    right: "18%",
+    bottom: "55%",
+    width: "19%",
     aspectRatio: AR.flower,
   },
-
-  // 그리니(연못 기준)
+  // 작은 꽃
+  flower2: {
+    position: "absolute",
+    zIndex: 5,
+    left: "10%",
+    bottom: "33%",
+    width: "12%",
+    aspectRatio: AR.flower,
+  },
+  // 그리니
   greeni: {
     position: "absolute",
     zIndex: 4,
-    left: "8%",
-    bottom: "18%",
+    left: "18%",
+    bottom: "30%",
     width: "26%",
     aspectRatio: AR.greeniUmbrella,
   },

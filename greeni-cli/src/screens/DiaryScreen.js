@@ -10,9 +10,12 @@ const { width: W, height: H } = Dimensions.get("window");
 export default function DiaryScreen({ navigation }) {
   return (
     <View style={styles.root}>
+      <View style={styles.topBackground} />
       {/* 상단 뒤로가기 + 제목 */}
-      <BackButton navigation={navigation}/>
-        <Text style={styles.title}>일기쓰기</Text>
+      <BackButton navigation={navigation}
+        top={H * 0.08}
+      />
+      <Text style={styles.title}>일기쓰기</Text>
 
       {/* 말풍선 + 그리니 */}
       <View style={styles.greeniWrap}>
@@ -54,13 +57,23 @@ const styles = StyleSheet.create({
     justifyContent: "flex-end", 
     backgroundColor: colors.ivory,
   },
+  topBackground: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    height: H * 0.14,
+    backgroundColor: colors.pink, 
+    borderBottomLeftRadius: 30,
+    borderBottomRightRadius: 30,
+  },
 
   title: {
     position: "absolute",
     alignItems: "center",
-    top: 80,
+    top: H * 0.08,
     fontFamily: "Maplestory_Bold",
-    fontSize: 24,
+    fontSize: 28,
     color: colors.brown,
   },
 
