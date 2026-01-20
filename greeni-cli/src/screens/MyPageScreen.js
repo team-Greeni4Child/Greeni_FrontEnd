@@ -8,6 +8,7 @@ import {
   Dimensions,
   BackHandler,
   Platform,
+  ScrollView,
 } from "react-native";
 import colors from "../theme/colors";
 import NavigationBar from "../components/NavigationBar";
@@ -18,7 +19,7 @@ const { width: W, height: H } = Dimensions.get("window");
 const TEST_BADGES = [
   { id: "b1", src: require("../assets/images/attendance_bedge1.png"), label: "출석 1일" },
   { id: "b2", src: require("../assets/images/diary_bedge1.png"), label: "일기작성 1일" },
-  /*
+  
   { id: "b3", src: require("../assets/images/diary_bedge1.png"), label: "출석 7일" },
   { id: "b4", src: require("../assets/images/diary_bedge1.png"), label: "출석 7일" },
   { id: "b5", src: require("../assets/images/diary_bedge1.png"), label: "출석 7일" },
@@ -46,11 +47,12 @@ const TEST_BADGES = [
   { id: "b27", src: require("../assets/images/diary_bedge1.png"), label: "출석 7일" },
   { id: "b28", src: require("../assets/images/diary_bedge1.png"), label: "출석 7일" },
   { id: "b29", src: require("../assets/images/diary_bedge1.png"), label: "출석 7일" },
-   */
+   
 ];
 
 export default function MyPageScreen({ navigation }) {
   const [tab, setTab] = useState(3);
+  const NAV_H = 90;
 
   // 뒤로가기 → 앱 종료
   useEffect(() => {
@@ -100,36 +102,53 @@ export default function MyPageScreen({ navigation }) {
       </View>
 
       {/* 프로필 카드 */}
-      <View style={styles.profileRow}>
+      <View style={styles.profileCol}>
         <Image
-          source={require("../assets/images/basic_greeni_green.png")}
+          source={require("../assets/images/basic_greeni_pink.png")}
           style={styles.avatar}
           resizeMode="contain"
         />
         <View style={styles.profileCard}>
-          <Text style={styles.profileName}>김 그리니</Text>
           <View style={styles.statRow}>
-            <Text style={styles.statLabel}>출석</Text>
-            <Text style={styles.statValue}>85일</Text>
+            <Text style={styles.statLabel}>이름</Text>
+            <Text style={styles.statValue}>김그리니</Text>
           </View>
           <View style={styles.statRow}>
-            <Text style={styles.statLabel}>뱃지</Text>
-            <Text style={styles.statValue}>{TEST_BADGES.length}개</Text>
+            <Text style={styles.statLabel}>생년월일</Text>
+            <Text style={styles.statValue}>2002.11.26</Text>
           </View>
         </View>
       </View>
 
-      {/* 섹션 타이틀 */}
-      <Text style={styles.sectionTitle}>활동 배지</Text>
+      {/* 섹션 타이틀
+      <Text style={styles.sectionTitle}>활동 배지</Text> */}
 
-      {/* 배지 영역 (View + flexWrap) */}
-      <View style={styles.badgeGrid}>
-        {TEST_BADGES.map((item) => (
-          <View key={item.id} style={styles.badgeWrap}>
-            <Image source={item.src} style={styles.badgeImage} resizeMode="contain" />
-          </View>
-        ))}
-      </View>
+      <ScrollView
+        style={[
+          styles.scrollWrap,
+          { backgroundColor: colors.ivory },
+        ]}
+        contentContainerStyle={{
+          alignItems: "center",
+          paddingTop: 0,          
+          paddingBottom: NAV_H+20 
+        }}
+        showsVerticalScrollIndicator={false}
+        bounces={false}                 
+        overScrollMode="never"         
+      >
+        {/* 섹션 타이틀 */}
+        <Text style={styles.sectionTitle}>활동 배지</Text>
+
+        {/* 배지 영역 (View + flexWrap) */}
+        <View style={styles.badgeGrid}>
+          {TEST_BADGES.map((item) => (
+            <View key={item.id} style={styles.badgeWrap}>
+              <Image source={item.src} style={styles.badgeImage} resizeMode="contain" />
+            </View>
+          ))}
+        </View>
+      </ScrollView>
     </View>
   );
 }
@@ -147,7 +166,7 @@ const styles = StyleSheet.create({
     top: 0,
     left: 0,
     right: 0,
-    height: H * 0.35,
+    height: H * 0.5,
     backgroundColor: colors.pink,
     borderBottomLeftRadius: 30,
     borderBottomRightRadius: 30,
@@ -172,27 +191,40 @@ const styles = StyleSheet.create({
     height: 30,
   },
 
-  profileRow: {
+  profileCol: {
     width: W * 0.9,
-    marginTop: H * 0.19,
-    flexDirection: "row",
+    marginTop: H * 0.16,
+    flexDirection: "column",
     alignItems: "center",
+    // borderWidth: 2,
+    // borderColor: 'red'
   },
   avatar: {
-    width: 70,
-    height: 70,
-    borderRadius: 35,
-    marginRight: 14,
+    width: 94,
+    height: 94,
+    aspectRatio: 1,
+    borderRadius: 52,
+    resizeMode: "cover",
+    marginBottom: 30,
   },
   profileCard: {
-    flex: 1,
+    // flex: 1,
+    // backgroundColor: colors.ivory,
+    // borderWidth: 2,
+    // borderColor: colors.greenDark,
+    // borderRadius: 12,
+    // height: CARD_H,
+    // paddingHorizontal: 14,
+    // paddingVertical: 10,
+    width: 345,
+    height: 135,
+    borderRadius: 10,
+    borderWidth: 3,
+    borderColor: colors.pinkDark,
     backgroundColor: colors.ivory,
-    borderWidth: 2,
-    borderColor: colors.greenDark,
-    borderRadius: 12,
-    height: CARD_H,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
+    justifyContent: "center",
+    alignItems: "center",
+    position: "relative",
   },
   profileName: {
     fontFamily: "Maplestory_Bold",
@@ -201,24 +233,32 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   statRow: {
+    width: "80%",
     flexDirection: "row",
     justifyContent: "space-between",
-    marginTop: 2,
+    alignItems: "center",
+    marginVertical: 15,
   },
   statLabel: {
     fontFamily: "Maplestory_Light",
-    fontSize: 14,
+    fontSize: 16,
     color: colors.brown,
   },
   statValue: {
     fontFamily: "Maplestory_Light",
-    fontSize: 14,
+    fontSize: 16,
     color: colors.brown,
+  },
+
+  scrollWrap: {
+    width: W,
+    marginTop: H * 0.035,
+    marginBottom: H * 0.15,
   },
 
   sectionTitle: {
     width: W * 0.9,
-    marginTop: H * 0.1,
+    marginTop: H * 0.02,
     marginBottom: 15,
     fontFamily: "Maplestory_Bold",
     fontSize: 20,
