@@ -19,6 +19,7 @@ import BackButton from "../components/BackButton";
 import colors from "../theme/colors";
 import NavigationBar from "../components/NavigationBar";
 import EmotionVander from "../components/EmotionVander";
+import EmotionVander2 from "../components/EmotionVander2";
 
 // 현재 기기의 화면 너비 W, 화면 높이 H
 const { width: W, height: H } = Dimensions.get("window");
@@ -34,7 +35,7 @@ const emotionSourceMap = {
 
 
 // 예시 데이터 (하루하루 쌓이면 배열에 push)
-const monthEmotions = ["sad", "angry", "happy", "surprised", "anxiety", "sad", "angry", "happy", "surprised", "anxiety", "angry", "happy", "surprised", "anxiety","angry", "happy", "surprised", "anxiety",];
+const monthEmotions = ["happy", "happy", "sad", "sad", "sad", "angry", "angry", "angry", "angry", "angry", "surprised", "surprised", "surprised", "surprised", "anxiety", "anxiety", "anxiety"];
 
 export default function StatisticsScreen({route, navigation}) {
 
@@ -94,8 +95,8 @@ export default function StatisticsScreen({route, navigation}) {
                         </View>
                     </View>
 
-                    {/* 감정 */}
-                    <View style={styles.emotionWrap}>
+                    {/* 감정1 */}
+                    {/* <View style={styles.emotionWrap}>
                         <View style={styles.emotionTitleWrap}>
                             <Text style={{fontFamily: "Maplestory_Bold", fontSize: 18, color:colors.brown,}}>이번달 감정</Text>
                         </View>
@@ -106,6 +107,35 @@ export default function StatisticsScreen({route, navigation}) {
                                 sourceMap={emotionSourceMap}
                                 max={31}
                                 seed={202512}
+                              />
+                            </View>
+                            <View style={styles.emotionCountWrap}>
+                                <Text style={{fontFamily: "gangwongyoyuksaeeum", fontSize: 24,}}>기쁨 2</Text>
+                                <Text style={{fontFamily: "gangwongyoyuksaeeum", fontSize: 24,}}>슬픔 3</Text>
+                                <Text style={{fontFamily: "gangwongyoyuksaeeum", fontSize: 24,}}>화남 5</Text>
+                                <Text style={{fontFamily: "gangwongyoyuksaeeum", fontSize: 24,}}>놀람 4</Text>
+                                <Text style={{fontFamily: "gangwongyoyuksaeeum", fontSize: 24,}}>불안 3</Text>
+                            </View>
+                        </View>
+                    </View> */}
+
+                    {/* 감정2 */}
+                    <View style={styles.emotionWrap}>
+                        <View style={styles.emotionTitleWrap}>
+                            <Text style={{fontFamily: "Maplestory_Bold", fontSize: 18, color:colors.brown,}}>이번달 감정</Text>
+                        </View>
+                        <View style={styles.emotionDetailsWrap}>
+                            <View style={styles.emotionVander}>
+                              <EmotionVander2 
+                                emotions={monthEmotions}
+                                sourceMap={emotionSourceMap}
+                                seed={202512}
+                                padding={0}
+                                gap={0}
+                                maxCount={31}
+                                // 차이 더 크게 보이고 싶으면:
+                                curvePow={1.35}
+                                maxSizeRatio={0.95}
                               />
                             </View>
                             <View style={styles.emotionCountWrap}>
