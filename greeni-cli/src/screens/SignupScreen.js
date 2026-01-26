@@ -154,8 +154,8 @@ export default function SignUpScreen({ navigation }) {
     setIsSigningUp(false);
   };
 
-  const openErrorModal = () => {
-    console.log(e?.message);
+  const openErrorModal = (err) => {
+    console.log(err?.message);
     setShowErrorModal(true);
   };
 
@@ -211,7 +211,7 @@ export default function SignUpScreen({ navigation }) {
       } 
       
       // 그 외(네트워크/서버 오류 등) => 모달
-      openErrorModal();
+      openErrorModal(e);
     } finally {
       setIsRequestingEmail(false);
     }
@@ -330,7 +330,7 @@ export default function SignUpScreen({ navigation }) {
       }
 
       // 그 외(네트워크/서버 오류 등) => 모달
-      openErrorModal();
+      openErrorModal(e);
     } finally {
       setIsSigningUp(false);
     }
