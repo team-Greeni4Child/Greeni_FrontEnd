@@ -21,6 +21,9 @@ export async function request(path, options = {}) {
     },
   });
 
+  // 응답 헤더 확보
+  const authorization = res.headers.get("authorization");
+
   const text = await res.text();
   let data = null;
 
@@ -37,6 +40,16 @@ export async function request(path, options = {}) {
       message: data?.message,
       result: data?.result,
     });
+  }
+
+  // 옵션으로 헤더도 함께 반환
+  if (options.returnHeaders) {
+    return {
+      ...data,
+      headers: {
+        authorization, // 없으면 null
+      },
+    };
   }
 
   return data;
