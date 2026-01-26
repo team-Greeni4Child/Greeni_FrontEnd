@@ -368,6 +368,7 @@ export default function SignUpScreen({ navigation }) {
               setEmail(text);
               if (emailError) setEmailError("");
             }}
+            autoCapitalize="none"
           />
 
           <TouchableOpacity

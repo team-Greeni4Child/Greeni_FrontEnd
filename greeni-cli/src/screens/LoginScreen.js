@@ -12,6 +12,7 @@ import {
   StyleSheet,
   Image,
   Dimensions,
+  Modal,
 } from "react-native";
 
 const { width: W, height: H } = Dimensions.get("window");
@@ -34,7 +35,19 @@ export default function LoginScreen({ navigation }) {
 
   const { setStep } = useContext(AuthContext);
 
+  // 요청 중 중복 클릭 방지
   const [isLoggingIn, setIsLoggingIn] = useState(false);
+
+  // 네트워크/서버 오류 모달
+  const [showErrorModal, setShowErrorModal] = useState(false);
+
+  const openErrorModal = () => {
+    setShowErrorModal(true);
+  };
+
+  const handleErrorOk = () => {
+    setShowErrorModal(false);
+  };
 
   const handleLogin = async () => {
     // 연타 막기
@@ -99,7 +112,7 @@ export default function LoginScreen({ navigation }) {
       // 방어코드: 토큰이 없으면 로그인 성공 처리하면 안 됨
       if (!accessToken || !refreshToken) {
         // 서버/프록시/CORS 설정 문제 가능성
-        setPasswordError("로그인 응답 토큰을 확인할 수 없습니다.");
+        openErrorModal();
         return;
       }
 
@@ -128,8 +141,8 @@ export default function LoginScreen({ navigation }) {
         return;
       }
 
-      // // 그 외(네트워크/서버 오류 등) => 모달
-      console.log(e?.message || "로그인에 실패했습니다");
+      // 그 외(네트워크/서버 오류 등) => 모달
+      openErrorModal();
     } finally {
       setIsLoggingIn(false);
     }
@@ -214,6 +227,22 @@ export default function LoginScreen({ navigation }) {
         </View>
       </View>
 
+      {/* 네트워크/서버 오류 모달 */}
+      <Modal transparent visible={showErrorModal}>
+        <View style={styles.modalBackground}>
+          <View style={styles.modalWrap}>
+            <Text style={styles.modalText}>
+              {"오류가 발생했습니다.\n잠시 후 다시 시도해주세요."}
+            </Text>
+
+            <View style={styles.modalButtonWrap}>
+              <TouchableOpacity style={styles.modalButton} onPress={handleErrorOk}>
+                <Text style={styles.modalButtonText}>확인</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -290,6 +319,48 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   linkText: {
+    color: colors.brown,
+    fontSize: 16,
+    fontFamily: "Maplestory_Light",
+  },
+
+  // 모달
+  modalBackground: {
+    flex: 1,
+    backgroundColor: colors.lightGray95,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalWrap: {
+    width: W * 0.7,
+    backgroundColor: "white",
+    borderRadius: 20,
+    borderWidth: 3,
+    borderColor: colors.greenDark,
+    padding: 0,
+    alignItems: "center",
+    justifyContent: "flex-end",
+    overflow: "hidden",
+  },
+  modalText: {
+    fontSize: 16,
+    fontFamily: "Maplestory_Light",
+    color: colors.brown,
+    textAlign: "center",
+    margin: 30,
+  },
+  modalButtonWrap: {
+    flexDirection: "row",
+    height: 45,
+    width: "100%",
+  },
+  modalButton: {
+    justifyContent: "center",
+    alignItems: "center",
+    width: "100%",
+    backgroundColor: colors.green,
+  },
+  modalButtonText: {
     color: colors.brown,
     fontSize: 16,
     fontFamily: "Maplestory_Light",
