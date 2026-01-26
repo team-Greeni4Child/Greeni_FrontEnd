@@ -155,6 +155,7 @@ export default function SignUpScreen({ navigation }) {
   };
 
   const openErrorModal = () => {
+    console.log(e?.message);
     setShowErrorModal(true);
   };
 

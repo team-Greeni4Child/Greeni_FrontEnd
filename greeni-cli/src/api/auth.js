@@ -15,3 +15,12 @@ export function signUp({ email, password, code }) {
     body: JSON.stringify({ email, password, code }),
   });
 }
+
+/** 일반 로그인: POST /api/auth/login */
+export function login({ email, password }) {
+  return request("/api/auth/login", {
+    method: "POST",
+    body: JSON.stringify({ email, password }),
+    returnHeaders: true,
+  });
+}
