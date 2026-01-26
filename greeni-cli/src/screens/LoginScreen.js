@@ -21,6 +21,9 @@ const AR = {
   greeni: 509 / 852
 };
 
+// 이메일 형식 검증 (기본)
+const emailRule = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 export default function LoginScreen({ navigation }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -50,6 +53,13 @@ export default function LoginScreen({ navigation }) {
     if (!trimmedEmail) {
       setEmail(""); // 입력값 비우기
       setEmailError("이메일을 입력해주세요");
+      hasError = true;
+    }
+
+    // 이메일 형식 오류
+    else if (!emailRule.test(trimmedEmail)) {
+      setEmail("");
+      setEmailError("이메일 형식이 올바르지 않습니다");
       hasError = true;
     }
 
