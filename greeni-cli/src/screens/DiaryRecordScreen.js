@@ -1,5 +1,12 @@
 import React, { useMemo, useState } from "react";
-import { View, Text, StyleSheet, Dimensions } from "react-native";
+import {
+  View,
+  Text,
+  StyleSheet,
+  Dimensions,
+  TouchableOpacity,
+  Image,
+} from "react-native";
 import colors from "../theme/colors";
 import BackButton from "../components/BackButton";
 import NavigationBar from "../components/NavigationBar";
@@ -20,7 +27,7 @@ const toMD = (input) => {
   return `${d.getMonth() + 1}/${d.getDate()}`;
 };
 
-export default function DiaryDrawScreen({ navigation, route }) {
+export default function DiaryRecordScreen({ navigation, route }) {
   // 하단 탭 상태 (기본: 캘린더)
   const [tab, setTab] = useState(0);
 
@@ -30,23 +37,30 @@ export default function DiaryDrawScreen({ navigation, route }) {
     return toMD(paramDate || new Date());
   }, [route?.params?.date]);
 
+  const handlePressHeadset = () => {
+    // TODO: 추후 "그날 일기 음성 대화 기록 재생" 기능 연결
+  };
+
   return (
     <View style={styles.root}>
-      {/* 하단 네비게이션 */}
-      <NavigationBar
-        state={tab}
-        onTabPress={(i) => {
-          setTab(i);
-          if (i === 0) navigation.navigate("Calendar");
-          if (i === 1) navigation.navigate("Home");
-          if (i === 2) navigation.navigate("MyPage");
-        }}
-      />
 
       {/* 상단 바 */}
       <View style={styles.topBar}>
         <BackButton navigation={navigation} />
         <Text style={styles.title}>{titleDate}</Text>
+
+        {/* 헤드셋 아이콘 (오른쪽 상단) */}
+        <TouchableOpacity
+          style={styles.headsetBtn}
+          activeOpacity={0.8}
+          onPress={handlePressHeadset}
+        >
+          <Image
+            source={require("../assets/images/headset.png")}
+            style={styles.headsetIcon}
+            resizeMode="contain"
+          />
+        </TouchableOpacity>
       </View>
 
       {/* 그림 영역 (지금은 빈 공간) */}
@@ -74,6 +88,19 @@ const styles = StyleSheet.create({
     fontSize: 24,
     color: colors.brown,
   },
+
+  // 오른쪽 상단 헤더 아이콘
+  headsetBtn: {
+    position: "absolute",
+    right: 20,
+    top: 70,
+    padding: 8, // 터치 영역 확보
+  },
+  headsetIcon: {
+    width: 28,
+    height: 28,
+  },
+
   drawArea: {
     height: H - 180,
   },
