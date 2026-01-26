@@ -97,8 +97,8 @@ const styles = StyleSheet.create({
     padding: 8, // 터치 영역 확보
   },
   headsetIcon: {
-    width: 28,
-    height: 28,
+    width: 30,
+    height: 30,
   },
 
   drawArea: {
