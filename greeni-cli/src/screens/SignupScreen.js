@@ -38,13 +38,16 @@ export default function SignUpScreen({ navigation }) {
   const [codeError, setCodeError] = useState("");
   const [passwordError, setPasswordError] = useState("");
   const [checkPasswordError, setCheckPasswordError] = useState("");
-  const [ruleError, setRuleError] = useState(false); 
+  const [ruleError, setRuleError] = useState(false);
 
   // 회원가입 완료 모달 on/off
   const [showCompleteModal, setShowCompleteModal] = useState(false);
 
   // 네트워크/서버 오류 모달
   const [showErrorModal, setShowErrorModal] = useState(false);
+
+  // 이미 가입된 이메일 모달
+  const [showDuplicateEmailModal, setShowDuplicateEmailModal] = useState(false);
 
   // 인증코드 유효시간 타이머
   const [secondsLeft, setSecondsLeft] = useState(null); // null이면 미표시
@@ -159,6 +162,11 @@ export default function SignUpScreen({ navigation }) {
     setShowErrorModal(false);
   };
 
+  const handleDuplicateEmailOk = () => {
+    setShowDuplicateEmailModal(false);
+    resetSignUpForm();
+  };
+
   // 이메일 인증 버튼
   const handleVerifyEmail = async () => {
     if (isVerifyDisabled) return;
@@ -201,7 +209,7 @@ export default function SignUpScreen({ navigation }) {
         return;
       } 
       
-      // 그 외(네트워크/서버 오류 등) => 모달 + 확인 시 리셋
+      // 그 외(네트워크/서버 오류 등) => 모달
       openErrorModal();
     } finally {
       setIsRequestingEmail(false);
@@ -296,9 +304,9 @@ export default function SignUpScreen({ navigation }) {
     } catch (e) {
       console.log("SIGNUP FAIL:", e);
 
+      // 이미 가입된 이메일 => 모달
       if (e?.code === "MEMBER4001") {
-        setEmail("");
-        setEmailError("이미 가입된 이메일입니다.");
+        setShowDuplicateEmailModal(true);
         return;
       }
       if (e?.code === "MEMBER4002") {
@@ -320,7 +328,7 @@ export default function SignUpScreen({ navigation }) {
         return;
       }
 
-      // 그 외(네트워크/서버 오류 등) => 모달 + 확인 시 리셋
+      // 그 외(네트워크/서버 오류 등) => 모달
       openErrorModal();
     } finally {
       setIsSigningUp(false);
@@ -482,6 +490,24 @@ export default function SignUpScreen({ navigation }) {
               <TouchableOpacity
                 style={[styles.modalButton]}
                 onPress={handleCompleteOk}  
+              >
+                <Text style={styles.modalButtonText}>확인</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* 이미 가입된 이메일 모달 */}
+      <Modal transparent visible={showDuplicateEmailModal}>
+        <View style={styles.modalBackground}>
+          <View style={styles.modalWrap}>
+            <Text style={styles.modalText}>이미 가입된 이메일입니다.</Text>
+
+            <View style={styles.modalButtonWrap}>
+              <TouchableOpacity
+                style={[styles.modalButton]}
+                onPress={handleDuplicateEmailOk}
               >
                 <Text style={styles.modalButtonText}>확인</Text>
               </TouchableOpacity>
