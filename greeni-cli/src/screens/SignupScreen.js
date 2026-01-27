@@ -12,6 +12,7 @@ import {
   Dimensions,
   Modal,
 } from "react-native";
+import { requestEmailVerification, signUp } from "../api/auth";
 
 const { width: W, height: H } = Dimensions.get("window");
 
@@ -19,14 +20,10 @@ const AR = {
   greeni: 509 / 852,
 };
 
-// 임시: 이미 가입된 이메일 / 인증코드 (백엔드 연동 시 교체)
-const MOCK_EXISTING_EMAILS = ["aaa"];
-const MOCK_VERIFY_CODE = "aaa";
-
 // 비밀번호 규칙 (영문 + 숫자 + ASCII 특수문자 + 8자리 이상)
 const passwordRule = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[!-/:-@[-`{-~]).{8,}$/;
 
-// 인증번호 유효시간 3분
+// 인증번호 유효시간 3분 (현재는 프론트 타이머로 운영)
 const DEFAULT_EXPIRE_SECONDS = 3 * 60;
 // 재전송 쿨타임(10초)
 const RESEND_COOLDOWN_SECONDS = 10;
@@ -41,10 +38,16 @@ export default function SignUpScreen({ navigation }) {
   const [codeError, setCodeError] = useState("");
   const [passwordError, setPasswordError] = useState("");
   const [checkPasswordError, setCheckPasswordError] = useState("");
-  const [ruleError, setRuleError] = useState(false); 
+  const [ruleError, setRuleError] = useState(false);
 
   // 회원가입 완료 모달 on/off
   const [showCompleteModal, setShowCompleteModal] = useState(false);
+
+  // 네트워크/서버 오류 모달
+  const [showErrorModal, setShowErrorModal] = useState(false);
+
+  // 이미 가입된 이메일 모달
+  const [showDuplicateEmailModal, setShowDuplicateEmailModal] = useState(false);
 
   // 인증코드 유효시간 타이머
   const [secondsLeft, setSecondsLeft] = useState(null); // null이면 미표시
@@ -55,6 +58,10 @@ export default function SignUpScreen({ navigation }) {
   const [isVerifyDisabled, setIsVerifyDisabled] = useState(false);
   const [verifyLabel, setVerifyLabel] = useState("인증");
   const cooldownRef = useRef(null);
+
+  // 요청 중 중복 클릭 방지
+  const [isRequestingEmail, setIsRequestingEmail] = useState(false);
+  const [isSigningUp, setIsSigningUp] = useState(false);
 
   const clearTimer = () => {
     if (timerRef.current) {
@@ -118,9 +125,53 @@ export default function SignUpScreen({ navigation }) {
     return `${m}:${s}`;
   };
 
+  // 전부 리셋
+  const resetSignUpForm = () => {
+    // 입력값
+    setEmail("");
+    setCode("");
+    setPassword("");
+    setCheckPassword("");
+
+    // 에러 표시
+    setEmailError("");
+    setCodeError("");
+    setPasswordError("");
+    setCheckPasswordError("");
+    setRuleError(false);
+
+    // 타이머/쿨다운
+    clearTimer();
+    clearCooldown();
+    setSecondsLeft(null);
+    setIsExpired(false);
+
+    setIsVerifyDisabled(false);
+    setVerifyLabel("인증");
+
+    // 진행중 플래그
+    setIsRequestingEmail(false);
+    setIsSigningUp(false);
+  };
+
+  const openErrorModal = (err) => {
+    console.log(err?.message);
+    setShowErrorModal(true);
+  };
+
+  const handleErrorOk = () => {
+    setShowErrorModal(false);
+  };
+
+  const handleDuplicateEmailOk = () => {
+    setShowDuplicateEmailModal(false);
+    resetSignUpForm();
+  };
+
   // 이메일 인증 버튼
-  const handleVerifyEmail = () => {
+  const handleVerifyEmail = async () => {
     if (isVerifyDisabled) return;
+    if (isRequestingEmail) return;
 
     setEmailError("");
     setCodeError("");
@@ -133,26 +184,43 @@ export default function SignUpScreen({ navigation }) {
       return;
     }
 
-    // 회원가입: 이미 가입된 이메일이면 에러
-    if (MOCK_EXISTING_EMAILS.includes(trimmedEmail)) {
-      setEmail("");
-      setEmailError("이미 가입된 이메일입니다");
-      return;
+    try {
+      setIsRequestingEmail(true);
+
+      // 이메일 인증 요청 API 호출
+      const res = await requestEmailVerification(trimmedEmail);
+      console.log("EMAIL REQUEST OK:", res);
+
+      // 타이머 시작
+      startTimer(DEFAULT_EXPIRE_SECONDS);
+
+      // 전송 직후: 전송됨 (10초 후 재전송으로 변경)
+      startCooldown();
+
+      // 재전송 버튼을 누르면 인증코드 입력칸을 비움
+      setCode("");
+    } catch (e) {
+      console.log("EMAIL REQUEST FAIL:", e);
+
+      
+      // 인증 코드 전송 실패
+      if (e?.code === "MEMBER4006") {
+        setCode("");
+        setCodeError("인증코드 전송에 실패했습니다.");
+        return;
+      } 
+      
+      // 그 외(네트워크/서버 오류 등) => 모달
+      openErrorModal(e);
+    } finally {
+      setIsRequestingEmail(false);
     }
-
-    // 여기서 실제로는 인증코드 발송 API 호출
-    // 성공했다고 가정하고 타이머 시작
-    startTimer(DEFAULT_EXPIRE_SECONDS);
-
-    // 전송 직후: 전송됨 (10초 후 재전송으로 변경)
-    startCooldown();
-
-    // 재전송 버튼을 누르면 인증코드 입력칸을 비움
-    setCode("");
   };
 
   // 가입하기 버튼
-  const handleSignUp = () => {
+  const handleSignUp = async () => {
+    if (isSigningUp) return;
+
     // 에러 초기화
     setEmailError("");
     setCodeError("");
@@ -175,17 +243,14 @@ export default function SignUpScreen({ navigation }) {
       hasError = true;
     }
 
-    // 2) 인증코드 검사 (공란 + 불일치 둘 다 체크)
+    // 2) 인증코드 검사
     if (!trimmedCode) {
       setCode("");
       setCodeError("인증코드를 입력해주세요");
       hasError = true;
-    } else if (trimmedCode !== MOCK_VERIFY_CODE) {
-      setCode("");
-      setCodeError("인증코드가 일치하지 않습니다");
-      hasError = true;
     }
-    // 2-1) 인증코드 만료 검사 (타이머가 시작된 적이 있을 때만)
+
+    // 2-1) 인증코드 만료 검사 (프론트 타이머 기준)
     if (secondsLeft !== null && (secondsLeft === 0 || isExpired)) {
       setCode("");
       setCodeError("인증코드가 만료되었습니다");
@@ -225,9 +290,50 @@ export default function SignUpScreen({ navigation }) {
     // 에러 하나라도 있으면 회원가입 중단
     if (hasError) return;
 
-    // TODO: 실제 회원가입 API 호출
-    // 완료 모달 띄우기
-    setShowCompleteModal(true);
+    try {
+      setIsSigningUp(true);
+
+      const res = await signUp({
+        email: trimmedEmail,
+        password: trimmedPw,
+        code: trimmedCode,
+      });
+      console.log("SIGNUP OK:", res);
+
+      // 회원가입 완료 모달 띄우기
+      setShowCompleteModal(true);
+    } catch (e) {
+      console.log("SIGNUP FAIL:", e);
+
+      // 이미 가입된 이메일 => 모달
+      if (e?.code === "MEMBER4001") {
+        setShowDuplicateEmailModal(true);
+        return;
+      }
+      if (e?.code === "MEMBER4002") {
+        setCode("");
+        setCodeError("인증코드가 만료되었습니다.");
+        return;
+      }
+      if (e?.code === "MEMBER4003") {
+        setCode("");
+        setCodeError("인증코드가 일치하지 않습니다.");
+        return;
+      }
+
+      // 비밀번호 형식 오류
+      if (e?.code === "COMMON400") {
+        setPassword("");
+        setCheckPassword("");
+        setRuleError(true);
+        return;
+      }
+
+      // 그 외(네트워크/서버 오류 등) => 모달
+      openErrorModal(e);
+    } finally {
+      setIsSigningUp(false);
+    }
   };
 
   // 모달에서 확인 버튼 누르면 로그인 화면으로 이동
@@ -262,16 +368,18 @@ export default function SignUpScreen({ navigation }) {
               setEmail(text);
               if (emailError) setEmailError("");
             }}
+            autoCapitalize="none"
           />
 
           <TouchableOpacity
             style={[
               styles.verificationButton,
-              isVerifyDisabled && styles.verificationButtonDisabled,
+              (isVerifyDisabled || isRequestingEmail) &&
+                styles.verificationButtonDisabled,
             ]}
             onPress={handleVerifyEmail}
             activeOpacity={0.6}
-            disabled={isVerifyDisabled}
+            disabled={isVerifyDisabled || isRequestingEmail}
           >
             <Text style={styles.verificationButtonText}>{verifyLabel}</Text>
           </TouchableOpacity>
@@ -332,12 +440,8 @@ export default function SignUpScreen({ navigation }) {
             checkPasswordError ? { borderBottomColor: "#f36945" } : {},
           ]}
           fontFamily="Maplestory_Light"
-          placeholder={
-            checkPasswordError ? checkPasswordError : "비밀번호 확인"
-          }
-          placeholderTextColor={
-            checkPasswordError ? "#f36945" : colors.brown
-          }
+          placeholder={checkPasswordError ? checkPasswordError : "비밀번호 확인"}
+          placeholderTextColor={checkPasswordError ? "#f36945" : colors.brown}
           secureTextEntry
           value={CheckPassword}
           onChangeText={(text) => {
@@ -374,19 +478,15 @@ export default function SignUpScreen({ navigation }) {
           borderRadius={10}
           fontSize={14}
           onPress={handleSignUp}
+          disabled={isSigningUp}
         />
       </View>
 
       {/* 회원가입 완료 모달 */}
-      <Modal
-        transparent
-        visible={showCompleteModal}
-      >
+      <Modal transparent visible={showCompleteModal}>
         <View style={styles.modalBackground}>
           <View style={styles.modalWrap}>
-            <Text style={styles.modalText}>
-              회원가입이 완료되었습니다.
-            </Text>
+            <Text style={styles.modalText}>회원가입이 완료되었습니다.</Text>
 
             <View style={styles.modalButtonWrap}>
               <TouchableOpacity
@@ -399,6 +499,43 @@ export default function SignUpScreen({ navigation }) {
           </View>
         </View>
       </Modal>
+
+      {/* 이미 가입된 이메일 모달 */}
+      <Modal transparent visible={showDuplicateEmailModal}>
+        <View style={styles.modalBackground}>
+          <View style={styles.modalWrap}>
+            <Text style={styles.modalText}>이미 가입된 이메일입니다.</Text>
+
+            <View style={styles.modalButtonWrap}>
+              <TouchableOpacity
+                style={[styles.modalButton]}
+                onPress={handleDuplicateEmailOk}
+              >
+                <Text style={styles.modalButtonText}>확인</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* 네트워크/서버 오류 모달 */}
+      <Modal transparent visible={showErrorModal}>
+        <View style={styles.modalBackground}>
+          <View style={styles.modalWrap}>
+            <Text style={styles.modalText}>{"오류가 발생했습니다.\n잠시 후 다시 시도해주세요."}</Text>
+
+            <View style={styles.modalButtonWrap}>
+              <TouchableOpacity
+                style={[styles.modalButton]}
+                onPress={handleErrorOk}
+              >
+                <Text style={styles.modalButtonText}>확인</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
     </View>
   );
 }

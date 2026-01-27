@@ -2,14 +2,17 @@ import React, { useState, useContext } from "react";
 import colors from "../theme/colors";
 import { AuthContext } from "../App"; 
 import Button from "../components/Button";
-import { 
-  View, 
-  Text, 
-  TextInput, 
-  TouchableOpacity, 
-  StyleSheet, 
-  Image, 
-  Dimensions 
+import { login } from "../api/auth";
+import { saveAuth } from "../utils/tokenStorage";
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  Image,
+  Dimensions,
+  Modal,
 } from "react-native";
 
 const { width: W, height: H } = Dimensions.get("window");
@@ -19,11 +22,8 @@ const AR = {
   greeni: 509 / 852
 };
 
-// 임시: 가입된 이메일/비밀번호 목록 (나중에 API 연동 시 수정)
-const MOCK_USERS = {
-  "pputtymin@gmail.com": "minseo2002.",
-  "aaa": "aaa",
-};
+// 이메일 형식 검증 (기본)
+const emailRule = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export default function LoginScreen({ navigation }) {
   const [email, setEmail] = useState("");
@@ -35,7 +35,24 @@ export default function LoginScreen({ navigation }) {
 
   const { setStep } = useContext(AuthContext);
 
-  const handleLogin = () => {
+  // 요청 중 중복 클릭 방지
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
+
+  // 네트워크/서버 오류 모달
+  const [showErrorModal, setShowErrorModal] = useState(false);
+
+  const openErrorModal = () => {
+    setShowErrorModal(true);
+  };
+
+  const handleErrorOk = () => {
+    setShowErrorModal(false);
+  };
+
+  const handleLogin = async () => {
+    // 연타 막기
+    if (isLoggingIn) return;
+
     // 이전 에러 초기화
     setEmailError("");
     setPasswordError("");
@@ -45,14 +62,21 @@ export default function LoginScreen({ navigation }) {
 
     let hasError = false;
 
-    // 1) 이메일 미입력
+    // 이메일 미입력
     if (!trimmedEmail) {
       setEmail(""); // 입력값 비우기
       setEmailError("이메일을 입력해주세요");
       hasError = true;
     }
 
-    // 2) 비밀번호 미입력
+    // 이메일 형식 오류
+    else if (!emailRule.test(trimmedEmail)) {
+      setEmail("");
+      setEmailError("이메일 형식이 올바르지 않습니다");
+      hasError = true;
+    }
+
+    // 비밀번호 미입력
     if (!trimmedPassword) {
       setPassword("");
       setPasswordError("비밀번호를 입력해주세요");
@@ -62,24 +86,66 @@ export default function LoginScreen({ navigation }) {
     // 이메일이나 비밀번호가 비어있으면 여기서 종료
     if (hasError) return;
 
-    // 3) 가입되지 않은 이메일
-    const registeredPassword = MOCK_USERS[trimmedEmail];
-    if (!registeredPassword) {
-      setEmail("");
-      setPassword("");
-      setEmailError("가입되지 않은 이메일입니다");
-      return;
-    }
+    try {
+      setIsLoggingIn(true);
+      console.log("LOGIN REQUEST:", { email: trimmedEmail });
 
-    // 4) 이메일은 맞지만 비밀번호가 틀림
-    if (registeredPassword !== trimmedPassword) {
-      setPassword("");
-      setPasswordError("비밀번호가 일치하지 않습니다");
-      return;
-    }
+      // 1) 로그인 API 호출
+      const res = await login({ email: trimmedEmail, password: trimmedPassword });
 
-    // 5) 로그인 성공
-    setStep("profile");
+      // 2) accessToken: 헤더 authorization에서 꺼내기
+      const authorization = res?.headers?.authorization; // "Bearer xxx"
+      const accessToken = authorization?.startsWith("Bearer ")
+        ? authorization.slice("Bearer ".length)
+        : authorization;
+
+      // 3) refreshToken/memberId: body(result)에서 꺼내기
+      const refreshToken = res?.result?.refreshToken;
+      const memberId = res?.result?.memberId;
+
+      console.log("LOGIN OK:", {
+        memberId,
+        hasAccessToken: !!accessToken,
+        hasRefreshToken: !!refreshToken,
+      });
+
+      // 방어코드: 토큰이 없으면 로그인 성공 처리하면 안 됨
+      if (!accessToken || !refreshToken) {
+        // 서버/프록시/CORS 설정 문제 가능성
+        openErrorModal();
+        return;
+      }
+
+      // 4) 저장
+      await saveAuth({ accessToken, refreshToken, memberId });
+
+      console.log("LOGIN SAVE TOKEN OK:", { memberId });
+
+      // 5) 다음 단계로 이동
+      setStep("profile");
+    } catch (e) {
+      console.log("LOGIN FAIL:", e);
+
+      const code = e?.code;
+
+      if (code === "MEMBER4004") {
+        setEmail("");
+        setPassword("");
+        setEmailError("가입되지 않은 이메일입니다");
+        return;
+      }
+
+      if (code === "MEMBER4007") {
+        setPassword("");
+        setPasswordError("비밀번호가 일치하지 않습니다");
+        return;
+      }
+
+      // 그 외(네트워크/서버 오류 등) => 모달
+      openErrorModal();
+    } finally {
+      setIsLoggingIn(false);
+    }
   };
 
   return (
@@ -105,6 +171,7 @@ export default function LoginScreen({ navigation }) {
               setEmail(text);
               if (emailError) setEmailError("");
             }}
+            autoCapitalize="none"
           />
           <TextInput
             style={[
@@ -160,6 +227,22 @@ export default function LoginScreen({ navigation }) {
         </View>
       </View>
 
+      {/* 네트워크/서버 오류 모달 */}
+      <Modal transparent visible={showErrorModal}>
+        <View style={styles.modalBackground}>
+          <View style={styles.modalWrap}>
+            <Text style={styles.modalText}>
+              {"오류가 발생했습니다.\n잠시 후 다시 시도해주세요."}
+            </Text>
+
+            <View style={styles.modalButtonWrap}>
+              <TouchableOpacity style={styles.modalButton} onPress={handleErrorOk}>
+                <Text style={styles.modalButtonText}>확인</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -236,6 +319,48 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   linkText: {
+    color: colors.brown,
+    fontSize: 16,
+    fontFamily: "Maplestory_Light",
+  },
+
+  // 모달
+  modalBackground: {
+    flex: 1,
+    backgroundColor: colors.lightGray95,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalWrap: {
+    width: W * 0.7,
+    backgroundColor: "white",
+    borderRadius: 20,
+    borderWidth: 3,
+    borderColor: colors.greenDark,
+    padding: 0,
+    alignItems: "center",
+    justifyContent: "flex-end",
+    overflow: "hidden",
+  },
+  modalText: {
+    fontSize: 16,
+    fontFamily: "Maplestory_Light",
+    color: colors.brown,
+    textAlign: "center",
+    margin: 30,
+  },
+  modalButtonWrap: {
+    flexDirection: "row",
+    height: 45,
+    width: "100%",
+  },
+  modalButton: {
+    justifyContent: "center",
+    alignItems: "center",
+    width: "100%",
+    backgroundColor: colors.green,
+  },
+  modalButtonText: {
     color: colors.brown,
     fontSize: 16,
     fontFamily: "Maplestory_Light",
