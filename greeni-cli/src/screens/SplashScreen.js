@@ -172,8 +172,8 @@ const styles = StyleSheet.create({
   cloud1: {
     position: "absolute",
     zIndex: 6,
-    top: -H * 0.16,
-    left: -H * 0.3,
+    top: -H * 0.15,
+    left: -H * 0.31,
     width: W * 1.9,
     height: H * 0.4,
     aspectRatio: AR.cloud,

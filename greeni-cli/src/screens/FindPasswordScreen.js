@@ -210,6 +210,7 @@ export default function LoginScreen({ navigation }) {
                 // 이메일 입력 시: 이메일 에러 초기화
                 if (emailError) setEmailError("");
               }}
+              autoCapitalize="none"
             />
 
             <TouchableOpacity
