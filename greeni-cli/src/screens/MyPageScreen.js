@@ -10,6 +10,7 @@ import {
   Platform,
   ScrollView,
 } from "react-native";
+import LinearGradient from "react-native-linear-gradient";
 import colors from "../theme/colors";
 import NavigationBar from "../components/NavigationBar";
 
@@ -149,6 +150,18 @@ export default function MyPageScreen({ navigation }) {
           ))}
         </View>
       </ScrollView>
+
+      <LinearGradient 
+        pointerEvents="none"
+        colors={[
+          "rgba(255, 255, 255, 0)",
+          "rgba(255, 255, 255, 0.6)",
+          colors.ivory,
+        ]}
+        locations={[0, 0.55, 1]}
+        style={[styles.bottomFade, { bottom: NAV_H + 20 }]}
+      />
+
     </View>
   );
 }
@@ -285,5 +298,12 @@ const styles = StyleSheet.create({
   badgeImage: {
     width: "100%",
     height: "100%",
+  },
+
+  bottomFade: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    height: 120,   // 흐려지는 범위
   },
 });

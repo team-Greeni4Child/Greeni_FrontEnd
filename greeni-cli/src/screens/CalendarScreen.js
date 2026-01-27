@@ -53,20 +53,40 @@ export default function CalendarScreen({ navigation }) {
   const [month, setMonth] = useState(today.getMonth()); // 0~11
   const [tab, setTab] = useState(1);
 
+  const stickerMap = useMemo(
+    () => ({
+      "2025-11-02": require("../assets/images/angry.png"),
+      "2025-11-05": require("../assets/images/angry.png"),
+      "2025-11-14": require("../assets/images/angry.png"),
+      "2025-11-18": require("../assets/images/angry.png"),
+      "2025-11-23": require("../assets/images/angry.png"),
+
+      "2025-12-01": require("../assets/images/happy.png"),
+      "2025-12-08": require("../assets/images/sad.png"),
+      "2025-12-12": require("../assets/images/anxiety.png"),
+      "2025-12-16": require("../assets/images/surprised.png"),
+      "2025-12-30": require("../assets/images/happy.png"),
+    })
+  )
+
   // 서버에서 가져올 실제 "일기 쓴 날짜들" 
   // 형식: "YYYY-MM-DD" 문자열 배열로 관리
   // TODO: 추후 백엔드 연동
+  // const diaryDates = useMemo(
+  //   () =>
+  //     new Set([
+  //       //test
+  //       "2025-11-02",
+  //       "2025-11-05",
+  //       "2025-11-14",
+  //       "2025-11-18",
+  //       "2025-11-23",
+  //     ]),
+  //   []
+  // );
   const diaryDates = useMemo(
     () =>
-      new Set([
-        //test
-        "2025-11-02",
-        "2025-11-05",
-        "2025-11-14",
-        "2025-11-18",
-        "2025-11-23",
-      ]),
-    []
+      new Set(Object.keys(stickerMap)), [stickerMap]
   );
 
   const matrix = useMemo(() => buildMonthMatrix(year, month), [year, month]);
@@ -74,6 +94,16 @@ export default function CalendarScreen({ navigation }) {
   const hasDiary = useCallback(
     (d) => (d ? diaryDates.has(ymd(d)) : false),
     [diaryDates]
+  );
+
+  // 날짜별 스티커 얻기
+  const getStickerSource = useCallback(
+    (d) => {
+      if (!d) return null;
+      const key = ymd(d);
+      return stickerMap[key] || null;
+    },
+    [stickerMap]
   );
 
   const goPrev = () => {
@@ -132,7 +162,7 @@ export default function CalendarScreen({ navigation }) {
         </ImageBackground>
 
         <Image
-            source={require("../assets/images/greeni_shy.png")}
+          source={require("../assets/images/greeni_face.png")}
           style={styles.greeni}
           resizeMode="contain"
         />
@@ -166,6 +196,7 @@ export default function CalendarScreen({ navigation }) {
               const isThisMonth = !!d;
               const dayNum = d ? d.getDate() : "";
               const diary = hasDiary(d);
+              const stickerSource = getStickerSource(d);
 
               return (
                 <View key={c} style={styles.cell}>
@@ -190,7 +221,7 @@ export default function CalendarScreen({ navigation }) {
                         onPress={() => openDiary(d)}
                       >
                         <Image
-                          source={require("../assets/images/date_greeni_pink.png")}
+                          source={stickerSource}
                           style={styles.stickerImage}
                           resizeMode="contain"
                         />
@@ -228,9 +259,11 @@ const styles = StyleSheet.create({
   },
   title: {
     position: "absolute",
-    top: 80,
+    // top: 80,
+    top: 65,
     fontFamily: "Maplestory_Bold",
-    fontSize: 24,
+    // fontSize: 24,
+    fontSize: 28,
     color: colors.brown,
   },
   // --- 상단 ---
@@ -256,9 +289,12 @@ const styles = StyleSheet.create({
     lineHeight: 26,
   },
   greeni: {
-    height: H * 0.15,
-    left: -50,
-    top: -50,
+    // height: H * 0.15,
+    // left: -50,
+    // top: -50,
+    height: H * 0.09,
+    left: -5,
+    top: -130,
   },
   monthRow: {
     marginTop: 2,
@@ -267,7 +303,8 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     gap: 18,
     left:80,
-    top: -90,
+    // top: -90,
+    top: -80,
   },
   arrowBtn: { 
     paddingHorizontal: 12, 
@@ -289,7 +326,8 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     width: W - 32,
-    marginTop: 12,
+    // marginTop: 12,
+    marginTop: -35,
     borderBottomWidth: 2,
     borderBottomColor: colors.greenDark,
     paddingBottom: 8,
@@ -307,7 +345,7 @@ const styles = StyleSheet.create({
   // --- 그리드 ---
   grid: {
     width: W - 32,
-    marginTop: 8,
+    marginTop: 10,
   },
   row: {
     flexDirection: "row",
