@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
 import { 
   View, 
   Text, 
@@ -14,6 +14,7 @@ import {
 } from "react-native";
 import DateTimePicker from "react-native-modal-datetime-picker";
 
+import { ProfileContext } from "../context/ProfileContext";
 import Button from "../components/Button";
 import BackButton from "../components/BackButton";
 import colors from "../theme/colors";
@@ -40,6 +41,9 @@ const monthEmotions = ["happy", "happy", "sad", "sad", "sad", "angry", "angry", 
 export default function StatisticsScreen({route, navigation}) {
 
     const [tab, setTab] = useState(2);
+    const { selectedProfile } = useContext(ProfileContext);
+
+    const profileName = selectedProfile.name;
 
     return (
         <View style={styles.root}>
@@ -82,7 +86,7 @@ export default function StatisticsScreen({route, navigation}) {
                         <Image style={styles.greeniFace} source={require("../assets/images/greeni_face.png")}/>
                         <View style={styles.attendanceTextWrap}>
                           <Text style={styles.attendanceText}>
-                            OO이는{" "}
+                            {profileName}이는{" "}
                             <Text style={styles.attendanceNumber}>100</Text>
                             일 출석했고
                           </Text>
@@ -177,7 +181,7 @@ export default function StatisticsScreen({route, navigation}) {
                               resizeMode="contain"
                             />
                             <View style={styles.bubble}>
-                              <Text style={styles.bubbleText}>오늘 그리니는 역할놀이에서{"\n"}환자 역할을 했어요.</Text>
+                              <Text style={styles.bubbleText}>오늘 {profileName}는 역할놀이에서{"\n"}환자 역할을 했어요.</Text>
                             </View>
                           </View>
 
