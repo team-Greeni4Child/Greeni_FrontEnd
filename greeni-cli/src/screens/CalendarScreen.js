@@ -154,7 +154,7 @@ export default function CalendarScreen({ navigation }) {
       {/* 상단 타이틀/말풍선/그리니 영역 */}
       <View style={styles.headerWrap}>
         <ImageBackground
-          source={require("../assets/images/bubble_calendar.png")}
+          source={require("../assets/images/bubble_calendar2.png")}
           style={styles.bubble}
           resizeMode="stretch"
         >
@@ -274,12 +274,12 @@ const styles = StyleSheet.create({
   },
   bubble: {
     maxWidth: W * 0.75, 
-    paddingHorizontal: 30,
-    paddingVertical: 50,
+    paddingHorizontal: 10,
+    paddingVertical: 25,
     alignItems: "center",
     justifyContent: "center",
-    top: -30,
-    right: -80,
+    top: 10,
+    right: -65,
   },
   bubbleText: {
     fontSize: 28,
@@ -292,9 +292,10 @@ const styles = StyleSheet.create({
     // height: H * 0.15,
     // left: -50,
     // top: -50,
-    height: H * 0.09,
-    left: -5,
-    top: -130,
+    width: 72,
+    height: 62,
+    left: 35,
+    top: -92,
   },
   monthRow: {
     marginTop: 2,
@@ -304,7 +305,7 @@ const styles = StyleSheet.create({
     gap: 18,
     left:80,
     // top: -90,
-    top: -80,
+    top: -25,
   },
   arrowBtn: { 
     paddingHorizontal: 12, 
