@@ -8,9 +8,10 @@ export const ProfileContext = createContext();
 // ProfileProvide로 감싸진 모든 화면에서 profiles와 setProfiles 공유 가능
 export const ProfileProvider = ({ children }) => {
   const [profiles, setProfiles] = useState([]);
+  const [selectedProfile, setSelectedProfile] = useState(null);
 
   return (
-    <ProfileContext.Provider value={{ profiles, setProfiles }}>
+    <ProfileContext.Provider value={{ profiles, setProfiles, selectedProfile, setSelectedProfile }}>
       {children}
     </ProfileContext.Provider>
   );
