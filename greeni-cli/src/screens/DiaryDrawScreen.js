@@ -7,7 +7,10 @@ import {
   Image,
   Dimensions,
   Pressable,
+  Alert,
 } from "react-native";
+import { launchImageLibrary } from "react-native-image-picker";
+
 import colors from "../theme/colors";
 import BackButton from "../components/BackButton";
 import Button from "../components/Button";
@@ -36,12 +39,44 @@ export default function DiaryDrawScreen({ navigation }) {
   // 컬러 모달
   const [showColorModal, setShowColorModal] = useState(false);
 
+  // 배경 사진
+  const [backgroundUri, setBackgroundUri] = useState(null);
+
   const closeAllPanels = () => {
     setShowPenPanel(false);
     setShowEraserPanel(false);
   };
 
   const isAnyPanelOpen = showPenPanel || showEraserPanel;
+
+  // 사진 선택
+  const pickBackgroundImage = async () => {
+    try {
+      const res = await launchImageLibrary({
+        mediaType: "photo",
+        selectionLimit: 1, //1장만
+        quality: 1,
+      });
+
+      if (res.didCancel) return;
+
+      if (res.errorCode) {
+        Alert.alert("오류", `사진을 불러오지 못했어요. (${res.errorCode})`);
+        return;
+      }
+
+      const uri = res.assets?.[0]?.uri;
+      if (!uri) {
+        Alert.alert("오류", "사진 URI를 가져오지 못했어요.");
+        return;
+      }
+
+      setBackgroundUri(uri);
+    } catch (e) {
+      console.log(e);
+      Alert.alert("오류", "사진을 불러오지 못했어요.");
+    }
+  };
 
   return (
     <View style={styles.root}>
@@ -89,10 +124,11 @@ export default function DiaryDrawScreen({ navigation }) {
 
           {/* 사진 */}
           <TouchableOpacity
-            onPress={() => {
+            onPress={async () => {
               setActiveTool("photo");
               closeAllPanels();
-              // TODO: 사진 업로드 로직 연결
+              await pickBackgroundImage();
+              setActiveTool("pen");
             }}
             activeOpacity={0.85}
           >
@@ -107,6 +143,12 @@ export default function DiaryDrawScreen({ navigation }) {
 
       {/* 그림 영역 */}
       <View style={styles.drawArea}>
+        {/* 배경 사진 */}
+        {backgroundUri ? (
+          <Image source={{ uri: backgroundUri }} style={styles.bgImage} resizeMode="cover" />
+        ) : null}
+
+        {/* 캔버스 */}
         <SkiaDrawCanvas
           tool={activeTool}
           penColor={penColor}
@@ -211,6 +253,11 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.ivory,
     position: "relative",
+  },
+
+  // 배경 이미지
+  bgImage: {
+    ...StyleSheet.absoluteFillObject,
   },
 
   backdrop: {
