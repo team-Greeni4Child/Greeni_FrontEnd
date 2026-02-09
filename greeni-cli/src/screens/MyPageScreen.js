@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useContext } from "react";
 import {
   View,
   Text,
@@ -10,7 +10,8 @@ import {
   Platform,
   ScrollView,
 } from "react-native";
-import LinearGradient from "react-native-linear-gradient";
+import { ProfileContext } from "../context/ProfileContext";
+// import LinearGradient from "react-native-linear-gradient";
 import colors from "../theme/colors";
 import NavigationBar from "../components/NavigationBar";
 
@@ -55,6 +56,18 @@ export default function MyPageScreen({ navigation }) {
   const [tab, setTab] = useState(3);
   const NAV_H = 90;
 
+  const { selectedProfile } = useContext(ProfileContext);
+  const formatBirth = (s) => (typeof s === "string" ? s.replaceAll("-", ".") : "");
+
+  // 선택된 profile 없으면 바로 프로필 선택 화면으로
+  useEffect(() => {
+    if (!selectedProfile) {
+      navigation.navigate("ProfileSelectFromSettings");
+    }
+  }, [selectedProfile, navigation]);
+
+  if (!selectedProfile) return null;
+
   // 뒤로가기 → 앱 종료
   useEffect(() => {
     const onBackPress = () => {
@@ -66,6 +79,10 @@ export default function MyPageScreen({ navigation }) {
     const sub = BackHandler.addEventListener("hardwareBackPress", onBackPress);
     return () => sub.remove();
   }, []);
+
+  const profileName = selectedProfile.name;
+  const profileBirth = formatBirth(selectedProfile.birth);
+  const profileImageSource = selectedProfile.image;
 
   return (
     <View style={styles.root}>
@@ -105,18 +122,18 @@ export default function MyPageScreen({ navigation }) {
       {/* 프로필 카드 */}
       <View style={styles.profileCol}>
         <Image
-          source={require("../assets/images/basic_greeni_pink.png")}
+          source={profileImageSource}
           style={styles.avatar}
           resizeMode="contain"
         />
         <View style={styles.profileCard}>
           <View style={styles.statRow}>
             <Text style={styles.statLabel}>이름</Text>
-            <Text style={styles.statValue}>김그리니</Text>
+            <Text style={styles.statValue}>{profileName}</Text>
           </View>
           <View style={styles.statRow}>
             <Text style={styles.statLabel}>생년월일</Text>
-            <Text style={styles.statValue}>2002.11.26</Text>
+            <Text style={styles.statValue}>{profileBirth}</Text>
           </View>
         </View>
       </View>
@@ -151,7 +168,7 @@ export default function MyPageScreen({ navigation }) {
         </View>
       </ScrollView>
 
-      <LinearGradient 
+      {/* <LinearGradient 
         pointerEvents="none"
         colors={[
           "rgba(255, 255, 255, 0)",
@@ -160,7 +177,7 @@ export default function MyPageScreen({ navigation }) {
         ]}
         locations={[0, 0.55, 1]}
         style={[styles.bottomFade, { bottom: NAV_H + 20 }]}
-      />
+      /> */}
 
     </View>
   );
