@@ -13,6 +13,7 @@ import BackButton from "../components/BackButton";
 import Button from "../components/Button";
 
 import PenOptionsPanel from "../components/draw/PenOptionsPanel";
+import EraserOptionsPanel from "../components/draw/EraserOptionsPanel";
 import ColorPickerModal from "../components/draw/ColorPickerModal";
 import SkiaDrawCanvas from "../components/draw/SkiaDrawCanvas";
 
@@ -20,12 +21,27 @@ const { width: W, height: H } = Dimensions.get("window");
 
 export default function DiaryDrawScreen({ navigation }) {
   const [activeTool, setActiveTool] = useState("pen"); // pen | eraser | photo
-  const [showPenPanel, setShowPenPanel] = useState(false);
 
+  // 패널 on/off
+  const [showPenPanel, setShowPenPanel] = useState(false);
+  const [showEraserPanel, setShowEraserPanel] = useState(false);
+
+  // 펜 옵션
   const [penWidth, setPenWidth] = useState(10);
   const [penColor, setPenColor] = useState("#000000");
 
+  // 지우개 옵션
+  const [eraserWidth, setEraserWidth] = useState(18);
+
+  // 컬러 모달
   const [showColorModal, setShowColorModal] = useState(false);
+
+  const closeAllPanels = () => {
+    setShowPenPanel(false);
+    setShowEraserPanel(false);
+  };
+
+  const isAnyPanelOpen = showPenPanel || showEraserPanel;
 
   return (
     <View style={styles.root}>
@@ -43,12 +59,14 @@ export default function DiaryDrawScreen({ navigation }) {
           <TouchableOpacity
             onPress={() => {
               setActiveTool("pen");
+              setShowEraserPanel(false);
               setShowPenPanel((v) => !v);
             }}
+            activeOpacity={0.85}
           >
             <Image
               source={require("../assets/images/icon_pen.png")}
-              style={styles.icon}
+              style={[styles.icon, activeTool === "pen" && styles.iconActive]}
               resizeMode="contain"
             />
           </TouchableOpacity>
@@ -58,11 +76,13 @@ export default function DiaryDrawScreen({ navigation }) {
             onPress={() => {
               setActiveTool("eraser");
               setShowPenPanel(false);
+              setShowEraserPanel((v) => !v);
             }}
+            activeOpacity={0.85}
           >
             <Image
               source={require("../assets/images/icon_eraser.png")}
-              style={styles.icon}
+              style={[styles.icon, activeTool === "eraser" && styles.iconActive]}
               resizeMode="contain"
             />
           </TouchableOpacity>
@@ -71,35 +91,36 @@ export default function DiaryDrawScreen({ navigation }) {
           <TouchableOpacity
             onPress={() => {
               setActiveTool("photo");
-              setShowPenPanel(false);
+              closeAllPanels();
+              // TODO: 사진 업로드 로직 연결
             }}
+            activeOpacity={0.85}
           >
             <Image
               source={require("../assets/images/icon_photo.png")}
-              style={styles.icon}
+              style={[styles.icon, activeTool === "photo" && styles.iconActive]}
               resizeMode="contain"
             />
           </TouchableOpacity>
         </View>
       </View>
 
-      {/* ]그림 영역 */}
+      {/* 그림 영역 */}
       <View style={styles.drawArea}>
         <SkiaDrawCanvas
+          tool={activeTool}
           penColor={penColor}
           penWidth={penWidth}
-          enabled={activeTool === "pen"}
+          eraserWidth={eraserWidth}
+          enabled={activeTool === "pen" || activeTool === "eraser"}
         />
 
-        {/* 바깥 터치 → 패널 닫기 */}
-        {activeTool === "pen" && showPenPanel && (
-          <Pressable
-            style={styles.backdrop}
-            onPress={() => setShowPenPanel(false)}
-          />
+        {/* 바깥 터치 → 열려있는 패널 닫기 */}
+        {isAnyPanelOpen && (
+          <Pressable style={styles.backdrop} onPress={closeAllPanels} />
         )}
 
-        {/* 펜 옵션 패널 (오버레이) */}
+        {/* 펜 옵션 패널 */}
         {activeTool === "pen" && showPenPanel && (
           <View style={styles.panelOverlay} pointerEvents="box-none">
             <PenOptionsPanel
@@ -114,6 +135,16 @@ export default function DiaryDrawScreen({ navigation }) {
                 setShowPenPanel(false);
                 setShowColorModal(true);
               }}
+            />
+          </View>
+        )}
+
+        {/* 지우개 옵션 패널 */}
+        {activeTool === "eraser" && showEraserPanel && (
+          <View style={styles.panelOverlay} pointerEvents="box-none">
+            <EraserOptionsPanel
+              eraserWidth={eraserWidth}
+              setEraserWidth={setEraserWidth}
             />
           </View>
         )}
@@ -154,7 +185,7 @@ const styles = StyleSheet.create({
     borderBottomRightRadius: 30,
     flexDirection: "column",
     alignItems: "center",
-    justifyContent: "start",
+    justifyContent: "flex-start",
     paddingTop: H * 0.08,
   },
   title: {
@@ -170,7 +201,12 @@ const styles = StyleSheet.create({
   icon: {
     width: W * 0.07,
     height: W * 0.07,
+    opacity: 0.65,
   },
+  iconActive: {
+    opacity: 1,
+  },
+
   drawArea: {
     flex: 1,
     backgroundColor: colors.ivory,

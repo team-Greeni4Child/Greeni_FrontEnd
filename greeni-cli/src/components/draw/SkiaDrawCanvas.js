@@ -1,25 +1,29 @@
 import React, { useCallback, useMemo, useRef, useState } from "react";
 import { View, StyleSheet, PanResponder } from "react-native";
-import { Canvas, Path, Skia } from "@shopify/react-native-skia";
+import { Canvas, Path, Skia, Group } from "@shopify/react-native-skia";
 
-// stroke: { path: SkPath, color: string, width: number }
-export default function SkiaDrawCanvas({ penColor, penWidth, enabled = true }) {
+// stroke: { path: SkPath, color: string, width: number, isEraser: boolean }
+export default function SkiaDrawCanvas({
+  tool = "pen", // "pen" | "eraser" | "photo"
+  penColor = "#000000",
+  penWidth = 10,
+  eraserWidth = 18,
+  enabled = true,
+}) {
   const [strokes, setStrokes] = useState([]);
 
-  // 드래그 중인 path
   const currentPathRef = useRef(Skia.Path.Make());
-  const currentStyleRef = useRef({ color: penColor, width: penWidth });
+  const currentStyleRef = useRef({
+    color: penColor,
+    width: penWidth,
+    isEraser: false,
+  });
   const isDrawingRef = useRef(false);
 
-  // 리렌더 트리거
-  const [tick, setTick] = useState(0);
+  const [, setTick] = useState(0); // 리렌더 트리거용(값은 안 씀)
 
-  // 캔버스 View ref + window 좌표(bounds)
   const wrapRef = useRef(null);
-  const boundsRef = useRef(null); // { x, y, width, height }
-
-  // 최신 스타일 업데이트(그리기 도중 옵션 변경 방지용은 begin에서 고정)
-  currentStyleRef.current = { color: penColor, width: penWidth };
+  const boundsRef = useRef(null);
 
   const measureBounds = useCallback(() => {
     // measureInWindow는 비동기 콜백
@@ -51,13 +55,18 @@ export default function SkiaDrawCanvas({ penColor, penWidth, enabled = true }) {
       p.moveTo(x, y);
       currentPathRef.current = p;
 
-      // 시작 시점 스타일 고정
-      currentStyleRef.current = { color: penColor, width: penWidth };
+      const isEraser = tool === "eraser";
+      currentStyleRef.current = {
+        color: isEraser ? "transparent" : penColor, 
+        width: isEraser ? eraserWidth : penWidth,
+        isEraser,
+      };
+
       isDrawingRef.current = true;
 
       setTick((t) => t + 1);
     },
-    [penColor, penWidth]
+    [tool, penColor, penWidth, eraserWidth]
   );
 
   const extendStroke = useCallback((x, y) => {
@@ -73,98 +82,92 @@ export default function SkiaDrawCanvas({ penColor, penWidth, enabled = true }) {
     const finished = currentPathRef.current.copy();
     const style = currentStyleRef.current;
 
-    setStrokes((prev) => [...prev, { path: finished, color: style.color, width: style.width }]);
+    setStrokes((prev) => [
+      ...prev,
+      { path: finished, color: style.color, width: style.width, isEraser: style.isEraser },
+    ]);
 
     currentPathRef.current = Skia.Path.Make();
     setTick((t) => t + 1);
   }, []);
 
-  const panResponder = useMemo(
-    () =>
-      PanResponder.create({
-        onStartShouldSetPanResponder: () => enabled,
-        onMoveShouldSetPanResponder: () => enabled,
+  const panResponder = useMemo(() => {
+    const canDraw = enabled && (tool === "pen" || tool === "eraser");
 
-        onPanResponderGrant: (evt) => {
-          if (!enabled) return;
+    return PanResponder.create({
+      onStartShouldSetPanResponder: () => canDraw,
+      onMoveShouldSetPanResponder: () => canDraw,
 
-          // 시작 시점에 bounds 확정
-          measureBounds();
+      onPanResponderGrant: (evt) => {
+        if (!canDraw) return;
+        measureBounds();
 
-          const { pageX, pageY } = evt.nativeEvent;
-          if (!isInsidePage(pageX, pageY)) return;
+        const { pageX, pageY } = evt.nativeEvent;
+        if (!isInsidePage(pageX, pageY)) return;
 
-          const local = toLocal(pageX, pageY);
-          if (!local) return;
+        const local = toLocal(pageX, pageY);
+        if (!local) return;
 
-          beginStroke(local.x, local.y);
-        },
+        beginStroke(local.x, local.y);
+      },
 
-        onPanResponderMove: (evt) => {
-          if (!enabled) return;
+      onPanResponderMove: (evt) => {
+        if (!canDraw) return;
 
-          const { pageX, pageY } = evt.nativeEvent;
+        const { pageX, pageY } = evt.nativeEvent;
 
-          // 영역 벗어나면 즉시 스트로크 종료(튀는 직선 차단)
-          if (!isInsidePage(pageX, pageY)) {
-            endStroke();
-            return;
-          }
-
-          const local = toLocal(pageX, pageY);
-          if (!local) return;
-
-          extendStroke(local.x, local.y);
-        },
-
-        onPanResponderRelease: () => {
-          if (!enabled) return;
+        if (!isInsidePage(pageX, pageY)) {
           endStroke();
-        },
+          return;
+        }
 
-        onPanResponderTerminate: () => {
-          if (!enabled) return;
-          endStroke();
-        },
-      }),
-    [enabled, measureBounds, isInsidePage, toLocal, beginStroke, extendStroke, endStroke]
-  );
+        const local = toLocal(pageX, pageY);
+        if (!local) return;
 
-  // tick은 리렌더용이라 실제 값은 안 씀
-  // eslint-disable-next-line no-unused-vars
-  const _ = tick;
+        extendStroke(local.x, local.y);
+      },
+
+      onPanResponderRelease: () => {
+        if (!canDraw) return;
+        endStroke();
+      },
+
+      onPanResponderTerminate: () => {
+        if (!canDraw) return;
+        endStroke();
+      },
+    });
+  }, [enabled, tool, measureBounds, isInsidePage, toLocal, beginStroke, extendStroke, endStroke]);
+
+  const live = currentStyleRef.current;
 
   return (
-    <View
-      ref={wrapRef}
-      style={styles.wrap}
-      onLayout={() => {
-        // 레이아웃 변할 때마다 bounds 갱신
-        measureBounds();
-      }}
-      {...panResponder.panHandlers}
-    >
+    <View ref={wrapRef} style={styles.wrap} onLayout={measureBounds} {...panResponder.panHandlers}>
       <Canvas style={styles.canvas}>
-        {strokes.map((s, idx) => (
+        <Group layer>
+          {strokes.map((s, idx) => (
+            <Path
+              key={idx}
+              path={s.path}
+              style="stroke"
+              strokeWidth={s.width}
+              strokeJoin="round"
+              strokeCap="round"
+              color={s.isEraser ? "transparent" : s.color}
+              blendMode={s.isEraser ? "clear" : "srcOver"}
+            />
+          ))}
+
           <Path
-            key={idx}
-            path={s.path}
-            color={s.color}
+            path={currentPathRef.current}
             style="stroke"
-            strokeWidth={s.width}
+            strokeWidth={live.width}
             strokeJoin="round"
             strokeCap="round"
+            color={live.isEraser ? "transparent" : live.color}
+            blendMode={live.isEraser ? "clear" : "srcOver"}
           />
-        ))}
-
-        <Path
-          path={currentPathRef.current}
-          color={penColor}
-          style="stroke"
-          strokeWidth={penWidth}
-          strokeJoin="round"
-          strokeCap="round"
-        />
+        </Group>
       </Canvas>
     </View>
   );
