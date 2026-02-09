@@ -20,6 +20,8 @@ const AR = {
   greeni: 509 / 852,
 };
 
+// 이메일 규착 ()
+const emailRule = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 // 비밀번호 규칙 (영문 + 숫자 + ASCII 특수문자 + 8자리 이상)
 const passwordRule = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[!-/:-@[-`{-~]).{8,}$/;
 
@@ -184,6 +186,12 @@ export default function SignUpScreen({ navigation }) {
       return;
     }
 
+    if (!emailRule.test(trimmedEmail)) {
+      setEmail("");
+      setEmailError("이메일 형식이 올바르지 않습니다");
+      return;
+    }
+
     try {
       setIsRequestingEmail(true);
 
@@ -240,6 +248,11 @@ export default function SignUpScreen({ navigation }) {
     if (!trimmedEmail) {
       setEmail("");
       setEmailError("이메일을 입력해주세요");
+      hasError = true;
+    } else if (!emailRule.test(trimmedEmail)) {
+      // 이메일 형식 검사
+      setEmail("");
+      setEmailError("이메일 형식이 올바르지 않습니다");
       hasError = true;
     }
 
