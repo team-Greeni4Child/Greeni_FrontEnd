@@ -50,11 +50,12 @@ export default function ProfileImageSelectScreen({ navigation, route }) {
   // 선택한 이미지의 index
   const [selectedIndex, setSelectedIndex] = useState(null);
   const [uploadImage, setUploadImage] = useState(null);
+  const uploadBtnIndex = profileImages.length - 1;
 
   const nextScreen = route?.params?.nextScreen ?? "ProfileInfoForm";
 
   const handleSelect = async (index) => {
-    if (index === profileImages.length - 1) {
+    if (index === uploadBtnIndex) {
       const result = await launchImageLibrary({
         mediaType: "photo",
         selectionLimit: 1,
@@ -81,7 +82,18 @@ export default function ProfileImageSelectScreen({ navigation, route }) {
   // 선택된 이미지 가져오기
   const getSelectedImage = () => {
     if (selectedIndex === null) return null;
-    return selectedIndex === profileImages.length - 1 ? uploadImage : profileImages[selectedIndex];
+    return selectedIndex === uploadBtnIndex ? uploadImage : profileImages[selectedIndex];
+  };
+
+  const handleNext = () => {
+    const selected = getSelectedImage();
+    if (!selected) return;
+
+    navigation.navigate("ProfileInfoForm", {
+      selectedImage: selected,
+      selectedIndex: selectedIndex,
+      isUploaded: selectedIndex == uploadBtnIndex,
+    });
   };
 
   return (
@@ -100,7 +112,7 @@ export default function ProfileImageSelectScreen({ navigation, route }) {
       {/* 이미지 선택시 선택한 이미지 index를 넘겨줌 */}
       <View style={styles.profileWrap}>
         {profileImages.map((img, idx) => {
-          const source = idx === profileImages.length - 1 && uploadImage ? uploadImage : img;
+          const source = idx === uploadBtnIndex && uploadImage ? uploadImage : img;
           return (
             <Profile
               key={idx}
@@ -116,18 +128,22 @@ export default function ProfileImageSelectScreen({ navigation, route }) {
       {/* 이미지 선택하면 다음 버튼 활성화, 선택 안 하면 회색으로 비활성화 */}
       <View style={styles.bottomWrap}>
         <Button
+          // title="선택"
+          // onPress={() =>{
+          //   const selected = getSelectedImage();
+          //   if (!selected) return;
+          //   const onSelectImage = route?.params?.onSelectImage;
+          //   if (typeof onSelectImage === "function") {
+          //     onSelectImage(selected);
+          //     navigation.goBack();
+          //     return;
+          //   }
+          //   navigation.navigate("ProfileInfoForm", { selectedImage: selected });
+          // }}
+          // icon={require("../assets/images/next.png")}
+          // disabled={selectedIndex === null}
           title="선택"
-          onPress={() =>{
-            const selected = getSelectedImage();
-            if (!selected) return;
-            const onSelectImage = route?.params?.onSelectImage;
-            if (typeof onSelectImage === "function") {
-              onSelectImage(selected);
-              navigation.goBack();
-              return;
-            }
-            navigation.navigate("ProfileInfoForm", { selectedImage: selected });
-          }}
+          onPress={handleNext}
           icon={require("../assets/images/next.png")}
           disabled={selectedIndex === null}
         />
