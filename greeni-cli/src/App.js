@@ -78,6 +78,7 @@ function MainStack() {
       <Stack.Screen name="SettingsPassword" component={SettingsPasswordScreen}/>
       <Stack.Screen name="Settings" component={SettingsScreen}/>
       <Stack.Screen name="ParentsPage" component={ParentsPageScreen}/>
+      <Stack.Screen name="ProfileSelectFromSettings" component={ProfileSelectScreen}/>
       <Stack.Screen name="ProfileImageSelectFromSettings" component={ProfileImageSelectScreen} />
       <Stack.Screen name="Summary" component={SummaryScreen}/>
       <Stack.Screen name="Statistics" component={StatisticsScreen}/>

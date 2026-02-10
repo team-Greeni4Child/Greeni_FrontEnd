@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useContext, useEffect, useMemo } from "react";
 import {
   View,
   Text,
@@ -10,9 +10,14 @@ import {
   TouchableWithoutFeedback,
   Keyboard,
   Modal,
+  Alert,
 } from "react-native";
 import DateTimePicker from "react-native-modal-datetime-picker";
 
+import { AuthContext } from "../App";
+import { ProfileContext } from "../context/ProfileContext";
+import { deleteProfile, modifyProfile, searchProfileList } from "../api/profile";
+import { toImageSource } from "../utils/profileImageMap";
 import Button from "../components/Button";
 import BackButton from "../components/BackButton";
 import colors from "../theme/colors";
@@ -20,15 +25,21 @@ import colors from "../theme/colors";
 const { width: W, height: H } = Dimensions.get("window");
 
 export default function SettingsScreen({ route, navigation }) {
-  const [profile, setProfile] = useState({
-    name: "김 그리니",
-    birthday: "2002.11.28",
-    image: require("../assets/images/basic_greeni_pink.png"),
-  });
+
+  const { setStep } = useContext(AuthContext);
+
+  const formatBirth = (s) => (typeof s === "string" ? s.replaceAll("-", ".") : "")
+
+  const { profiles, setProfiles, selectedProfile, setSelectedProfile } = useContext(ProfileContext);
+  const profileName = selectedProfile.name;
+  const profileBirth = formatBirth(selectedProfile.birth);
+  const profileImageSource = selectedProfile.image;
+  const [draftName, setDraftName] = useState(selectedProfile?.name ?? "");
+  const [draftBirth, setDraftBirth] = useState(selectedProfile?.birth ?? "");
+  const [draftProfileImage, setDraftProfileImage] = useState(selectedProfile?.profileImage ?? "");
 
   const [editEnabled, setEditEnabled] = useState(false);
   const [editingField, setEditingField] = useState(null);
-  const [temp, setTemp] = useState("");
 
   const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
   const [isDeleteModalVisible, setDeleteModalVisible] = useState(false);
@@ -82,6 +93,29 @@ export default function SettingsScreen({ route, navigation }) {
     setEditingField(null);
   };
 
+  const handleDeleteProfile = async () => {
+    try {
+      await deleteProfile(selectedProfile.profileId);
+    
+      const listRes = await searchProfileList();
+      const list = listRes?.result?.profileLists ?? [];
+
+      const mapped = list.map((p) => ({
+        profileId: p.profileId,
+        name: p.name,
+        profileImage: p.profileImage,
+        image: toImageSource(p.profileImage),
+      }));
+      setProfiles(mapped);
+      setSelectedProfile(null);
+      setDeleteModalVisible(false);
+      navigation.navigate("ProfileSelectFromSettings");
+    } catch(e) {
+      console.log("Delete Profile Fail:", e);
+      Alert.alert("오류", e?.message || "프로필 삭제에 실패했습니다.");
+    }
+  }
+
   return (
     <TouchableWithoutFeedback onPress={finishEdit}>
       <View style={styles.root}>
@@ -98,7 +132,7 @@ export default function SettingsScreen({ route, navigation }) {
               <View style={styles.imageWrap}>
                 <Image
                   style={styles.image}
-                  source={require("../assets/images/basic_greeni_pink.png")}
+                  source={profileImageSource}
                 />
                 <TouchableOpacity
                   style={styles.editIconTouch}
@@ -134,8 +168,8 @@ export default function SettingsScreen({ route, navigation }) {
                           padding: 0,
                         },
                       ]}
-                      value={temp}
-                      onChangeText={setTemp}
+                      value={draftName}
+                      onChangeText={setDraftName}
                       autoFocus
                     />
                   ) : (
@@ -150,7 +184,7 @@ export default function SettingsScreen({ route, navigation }) {
                           editEnabled && styles.editableUnderline,
                         ]}
                       >
-                        {profile.name}
+                        {profileName}
                       </Text>
                     </TouchableOpacity>
                   )}
@@ -172,7 +206,7 @@ export default function SettingsScreen({ route, navigation }) {
                         editEnabled && styles.editableUnderline,
                       ]}
                     >
-                      {profile.birthday}
+                      {profileBirth}
                     </Text>
                   </TouchableOpacity>
                 </View>
@@ -259,7 +293,7 @@ export default function SettingsScreen({ route, navigation }) {
                 <View style={styles.modalButtonWrap}>
                   <TouchableOpacity
                     style={[styles.modalButton, styles.leftButton]}
-                    onPress={() => setDeleteModalVisible(false)}
+                    onPress={handleDeleteProfile}
                   >
                     <Text style={styles.modalButtonText}>예</Text>
                   </TouchableOpacity>

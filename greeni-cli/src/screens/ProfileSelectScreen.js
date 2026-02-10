@@ -1,8 +1,10 @@
-import {React, useContext} from "react";
-import { View, Text, Image, StyleSheet, Dimensions, TouchableOpacity } from "react-native";
+import { React, useContext, useEffect, useState } from "react";
+import { View, Text, Image, StyleSheet, Dimensions, TouchableOpacity, Alert } from "react-native";
 import { StatusBar } from "react-native";
 import { AuthContext } from "../App";
 import { ProfileContext } from "../context/ProfileContext";
+import { searchProfileList, searchSingleProfile } from "../api/profile";
+import { toImageSource } from "../utils/profileImageMap";
 import colors from "../theme/colors";
 
 const { width: W, height: H } = Dimensions.get("window");
@@ -10,8 +12,59 @@ const MAX_PROFILES = 6;
 
 export default function ProfileSelectScreen({route, navigation}) {
 
-  const { profiles } = useContext(ProfileContext);
+  const { profiles, setProfiles, setSelectedProfile } = useContext(ProfileContext);
   const { setStep } = useContext(AuthContext);
+  const [isSelecting, setIsSelecting] = useState(false);
+
+  const handleSelectProfile = async (p) => {
+    if (isSelecting) return;
+
+    try {
+      setIsSelecting(true);
+
+      const res = await searchSingleProfile(p.profileId);
+      const detail = res?.result;
+
+      if (!detail) {
+        Alert.alert("오류", "프로필 정보를 불러오지 못했습니다.");
+        return;
+      }
+      const selected = {
+        ...detail,
+        image: toImageSource(detail.profileImage),
+      };
+      setSelectedProfile(selected);
+      setStep("main");
+    } catch(e) {
+      console.log("Select Profile Fail:", e);
+    } finally {
+      setIsSelecting(false);
+    }
+  };
+  
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const res = await searchProfileList();
+        const list = res?.result?.profileLists ?? [];
+
+        const mapped = list.map((p) => ({
+          profileId: p.profileId,
+          name: p.name,
+          birth: p.birth,
+          profileImage: p.profileImage,          // 서버 문자열
+          image: toImageSource(p.profileImage),  // RN source
+        }));
+
+        setProfiles(mapped);
+      } catch (e) {
+        console.log("LOAD PROFILE LIST FAIL:", e);
+        // 필요하면 모달 처리
+      }
+    };
+
+    load();
+  }, [setProfiles]);
 
   return (
     <View style={styles.root}>
@@ -26,9 +79,9 @@ export default function ProfileSelectScreen({route, navigation}) {
       <View style={styles.profileWrap}>
         {profiles.map((p, idx) => (
           <TouchableOpacity 
-            key={idx} 
+            key={p.profileId} 
             style={styles.profile} 
-            onPress={() => setStep("main")}  
+            onPress={() => handleSelectProfile(p)}  
           >
             <Image source={p.image} style={styles.profileImage} />
             <Text 
@@ -46,7 +99,8 @@ export default function ProfileSelectScreen({route, navigation}) {
           <TouchableOpacity
             style={styles.createBtn}
             onPress={() =>
-              navigation.navigate("ProfileImageSelect", { existingProfiles: profiles })
+              // navigation.navigate("ProfileImageSelect", { existingProfiles: profiles })
+              navigation.navigate("ProfileImageSelect")
             }>
             <Image source={require("../assets/images/create.png")} style={styles.createImage} />
           </TouchableOpacity>
