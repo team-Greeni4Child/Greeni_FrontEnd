@@ -1,9 +1,10 @@
+import "react-native-gesture-handler";
 import React, { useState, createContext } from "react";
 import { Text, TextInput } from "react-native";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { ProfileProvider } from "./context/ProfileContext";
-//import { useFonts } from "expo-font";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 import SplashScreen from "./screens/SplashScreen";
 import LoginScreen from "./screens/LoginScreen";
@@ -90,40 +91,32 @@ export default function App() {
   const [showSplash, setShowSplash] = useState(true);
   const [step, setStep] = useState("auth"); 
 
-  // //폰트
-  // const [fontsLoaded] = useFonts({
-  //   "Maplestory_Light": require("./assets/fonts/Maplestory Light.ttf"),
-  //   "Maplestory_Bold": require("./assets/fonts/Maplestory Bold.ttf"),
-  //   "gangwongyoyuksaeeum": require("./assets/fonts/강원교육새음.ttf"),
-  // });  
-  // if (!fontsLoaded) {
-  //   return null; 
-  // }
-
   return (
-    <ProfileProvider>
-    <AuthContext.Provider value={{ step, setStep }}>
-      <NavigationContainer>
-        {showSplash ? (
-          <Stack.Navigator screenOptions={{ headerShown: false }}>
-            <Stack.Screen name="Splash">
-              {(props) => (
-                <SplashScreen
-                  {...props}
-                  onDone={() => setShowSplash(false)}
-                />
-              )}
-            </Stack.Screen>
-          </Stack.Navigator>
-        ) : step === "auth" ? (
-          <AuthStack  />
-        ) : step === "profile" ? (
-          <ProfileStack />
-        ) : (
-          <MainStack />
-        )}
-      </NavigationContainer>
-    </AuthContext.Provider>
-    </ProfileProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <ProfileProvider>
+        <AuthContext.Provider value={{ step, setStep }}>
+          <NavigationContainer>
+            {showSplash ? (
+              <Stack.Navigator screenOptions={{ headerShown: false }}>
+                <Stack.Screen name="Splash">
+                  {(props) => (
+                    <SplashScreen
+                      {...props}
+                      onDone={() => setShowSplash(false)}
+                    />
+                  )}
+                </Stack.Screen>
+              </Stack.Navigator>
+            ) : step === "auth" ? (
+              <AuthStack  />
+            ) : step === "profile" ? (
+              <ProfileStack />
+            ) : (
+              <MainStack />
+            )}
+          </NavigationContainer>
+        </AuthContext.Provider>
+      </ProfileProvider>
+    </GestureHandlerRootView>
   );
 }

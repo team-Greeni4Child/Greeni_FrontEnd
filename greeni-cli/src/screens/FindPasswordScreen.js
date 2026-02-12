@@ -20,6 +20,9 @@ const AR = {
   greeni: 509 / 852
 };
 
+// 이메일 규칙 
+const emailRule = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 // 임시: 가입된 이메일 & 인증코드 (나중에 API 연동 시 교체)
 const MOCK_USER_EMAIL = "aaa";
 const MOCK_VERIFY_CODE = "aaa";
@@ -123,6 +126,12 @@ export default function LoginScreen({ navigation }) {
       return;
     }
 
+    if (!emailRule.test(trimmedEmail)) {
+      setEmail("");
+      setEmailError("이메일 형식이 올바르지 않습니다");
+      return;
+    }
+
     if (trimmedEmail !== MOCK_USER_EMAIL) {
       setEmail("");
       setEmailError("가입되지 않은 이메일입니다");
@@ -152,6 +161,10 @@ export default function LoginScreen({ navigation }) {
     if (!trimmedEmail) {
       setEmail("");
       setEmailError("이메일을 입력해주세요");
+      hasError = true;
+    } else if (!emailRule.test(trimmedEmail)) {
+      setEmail("");
+      setEmailError("이메일 형식이 올바르지 않습니다");
       hasError = true;
     }
 

@@ -1,13 +1,83 @@
-// screens/DiaryDrawScreen.js
-import React from "react";
-import { View, Text, StyleSheet, TouchableOpacity, Image, Dimensions } from "react-native";
+import React, { useState } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Image,
+  Dimensions,
+  Pressable,
+  Alert,
+} from "react-native";
+import { launchImageLibrary } from "react-native-image-picker";
+
 import colors from "../theme/colors";
 import BackButton from "../components/BackButton";
 import Button from "../components/Button";
 
+import PenOptionsPanel from "../components/draw/PenOptionsPanel";
+import EraserOptionsPanel from "../components/draw/EraserOptionsPanel";
+import ColorPickerModal from "../components/draw/ColorPickerModal";
+import SkiaDrawCanvas from "../components/draw/SkiaDrawCanvas";
+
 const { width: W, height: H } = Dimensions.get("window");
 
 export default function DiaryDrawScreen({ navigation }) {
+  const [activeTool, setActiveTool] = useState("pen"); // pen | eraser | photo
+
+  // 패널 on/off
+  const [showPenPanel, setShowPenPanel] = useState(false);
+  const [showEraserPanel, setShowEraserPanel] = useState(false);
+
+  // 펜 옵션
+  const [penWidth, setPenWidth] = useState(10);
+  const [penColor, setPenColor] = useState("#000000");
+
+  // 지우개 옵션
+  const [eraserWidth, setEraserWidth] = useState(18);
+
+  // 컬러 모달
+  const [showColorModal, setShowColorModal] = useState(false);
+
+  // 배경 사진
+  const [backgroundUri, setBackgroundUri] = useState(null);
+
+  const closeAllPanels = () => {
+    setShowPenPanel(false);
+    setShowEraserPanel(false);
+  };
+
+  const isAnyPanelOpen = showPenPanel || showEraserPanel;
+
+  // 사진 선택
+  const pickBackgroundImage = async () => {
+    try {
+      const res = await launchImageLibrary({
+        mediaType: "photo",
+        selectionLimit: 1, //1장만
+        quality: 1,
+      });
+
+      if (res.didCancel) return;
+
+      if (res.errorCode) {
+        Alert.alert("오류", `사진을 불러오지 못했어요. (${res.errorCode})`);
+        return;
+      }
+
+      const uri = res.assets?.[0]?.uri;
+      if (!uri) {
+        Alert.alert("오류", "사진 URI를 가져오지 못했어요.");
+        return;
+      }
+
+      setBackgroundUri(uri);
+    } catch (e) {
+      console.log(e);
+      Alert.alert("오류", "사진을 불러오지 못했어요.");
+    }
+  };
+
   return (
     <View style={styles.root}>
       <View style={styles.topBar}>
@@ -20,34 +90,107 @@ export default function DiaryDrawScreen({ navigation }) {
 
         {/* 도구 아이콘 영역 */}
         <View style={styles.tools}>
-          <TouchableOpacity>
+          {/* 펜 */}
+          <TouchableOpacity
+            onPress={() => {
+              setActiveTool("pen");
+              setShowEraserPanel(false);
+              setShowPenPanel((v) => !v);
+            }}
+            activeOpacity={0.85}
+          >
             <Image
               source={require("../assets/images/icon_pen.png")}
-              style={styles.icon}
+              style={[styles.icon, activeTool === "pen" && styles.iconActive]}
               resizeMode="contain"
             />
           </TouchableOpacity>
 
-          <TouchableOpacity>
+          {/* 지우개 */}
+          <TouchableOpacity
+            onPress={() => {
+              setActiveTool("eraser");
+              setShowPenPanel(false);
+              setShowEraserPanel((v) => !v);
+            }}
+            activeOpacity={0.85}
+          >
             <Image
               source={require("../assets/images/icon_eraser.png")}
-              style={styles.icon}
+              style={[styles.icon, activeTool === "eraser" && styles.iconActive]}
               resizeMode="contain"
             />
           </TouchableOpacity>
 
-          <TouchableOpacity>
+          {/* 사진 */}
+          <TouchableOpacity
+            onPress={async () => {
+              setActiveTool("photo");
+              closeAllPanels();
+              await pickBackgroundImage();
+              setActiveTool("pen");
+            }}
+            activeOpacity={0.85}
+          >
             <Image
               source={require("../assets/images/icon_photo.png")}
-              style={styles.icon}
+              style={[styles.icon, activeTool === "photo" && styles.iconActive]}
               resizeMode="contain"
             />
           </TouchableOpacity>
         </View>
       </View>
 
-      {/* 그림 영역 (지금은 빈 공간) */}
-      <View style={styles.drawArea} />
+      {/* 그림 영역 */}
+      <View style={styles.drawArea}>
+        {/* 배경 사진 */}
+        {backgroundUri ? (
+          <Image source={{ uri: backgroundUri }} style={styles.bgImage} resizeMode="cover" />
+        ) : null}
+
+        {/* 캔버스 */}
+        <SkiaDrawCanvas
+          tool={activeTool}
+          penColor={penColor}
+          penWidth={penWidth}
+          eraserWidth={eraserWidth}
+          enabled={activeTool === "pen" || activeTool === "eraser"}
+        />
+
+        {/* 바깥 터치 → 열려있는 패널 닫기 */}
+        {isAnyPanelOpen && (
+          <Pressable style={styles.backdrop} onPress={closeAllPanels} />
+        )}
+
+        {/* 펜 옵션 패널 */}
+        {activeTool === "pen" && showPenPanel && (
+          <View style={styles.panelOverlay} pointerEvents="box-none">
+            <PenOptionsPanel
+              penWidth={penWidth}
+              setPenWidth={setPenWidth}
+              penColor={penColor}
+              setPenColor={(c) => {
+                setPenColor(c);
+                setShowPenPanel(false);
+              }}
+              onPressCustomColor={() => {
+                setShowPenPanel(false);
+                setShowColorModal(true);
+              }}
+            />
+          </View>
+        )}
+
+        {/* 지우개 옵션 패널 */}
+        {activeTool === "eraser" && showEraserPanel && (
+          <View style={styles.panelOverlay} pointerEvents="box-none">
+            <EraserOptionsPanel
+              eraserWidth={eraserWidth}
+              setEraserWidth={setEraserWidth}
+            />
+          </View>
+        )}
+      </View>
 
       {/* 저장 버튼 */}
       <View style={styles.bottomWrap}>
@@ -57,6 +200,17 @@ export default function DiaryDrawScreen({ navigation }) {
           backgroundColor={colors.greenLight} 
         />
       </View>
+
+      {/* 컬러 피커 모달 */}
+      <ColorPickerModal
+        visible={showColorModal}
+        initialColor={penColor}
+        onClose={() => setShowColorModal(false)}
+        onApply={(c) => {
+          setPenColor(c);
+          setShowColorModal(false);
+        }}
+      />
     </View>
   );
 }
@@ -73,7 +227,7 @@ const styles = StyleSheet.create({
     borderBottomRightRadius: 30,
     flexDirection: "column",
     alignItems: "center",
-    justifyContent: "start",
+    justifyContent: "flex-start",
     paddingTop: H * 0.08,
   },
   title: {
@@ -89,13 +243,41 @@ const styles = StyleSheet.create({
   icon: {
     width: W * 0.07,
     height: W * 0.07,
+    opacity: 0.65,
   },
+  iconActive: {
+    opacity: 1,
+  },
+
   drawArea: {
     flex: 1,
     backgroundColor: colors.ivory,
+    position: "relative",
   },
-  bottomWrap: {
+
+  // 배경 이미지
+  bgImage: {
+    ...StyleSheet.absoluteFillObject,
+  },
+
+  backdrop: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "transparent",
+  },
+
+  panelOverlay: {
+    position: "absolute",
+    top: 10, 
+    left: 0,
+    right: 0,
     alignItems: "center",
-    marginBottom: H * 0.05,
+  },
+
+  bottomWrap: {
+    position: "absolute",
+    left: 0,
+    right: 0, 
+    alignItems: "center",
+    bottom: H * 0.05,
   },
 });
