@@ -326,6 +326,12 @@ export default function SignUpScreen({ navigation }) {
       if (e?.code === "MEMBER4002") {
         setCode("");
         setCodeError("인증코드가 만료되었습니다.");
+
+        // 만료 UX 정리
+        setIsExpired(true);
+        setSecondsLeft(0);
+        setIsVerifyDisabled(false);
+        setVerifyLabel("재전송");
         return;
       }
       if (e?.code === "MEMBER4003") {
