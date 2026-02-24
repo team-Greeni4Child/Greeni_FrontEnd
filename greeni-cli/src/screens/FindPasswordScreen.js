@@ -2,15 +2,16 @@ import React, { useEffect, useRef, useState } from "react";
 import colors from "../theme/colors";
 import BackButton from "../components/BackButton";
 import Button from "../components/Button";
-import { 
-  View, 
-  Text, 
-  TextInput, 
-  TouchableOpacity, 
-  StyleSheet, 
-  Image, 
-  Dimensions, 
-  Platform,
+import { requestEmailVerification, verifyPasswordResetCode } from "../api/auth";
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  Image,
+  Dimensions,
+  Modal,
 } from "react-native";
 
 const { width: W, height: H } = Dimensions.get("window");
@@ -23,21 +24,20 @@ const AR = {
 // 이메일 규칙 
 const emailRule = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-// 임시: 가입된 이메일 & 인증코드 (나중에 API 연동 시 교체)
-const MOCK_USER_EMAIL = "aaa";
-const MOCK_VERIFY_CODE = "aaa";
-
 // 인증번호 유효시간 3분
 const DEFAULT_EXPIRE_SECONDS = 3 * 60;
 // 재전송 쿨타임(10초)
 const RESEND_COOLDOWN_SECONDS = 10;
 
-export default function LoginScreen({ navigation }) {
+export default function FindPasswordScreen({ navigation }) {
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
 
   const [emailError, setEmailError] = useState("");
   const [codeError, setCodeError] = useState("");
+
+  // 네트워크/서버 오류 모달
+  const [showErrorModal, setShowErrorModal] = useState(false);
 
   // 인증코드 유효시간 타이머
   const [secondsLeft, setSecondsLeft] = useState(null); // null이면 미표시
@@ -48,6 +48,10 @@ export default function LoginScreen({ navigation }) {
   const [isVerifyDisabled, setIsVerifyDisabled] = useState(false);
   const [verifyLabel, setVerifyLabel] = useState("인증");
   const cooldownRef = useRef(null);
+
+  // 요청 중 중복 클릭 방지
+  const [isRequestingEmail, setIsRequestingEmail] = useState(false);
+  const [isVerifyingCode, setIsVerifyingCode] = useState(false);
 
   const clearTimer = () => {
     if (timerRef.current) {
@@ -111,9 +115,19 @@ export default function LoginScreen({ navigation }) {
     return `${m}:${s}`;
   };
 
-  // 인증 버튼 클릭
-  const handleVerifyEmail = () => {
+  const openErrorModal = (err) => {
+    console.log(err?.message);
+    setShowErrorModal(true);
+  };
+
+  const handleErrorOk = () => {
+    setShowErrorModal(false);
+  };
+
+  // 이메일 인증 버튼
+  const handleVerifyEmail = async () => {
     if (isVerifyDisabled) return;
+    if (isRequestingEmail) return;
 
     setEmailError("");
     setCodeError("");
@@ -132,24 +146,42 @@ export default function LoginScreen({ navigation }) {
       return;
     }
 
-    if (trimmedEmail !== MOCK_USER_EMAIL) {
-      setEmail("");
-      setEmailError("가입되지 않은 이메일입니다");
-      return;
+    try {
+      setIsRequestingEmail(true);
+
+      // 이메일 인증 요청 API 호출
+      const res = await requestEmailVerification(trimmedEmail);
+      console.log("EMAIL REQUEST OK:", res);
+
+      // 타이머 시작
+      startTimer(DEFAULT_EXPIRE_SECONDS);
+
+      // 전송 직후: 전송됨 (10초 후 재전송으로 변경)
+      startCooldown();
+
+      // 재전송 버튼을 누르면 인증코드 입력칸을 비움
+      setCode("");
+    } catch (e) {
+      console.log("EMAIL REQUEST FAIL:", e);
+
+      // 인증 코드 전송 실패
+      if (e?.code === "MEMBER4006") {
+        setCode("");
+        setCodeError("인증코드 전송에 실패했습니다.");
+        return;
+      }
+
+      // 그 외(네트워크/서버 오류 등) => 모달
+      openErrorModal(e);
+    } finally {
+      setIsRequestingEmail(false);
     }
-    // 인증코드 발송 API 호출
-    // 성공했다고 가정하고 타이머 시작
-    startTimer(DEFAULT_EXPIRE_SECONDS);
-
-    // 전송 직후: 전송됨 (10초 후 재전송으로 변경)
-    startCooldown();
-
-    // 재전송 버튼을 누르면 인증코드 입력칸을 비움
-    setCode("");
   };
 
   // 완료 버튼 클릭
-  const handleComplete = () => {
+  const handleComplete = async () => {
+    if (isVerifyingCode) return;
+
     setEmailError("");
     setCodeError("");
 
@@ -158,6 +190,7 @@ export default function LoginScreen({ navigation }) {
 
     let hasError = false;
 
+    // 이메일 검사
     if (!trimmedEmail) {
       setEmail("");
       setEmailError("이메일을 입력해주세요");
@@ -168,29 +201,66 @@ export default function LoginScreen({ navigation }) {
       hasError = true;
     }
 
+    // 인증코드 검사
     if (!trimmedCode) {
       setCode("");
       setCodeError("인증코드를 입력해주세요");
       hasError = true;
     }
 
-    if (hasError) return;
-
-    // 인증코드 만료
-    if (secondsLeft === 0 || isExpired) {
+    // 인증코드 만료 검사 (프론트 타이머 기준)
+    if (secondsLeft !== null && (secondsLeft === 0 || isExpired)) {
       setCode("");
       setCodeError("인증코드가 만료되었습니다");
-      return;
+      hasError = true;
     }
 
-    // 이메일 + 코드 일치 여부만 간단히 체크
-    if (trimmedEmail !== MOCK_USER_EMAIL || trimmedCode !== MOCK_VERIFY_CODE) {
-      setCode("");
-      setCodeError("인증코드가 일치하지 않습니다");
-      return;
-    }
+    // 에러 하나라도 있으면 회원가입 중단
+    if (hasError) return;
 
-    navigation.navigate("ResetPassword");
+    try {
+      setIsVerifyingCode(true);
+
+      const res = await verifyPasswordResetCode({
+        email: trimmedEmail,
+        code: trimmedCode,
+      });
+      console.log("VERIFY CODE OK:", res);
+
+      // 성공 → ResetPassword로 email 넘기기
+      navigation.navigate("ResetPassword", { email: trimmedEmail });
+    } catch (e) {
+      console.log("VERIFY CODE FAIL:", e);
+
+      if (e?.code === "MEMBER4002") {
+        setCode("");
+        setCodeError("인증코드가 만료되었습니다.");
+
+        // 만료 UX 정리
+        setIsExpired(true);
+        setSecondsLeft(0);
+        setIsVerifyDisabled(false);
+        setVerifyLabel("재전송");
+        return;
+      }
+
+      if (e?.code === "MEMBER4003") {
+        setCode("");
+        setCodeError("인증코드가 올바르지 않습니다.");
+        return;
+      }
+
+      if (e?.code === "MEMBER4004") {
+        setEmail("");
+        setEmailError("존재하지 않는 메일입니다");
+        return;
+      }
+
+      // 그 외(네트워크/서버 오류 등) => 모달
+      openErrorModal(e);
+    } finally {
+      setIsVerifyingCode(false);
+    }
   };
 
   return (
@@ -229,11 +299,12 @@ export default function LoginScreen({ navigation }) {
             <TouchableOpacity
               style={[
                 styles.verificationButton,
-                isVerifyDisabled && styles.verificationButtonDisabled,
+                (isVerifyDisabled || isRequestingEmail) &&
+                  styles.verificationButtonDisabled,
               ]}
               onPress={handleVerifyEmail}
               activeOpacity={0.6}
-              disabled={isVerifyDisabled}
+              disabled={isVerifyDisabled || isRequestingEmail}
             >
               <Text style={styles.verificationButtonText}>{verifyLabel}</Text>
             </TouchableOpacity>
@@ -280,6 +351,7 @@ export default function LoginScreen({ navigation }) {
           borderRadius= {10}
           fontSize={14}
           onPress={handleComplete}
+          disabled={isVerifyingCode}
         />
       </View>
 
@@ -294,6 +366,23 @@ export default function LoginScreen({ navigation }) {
         {/* 오른쪽 공간 (비워둠) */}
         <View style={{ width: W * 0.402 }} />
       </View>
+
+      {/* 네트워크/서버 오류 모달 */}
+      <Modal transparent visible={showErrorModal}>
+        <View style={styles.modalBackground}>
+          <View style={styles.modalWrap}>
+            <Text style={styles.modalText}>
+              {"오류가 발생했습니다.\n잠시 후 다시 시도해주세요."}
+            </Text>
+
+            <View style={styles.modalButtonWrap}>
+              <TouchableOpacity style={[styles.modalButton]} onPress={handleErrorOk}>
+                <Text style={styles.modalButtonText}>확인</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -411,5 +500,47 @@ const styles = StyleSheet.create({
     width: W * 0.35,         
     aspectRatio: AR.greeni,   
     marginRight: W * 0.04, 
+  },
+
+  // 모달창
+  modalBackground: {
+    flex: 1,
+    backgroundColor: colors.lightGray95,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalWrap: {
+    width: W * 0.7,
+    backgroundColor: "white",
+    borderRadius: 20,
+    borderWidth: 3,
+    borderColor: colors.greenDark,
+    padding: 0,
+    alignItems: "center",
+    justifyContent: "flex-end",
+    overflow: "hidden",
+  },
+  modalText: {
+    fontSize: 16,
+    fontFamily: "Maplestory_Light",
+    color: colors.brown,
+    textAlign: "center",
+    margin: 30,
+  },
+  modalButtonWrap: {
+    flexDirection: "row",
+    height: 45,
+    width: "100%",
+  },
+  modalButton: {
+    justifyContent: "center",
+    alignItems: "center",
+    width: "100%",
+    backgroundColor: colors.green,
+  },
+  modalButtonText: {
+    color: colors.brown,
+    fontSize: 16,
+    fontFamily: "Maplestory_Light",
   },
 });

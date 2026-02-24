@@ -8,6 +8,14 @@ export function requestEmailVerification(email) {
   });
 }
 
+/** 비밀번호 찾기(이메일+코드 검증): POST /api/members/password */
+export function verifyPasswordResetCode({ email, code }) {
+  return request("/api/members/password", {
+    method: "POST",
+    body: JSON.stringify({ email, code }),
+  });
+}
+
 /** 일반 회원가입: POST /api/members/signup */
 export function signUp({ email, password, code }) {
   return request("/api/members/signup", {
