@@ -358,13 +358,20 @@ export default function SignUpScreen({ navigation }) {
   // 모달에서 확인 버튼 누르면 로그인 화면으로 이동
   const handleCompleteOk = () => {
     setShowCompleteModal(false);
-    navigation.navigate("Login");
+    goLoginAndResetStack();
+  };
+
+  const goLoginAndResetStack = () => {
+    navigation.reset({
+      index: 0,
+      routes: [{ name: "Login" }],
+    });
   };
 
   return (
     <View style={styles.container}>
       {/* 뒤로가기 버튼 */}
-      <BackButton navigation={navigation} />
+      <BackButton navigation={{ ...navigation, goBack: goLoginAndResetStack }} />
 
       {/* 입력 박스 */}
       <View style={styles.box}>
