@@ -16,6 +16,14 @@ export function verifyPasswordResetCode({ email, code }) {
   });
 }
 
+/** 비밀번호 재설정: POST /api/members/password/reset */
+export function resetPassword({ email, password }) {
+  return request("/api/members/password/reset", {
+    method: "POST",
+    body: JSON.stringify({ email, password }),
+  });
+}
+
 /** 일반 회원가입: POST /api/members/signup */
 export function signUp({ email, password, code }) {
   return request("/api/members/signup", {

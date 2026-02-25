@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import colors from "../theme/colors";
 import BackButton from "../components/BackButton";
 import Button from "../components/Button";
+import { resetPassword } from "../api/auth";
 import { 
   View, 
   Text, 
@@ -23,7 +24,10 @@ const AR = {
 // 비밀번호 규칙 (영문 + 숫자 + ASCII 특수문자 + 8자리 이상)
 const passwordRule = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[!-/:-@[-`{-~]).{8,}$/;
 
-export default function ResetPasswordScreen({ navigation }) {
+export default function ResetPasswordScreen({ navigation, route }) {
+  // FindPasswordScreen에서 넘겨준 email
+  const email = route?.params?.email ?? "";
+
   const [password, setPassword] = useState("");
   const [checkPassword, setCheckPassword] = useState("");
 
@@ -31,10 +35,27 @@ export default function ResetPasswordScreen({ navigation }) {
   const [checkPasswordError, setCheckPasswordError] = useState("");
   const [ruleError, setRuleError] = useState(false); // 비밀번호 규칙 안내문 색상 용
 
-  // ✅ 비밀번호 재설정 완료 모달 on/off
+  // 비밀번호 재설정 완료 모달 on/off
   const [showCompleteModal, setShowCompleteModal] = useState(false);
 
-  const handleComplete = () => {
+  // 네트워크/서버 오류 모달
+  const [showErrorModal, setShowErrorModal] = useState(false);
+
+  // 요청 중 중복 클릭 방지
+  const [isResetting, setIsResetting] = useState(false);
+
+  const openErrorModal = (err) => {
+    console.log(err?.message);
+    setShowErrorModal(true);
+  };
+
+  const handleErrorOk = () => {
+    setShowErrorModal(false);
+  };
+
+  const handleComplete = async () => {
+    if (isResetting) return;
+
     setPasswordError("");
     setCheckPasswordError("");
     setRuleError(false);
@@ -44,6 +65,13 @@ export default function ResetPasswordScreen({ navigation }) {
 
     let hasError = false;
     let shouldValidateCheckPw = true; // 비밀번호 규칙에 걸리면 false
+
+    // 수정해야함
+    // 0) email 없으면(비정상 진입) 방어
+    if (!email) {
+      setPasswordError("비밀번호 찾기부터 다시 진행해주세요");
+      return;
+    }
 
     // 1) 비밀번호 검사
     if (!trimmedPw) {
@@ -76,11 +104,38 @@ export default function ResetPasswordScreen({ navigation }) {
     // 에러 있으면 종료
     if (hasError) return;
 
-    // 성공 → 완료 모달 띄우기
-    setShowCompleteModal(true);
+    try {
+      setIsResetting(true);
+
+      const res = await resetPassword({ email, password: trimmedPw });
+      console.log("RESET PASSWORD OK:", res);
+
+      // 성공 → 완료 모달 띄우기
+      setShowCompleteModal(true);
+    } catch (e) {
+      console.log("RESET PASSWORD FAIL:", e);
+
+      if (e?.code === "MEMBER4004") {
+        // 존재하지 않는 메일
+        setPasswordError("존재하지 않는 메일입니다");
+        return;
+      }
+
+      // 수정해야함
+      if (e?.code === "MEMBER4005") {
+        // 비밀번호 찾기 검증을 안 하고 들어온 경우
+        setPasswordError("비밀번호 찾기를 다시 하고 오세요");
+        return;
+      }
+
+      // 그 외(네트워크/서버 오류 등) => 모달
+      openErrorModal(e);
+    } finally {
+      setIsResetting(false);
+    }
   };
 
-  // ✅ 모달에서 확인 버튼 누르면 로그인 화면으로 이동
+  // 모달에서 확인 버튼 누르면 로그인 화면으로 이동
   const handleCompleteOk = () => {
     setShowCompleteModal(false);
     navigation.navigate("Login");
@@ -158,6 +213,7 @@ export default function ResetPasswordScreen({ navigation }) {
           borderRadius={10}
           fontSize={14}
           onPress={handleComplete}
+          disabled={isResetting}
         />
       </View>
 
@@ -188,6 +244,26 @@ export default function ResetPasswordScreen({ navigation }) {
               <TouchableOpacity
                 style={[styles.modalButton]}
                 onPress={handleCompleteOk}  
+              >
+                <Text style={styles.modalButtonText}>확인</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* 네트워크/서버 오류 모달 */}
+      <Modal transparent visible={showErrorModal}>
+        <View style={styles.modalBackground}>
+          <View style={styles.modalWrap}>
+            <Text style={styles.modalText}>
+              {"오류가 발생했습니다.\n잠시 후 다시 시도해주세요."}
+            </Text>
+
+            <View style={styles.modalButtonWrap}>
+              <TouchableOpacity
+                style={[styles.modalButton]}
+                onPress={handleErrorOk}
               >
                 <Text style={styles.modalButtonText}>확인</Text>
               </TouchableOpacity>
