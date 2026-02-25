@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import colors from "../theme/colors";
 import BackButton from "../components/BackButton";
 import Button from "../components/Button";
@@ -41,16 +41,34 @@ export default function ResetPasswordScreen({ navigation, route }) {
   // 네트워크/서버 오류 모달
   const [showErrorModal, setShowErrorModal] = useState(false);
 
-  // 요청 중 중복 클릭 방지
+  // 확인 누르면 Login화면으로 돌아갈건가
+  const [goLogin, setGoLogin] = useState(false);
+
+  // 요청 중 중복 클릭 방지 (UI는 그대로, 로직만 차단)
   const [isResetting, setIsResetting] = useState(false);
+
+  // 화면 진입 즉시 email 넘어왔는지 검사
+  useEffect(() => {
+    if (!route?.params?.email) {
+      setGoLogin(true);
+      setShowErrorModal(true);
+    }
+  }, []);
 
   const openErrorModal = (err) => {
     console.log(err?.message);
+    setGoLogin(false);
     setShowErrorModal(true);
   };
 
   const handleErrorOk = () => {
     setShowErrorModal(false);
+
+    // email 없는 경우
+    if (goLogin) {
+      setGoLogin(false);
+      goLoginAndResetStack();
+    }
   };
 
   const handleComplete = async () => {
@@ -66,12 +84,6 @@ export default function ResetPasswordScreen({ navigation, route }) {
     let hasError = false;
     let shouldValidateCheckPw = true; // 비밀번호 규칙에 걸리면 false
 
-    // 수정해야함
-    // 0) email 없으면(비정상 진입) 방어
-    if (!email) {
-      setPasswordError("비밀번호 찾기부터 다시 진행해주세요");
-      return;
-    }
 
     // 1) 비밀번호 검사
     if (!trimmedPw) {
@@ -121,10 +133,10 @@ export default function ResetPasswordScreen({ navigation, route }) {
         return;
       }
 
-      // 수정해야함
+      // 비밀번호 찾기 검증을 안 하고 들어온 경우 → 모달 띄운 후 Login으로 이동
       if (e?.code === "MEMBER4005") {
-        // 비밀번호 찾기 검증을 안 하고 들어온 경우
-        setPasswordError("비밀번호 찾기를 다시 하고 오세요");
+        setGoLogin(true);
+        setShowErrorModal(true);
         return;
       }
 
@@ -259,7 +271,7 @@ export default function ResetPasswordScreen({ navigation, route }) {
         </View>
       </Modal>
 
-      {/* 네트워크/서버 오류 모달 */}
+      {/* 오류 모달 */}
       <Modal transparent visible={showErrorModal}>
         <View style={styles.modalBackground}>
           <View style={styles.modalWrap}>
