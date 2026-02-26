@@ -1,4 +1,4 @@
-import React, { useState, useContext, useEffect, useMemo } from "react";
+import React, { useState, useContext, useEffect, useCallback, useRef } from "react";
 import {
   View,
   Text,
@@ -17,7 +17,9 @@ import DateTimePicker from "react-native-modal-datetime-picker";
 import { AuthContext } from "../App";
 import { ProfileContext } from "../context/ProfileContext";
 import { deleteProfile, modifyProfile, searchProfileList } from "../api/profile";
-import { toImageSource } from "../utils/profileImageMap";
+import { logout } from "../api/auth";
+import { clearAuth } from "../utils/tokenStorage";
+import { fileByIndex, toImageSource } from "../utils/profileImageMap";
 import Button from "../components/Button";
 import BackButton from "../components/BackButton";
 import colors from "../theme/colors";
@@ -25,18 +27,23 @@ import colors from "../theme/colors";
 const { width: W, height: H } = Dimensions.get("window");
 
 export default function SettingsScreen({ route, navigation }) {
-
   const { setStep } = useContext(AuthContext);
+  const { setProfiles, selectedProfile, setSelectedProfile } = useContext(ProfileContext);
 
-  const formatBirth = (s) => (typeof s === "string" ? s.replaceAll("-", ".") : "")
+  const renderCount = useRef(0);
+  renderCount.current += 1;
+  console.log(
+    "[SettingsScreen] render#",
+    renderCount.current,
+    "selectedProfile:",
+    !!selectedProfile
+  );
 
-  const { profiles, setProfiles, selectedProfile, setSelectedProfile } = useContext(ProfileContext);
-  const profileName = selectedProfile.name;
-  const profileBirth = formatBirth(selectedProfile.birth);
-  const profileImageSource = selectedProfile.image;
-  const [draftName, setDraftName] = useState(selectedProfile?.name ?? "");
-  const [draftBirth, setDraftBirth] = useState(selectedProfile?.birth ?? "");
-  const [draftProfileImage, setDraftProfileImage] = useState(selectedProfile?.profileImage ?? "");
+  const formatBirth = (s) => (typeof s === "string" ? s.replaceAll("-", ".") : "");
+
+  // 훅은 무조건 실행
+  const [draftName, setDraftName] = useState("");
+  const [draftBirth, setDraftBirth] = useState("");
 
   const [editEnabled, setEditEnabled] = useState(false);
   const [editingField, setEditingField] = useState(null);
@@ -45,12 +52,39 @@ export default function SettingsScreen({ route, navigation }) {
   const [isDeleteModalVisible, setDeleteModalVisible] = useState(false);
   const [isLogoutModalVisible, setLogoutModalVisible] = useState(false);
 
-  const toggleEditEnabled = () => {
-    if (editingField === "name") {
-      setProfile((prev) => ({ ...prev, name: temp }));
-      setEditingField(null);
-      Keyboard.dismiss();
+  // selectedProfile 바뀔 때 draft 동기화
+  useEffect(() => {
+    if (selectedProfile) {
+      setDraftName(selectedProfile?.name ?? "");
+      setDraftBirth(selectedProfile?.birth ?? "");
     }
+  }, [selectedProfile?.profileId]);
+
+  // selectedProfile 없이 Settings로 들어오는 것 방지
+  useEffect(() => {
+    if (!selectedProfile) {
+      navigation.reset({
+        index: 0,
+        // routes: [{ name: "ProfileSelectFromSettings" }],
+        routes: [{ name: "ProfileSelect" }],
+      });
+    }
+  }, [selectedProfile, navigation]);
+
+  // 렌더 중에 절대 selectedProfile을 직접 dereference 하지 말고 safe 객체 사용
+  const safeProfile = selectedProfile ?? {
+    profileId: null,
+    name: "",
+    birth: "",
+    profileImage: "",
+    image: null,
+  };
+
+  const profileName = safeProfile.name;
+  const shownBirth = formatBirth(draftBirth || safeProfile.birth);
+  const profileImageSource = safeProfile.image;
+
+  const toggleEditEnabled = () => {
     setEditEnabled((prev) => !prev);
   };
 
@@ -58,34 +92,99 @@ export default function SettingsScreen({ route, navigation }) {
     if (!editEnabled) return;
 
     if (field === "name") {
-      setTemp(profile.name);
       setEditingField("name");
     } else if (field === "birthday") {
       setDatePickerVisibility(true);
     }
   };
 
-  const finishEdit = () => {
-    if (editingField === "name") {
-      setProfile((prev) => ({ ...prev, name: temp }));
+  const finishEdit = useCallback(async () => {
+    if (!editEnabled && !editingField) return;
+    if (!selectedProfile) return;
+
+    const nextName = (draftName ?? "").trim();
+    const nextBirth = (draftBirth ?? "").trim();
+
+    const finalName = nextName.length ? nextName : selectedProfile.name;
+    const finalBirth = nextBirth.length ? nextBirth : selectedProfile.birth;
+
+    const changed =
+      finalName !== selectedProfile.name || finalBirth !== selectedProfile.birth;
+
+    try {
+      if (changed) {
+        await modifyProfile(selectedProfile.profileId, {
+          profileImage: selectedProfile.profileImage,
+          name: finalName,
+          birth: finalBirth,
+        });
+
+        const updated = { ...selectedProfile, name: finalName, birth: finalBirth };
+        setSelectedProfile(updated);
+
+        setProfiles((prev) =>
+          prev.map((p) =>
+            p.profileId === selectedProfile.profileId
+              ? { ...p, name: finalName, birth: finalBirth }
+              : p
+          )
+        );
+      }
+    } catch (e) {
+      console.log("Modify Profile Fail", e);
+      Alert.alert("오류", e?.message || "프로필 수정에 실패했습니다.");
+
+      setDraftName(selectedProfile.name);
+      setDraftBirth(selectedProfile.birth);
+    } finally {
+      setEditingField(null);
+      Keyboard.dismiss();
+      setEditEnabled(false);
     }
-    setEditingField(null);
-    Keyboard.dismiss();
+  }, [
+    editEnabled,
+    editingField,
+    draftName,
+    draftBirth,
+    selectedProfile,
+    setSelectedProfile,
+    setProfiles,
+  ]);
 
-    if (editEnabled) setEditEnabled(false);
-  };
+  const handleDateConfirm = async (date) => {
+    if (!selectedProfile) return;
 
-  const handleDateConfirm = (date) => {
-    const formatted = `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(
+    const formatted = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(
       2,
       "0"
-    )}.${String(date.getDate()).padStart(2, "0")}`;
+    )}-${String(date.getDate()).padStart(2, "0")}`;
 
-    setProfile((prev) => ({ ...prev, birthday: formatted }));
-    setDatePickerVisibility(false);
-    setEditingField(null);
+    setDraftBirth(formatted);
 
-    setEditEnabled(false);
+    try {
+      await modifyProfile(selectedProfile.profileId, {
+        profileImage: selectedProfile.profileImage,
+        name: (draftName ?? "").trim() || selectedProfile.name,
+        birth: formatted,
+      });
+
+      const updated = { ...selectedProfile, birth: formatted };
+      setSelectedProfile(updated);
+
+      setProfiles((prev) =>
+        prev.map((p) =>
+          p.profileId === selectedProfile.profileId ? { ...p, birth: formatted } : p
+        )
+      );
+    } catch (e) {
+      console.log("Modify Birth Fail:", e);
+      Alert.alert("오류", e?.message || "생년월일 수정에 실패했습니다.");
+      setDraftBirth(selectedProfile.birth);
+    } finally {
+      setDatePickerVisibility(false);
+      setEditingField(null);
+      setEditEnabled(false);
+    }
   };
 
   const hideDatePicker = () => {
@@ -95,51 +194,124 @@ export default function SettingsScreen({ route, navigation }) {
 
   const handleDeleteProfile = async () => {
     try {
-      await deleteProfile(selectedProfile.profileId);
-    
+      const deletingId = selectedProfile?.profileId;
+      if (!deletingId) return;
+
+      await deleteProfile(deletingId);
+
+      setDeleteModalVisible(false);
+
+      // 1) ProfileSelect로 이동
+      navigation.reset({
+        index: 0,
+        // routes: [{ name: "ProfileSelectFromSettings" }],
+        routes: [{ name: "ProfileSelect" }],
+      });
+
+      // 2) 상태 정리
+      setSelectedProfile(null);
+
+      // 3) 목록 갱신
       const listRes = await searchProfileList();
       const list = listRes?.result?.profileLists ?? [];
-
       const mapped = list.map((p) => ({
         profileId: p.profileId,
         name: p.name,
+        birth: p.birth,
         profileImage: p.profileImage,
         image: toImageSource(p.profileImage),
       }));
       setProfiles(mapped);
-      setSelectedProfile(null);
-      setDeleteModalVisible(false);
-      navigation.navigate("ProfileSelectFromSettings");
-    } catch(e) {
+    } catch (e) {
       console.log("Delete Profile Fail:", e);
       Alert.alert("오류", e?.message || "프로필 삭제에 실패했습니다.");
     }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } catch (e) {
+      console.log("Logout Fail:", e);
+    } finally {
+      await clearAuth();
+      setLogoutModalVisible(false);
+      setStep?.(0);
+      navigation.reset({
+        index: 0,
+        // routes: [{ name: "LoginFromSettings" }],
+        routes: [{ name: "Login" }],
+      });
+    }
+  };
+
+  if (!selectedProfile) {
+    return <View style={styles.root} />;
   }
 
   return (
-    <TouchableWithoutFeedback onPress={finishEdit}>
+    <TouchableWithoutFeedback onPress={() => finishEdit()}>
       <View style={styles.root}>
         <View style={styles.topBackground}>
-          {/* 상단 뒤로가기 버튼 및 '설정' 제목 */}
           <View style={styles.titleWrap}>
             <BackButton navigation={navigation} top={H * 0.001} left={W * 0.05} />
             <Text style={styles.title}>설정</Text>
           </View>
 
-          {/* 프로필 이미지 */}
           <View style={styles.profileWrap}>
             <View style={styles.profile}>
               <View style={styles.imageWrap}>
-                <Image
-                  style={styles.image}
-                  source={profileImageSource}
-                />
+                {profileImageSource ? (
+                  <Image style={styles.image} source={profileImageSource} />
+                ) : null}
+
                 <TouchableOpacity
                   style={styles.editIconTouch}
                   onPress={() =>
-                    navigation.navigate("ProfileImageSelectFromSettings", {
-                      onSelectImage: (img) => {
-                        setProfile((prev) => ({ ...prev, image: img }));
+                    // navigation.navigate("ProfileImageSelectFromSettings", {
+                    navigation.navigate("ProfileImageSelect", {
+                      onSelectImage: async ({ imageSource, selectedIndex, isUploaded }) => {
+                        try {
+                          if (!selectedProfile) return;
+
+                          if (isUploaded) {
+                            Alert.alert(
+                              "알림",
+                              "업로드 이미지 수정은 아직 api 연동이 필요합니다. 기본 이미지로 수정해주세요."
+                            );
+                            return;
+                          }
+
+                          const profileImage = fileByIndex(selectedIndex);
+                          if (!profileImage) {
+                            Alert.alert("오류", "프로필 이미지를 다시 선택해 주세요.");
+                            return;
+                          }
+
+                          await modifyProfile(selectedProfile.profileId, {
+                            profileImage,
+                            name: (draftName ?? "").trim() || selectedProfile.name,
+                            birth: (draftBirth ?? "").trim() || selectedProfile.birth,
+                          });
+
+                          const updated = {
+                            ...selectedProfile,
+                            profileImage,
+                            image: toImageSource(profileImage),
+                          };
+                          setSelectedProfile(updated);
+
+                          setProfiles((prev) =>
+                            prev.map((p) =>
+                              p.profileId === selectedProfile.profileId
+                                ? { ...p, profileImage, image: toImageSource(profileImage) }
+                                : p
+                            )
+                          );
+                        } catch (e) {
+                          console.log("Modify Profile Image Fail:", e);
+                          Alert.alert("오류", e?.message || "프로필 이미지 수정에 실패했습니다.");
+                        }
                       },
                     })
                   }
@@ -155,7 +327,6 @@ export default function SettingsScreen({ route, navigation }) {
             <View style={styles.profileInfo}>
               <View style={styles.infoRow}>
                 <Text style={styles.infoLabel}>이름</Text>
-
                 <View style={styles.infoRight}>
                   {editingField === "name" ? (
                     <TextInput
@@ -193,7 +364,6 @@ export default function SettingsScreen({ route, navigation }) {
 
               <View style={styles.infoRow}>
                 <Text style={styles.infoLabel}>생년월일</Text>
-
                 <View style={styles.infoRight}>
                   <TouchableOpacity
                     activeOpacity={editEnabled ? 0.6 : 1}
@@ -206,7 +376,7 @@ export default function SettingsScreen({ route, navigation }) {
                         editEnabled && styles.editableUnderline,
                       ]}
                     >
-                      {profileBirth}
+                      {shownBirth}
                     </Text>
                   </TouchableOpacity>
                 </View>
@@ -218,10 +388,7 @@ export default function SettingsScreen({ route, navigation }) {
                 activeOpacity={0.7}
               >
                 <Image
-                  style={[
-                    styles.bottomEditIcon,
-                    editEnabled && { opacity: 1 },
-                  ]}
+                  style={[styles.bottomEditIcon, editEnabled && { opacity: 1 }]}
                   source={require("../assets/images/edit_icon.png")}
                 />
               </TouchableOpacity>
@@ -327,7 +494,7 @@ export default function SettingsScreen({ route, navigation }) {
                 <View style={styles.modalButtonWrap}>
                   <TouchableOpacity
                     style={[styles.modalButton, styles.leftButton]}
-                    onPress={() => setLogoutModalVisible(false)}
+                    onPress={handleLogout}
                   >
                     <Text style={styles.modalButtonText}>예</Text>
                   </TouchableOpacity>
@@ -453,7 +620,7 @@ const styles = StyleSheet.create({
 
   editableUnderline: {
     borderBottomColor: colors.pinkDark,
-    borderBottomWidth: 1
+    borderBottomWidth: 1,
   },
 
   input: {
