@@ -87,11 +87,23 @@ export default function ProfileImageSelectScreen({ navigation, route }) {
 
   const handleNext = () => {
     const selected = getSelectedImage();
+    const onSelectImage = route?.params?.onSelectImage;
+
     if (!selected) return;
+    
+    if (typeof onSelectImage === "function") {
+      onSelectImage({
+        imageSource: selected,
+        selectedIndex,
+        isUploaded: selectedIndex === uploadBtnIndex,
+      });
+      navigation.goBack();
+      return;
+    }
 
     navigation.navigate("ProfileInfoForm", {
       selectedImage: selected,
-      selectedIndex: selectedIndex,
+      selectedIndex,
       isUploaded: selectedIndex == uploadBtnIndex,
     });
   };
