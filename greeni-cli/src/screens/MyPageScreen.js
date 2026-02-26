@@ -11,6 +11,8 @@ import {
   ScrollView,
 } from "react-native";
 import { ProfileContext } from "../context/ProfileContext";
+import { searchBadgeList } from "../api/badge";
+
 // import LinearGradient from "react-native-linear-gradient";
 import colors from "../theme/colors";
 import NavigationBar from "../components/NavigationBar";
@@ -18,39 +20,39 @@ import NavigationBar from "../components/NavigationBar";
 const { width: W, height: H } = Dimensions.get("window");
 
 // 테스트 배지 2개만 우선 노출. (나중에 여기 배열만 늘리면 자동 정렬)
-const TEST_BADGES = [
-  { id: "b1", src: require("../assets/images/attendance_bedge1.png"), label: "출석 1일" },
-  { id: "b2", src: require("../assets/images/diary_bedge1.png"), label: "일기작성 1일" },
+// const TEST_BADGES = [
+//   { id: "b1", src: require("../assets/images/attendance_bedge1.png"), label: "출석 1일" },
+//   { id: "b2", src: require("../assets/images/diary_bedge1.png"), label: "일기작성 1일" },
   
-  { id: "b3", src: require("../assets/images/diary_bedge1.png"), label: "출석 7일" },
-  { id: "b4", src: require("../assets/images/diary_bedge1.png"), label: "출석 7일" },
-  { id: "b5", src: require("../assets/images/diary_bedge1.png"), label: "출석 7일" },
-  { id: "b6", src: require("../assets/images/diary_bedge1.png"), label: "출석 7일" },
-  { id: "b7", src: require("../assets/images/diary_bedge1.png"), label: "출석 7일" },
-  { id: "b8", src: require("../assets/images/diary_bedge1.png"), label: "출석 7일" },
-  { id: "b9", src: require("../assets/images/diary_bedge1.png"), label: "출석 7일" },
-  { id: "b10", src: require("../assets/images/diary_bedge1.png"), label: "출석 7일" },
-  { id: "b11", src: require("../assets/images/diary_bedge1.png"), label: "출석 7일" },
-  { id: "b12", src: require("../assets/images/diary_bedge1.png"), label: "출석 7일" },
-  { id: "b13", src: require("../assets/images/diary_bedge1.png"), label: "출석 7일" },
-  { id: "b14", src: require("../assets/images/diary_bedge1.png"), label: "출석 7일" },
-  { id: "b15", src: require("../assets/images/diary_bedge1.png"), label: "출석 7일" },
-  { id: "b16", src: require("../assets/images/diary_bedge1.png"), label: "출석 7일" },
-  { id: "b17", src: require("../assets/images/diary_bedge1.png"), label: "출석 7일" },
-  { id: "b18", src: require("../assets/images/diary_bedge1.png"), label: "출석 7일" },
-  { id: "b19", src: require("../assets/images/diary_bedge1.png"), label: "출석 7일" },
-  { id: "b20", src: require("../assets/images/diary_bedge1.png"), label: "출석 7일" },
-  { id: "b21", src: require("../assets/images/diary_bedge1.png"), label: "출석 7일" },
-  { id: "b22", src: require("../assets/images/diary_bedge1.png"), label: "출석 7일" },
-  { id: "b23", src: require("../assets/images/diary_bedge1.png"), label: "출석 7일" },
-  { id: "b24", src: require("../assets/images/diary_bedge1.png"), label: "출석 7일" },
-  { id: "b25", src: require("../assets/images/diary_bedge1.png"), label: "출석 7일" },
-  { id: "b26", src: require("../assets/images/diary_bedge1.png"), label: "출석 7일" },
-  { id: "b27", src: require("../assets/images/diary_bedge1.png"), label: "출석 7일" },
-  { id: "b28", src: require("../assets/images/diary_bedge1.png"), label: "출석 7일" },
-  { id: "b29", src: require("../assets/images/diary_bedge1.png"), label: "출석 7일" },
+//   { id: "b3", src: require("../assets/images/diary_bedge1.png"), label: "출석 7일" },
+//   { id: "b4", src: require("../assets/images/diary_bedge1.png"), label: "출석 7일" },
+//   { id: "b5", src: require("../assets/images/diary_bedge1.png"), label: "출석 7일" },
+//   { id: "b6", src: require("../assets/images/diary_bedge1.png"), label: "출석 7일" },
+//   { id: "b7", src: require("../assets/images/diary_bedge1.png"), label: "출석 7일" },
+//   { id: "b8", src: require("../assets/images/diary_bedge1.png"), label: "출석 7일" },
+//   { id: "b9", src: require("../assets/images/diary_bedge1.png"), label: "출석 7일" },
+//   { id: "b10", src: require("../assets/images/diary_bedge1.png"), label: "출석 7일" },
+//   { id: "b11", src: require("../assets/images/diary_bedge1.png"), label: "출석 7일" },
+//   { id: "b12", src: require("../assets/images/diary_bedge1.png"), label: "출석 7일" },
+//   { id: "b13", src: require("../assets/images/diary_bedge1.png"), label: "출석 7일" },
+//   { id: "b14", src: require("../assets/images/diary_bedge1.png"), label: "출석 7일" },
+//   { id: "b15", src: require("../assets/images/diary_bedge1.png"), label: "출석 7일" },
+//   { id: "b16", src: require("../assets/images/diary_bedge1.png"), label: "출석 7일" },
+//   { id: "b17", src: require("../assets/images/diary_bedge1.png"), label: "출석 7일" },
+//   { id: "b18", src: require("../assets/images/diary_bedge1.png"), label: "출석 7일" },
+//   { id: "b19", src: require("../assets/images/diary_bedge1.png"), label: "출석 7일" },
+//   { id: "b20", src: require("../assets/images/diary_bedge1.png"), label: "출석 7일" },
+//   { id: "b21", src: require("../assets/images/diary_bedge1.png"), label: "출석 7일" },
+//   { id: "b22", src: require("../assets/images/diary_bedge1.png"), label: "출석 7일" },
+//   { id: "b23", src: require("../assets/images/diary_bedge1.png"), label: "출석 7일" },
+//   { id: "b24", src: require("../assets/images/diary_bedge1.png"), label: "출석 7일" },
+//   { id: "b25", src: require("../assets/images/diary_bedge1.png"), label: "출석 7일" },
+//   { id: "b26", src: require("../assets/images/diary_bedge1.png"), label: "출석 7일" },
+//   { id: "b27", src: require("../assets/images/diary_bedge1.png"), label: "출석 7일" },
+//   { id: "b28", src: require("../assets/images/diary_bedge1.png"), label: "출석 7일" },
+//   { id: "b29", src: require("../assets/images/diary_bedge1.png"), label: "출석 7일" },
    
-];
+// ];
 
 export default function MyPageScreen({ navigation }) {
   const [tab, setTab] = useState(3);
@@ -59,16 +61,36 @@ export default function MyPageScreen({ navigation }) {
   const { selectedProfile } = useContext(ProfileContext);
   const formatBirth = (s) => (typeof s === "string" ? s.replaceAll("-", ".") : "");
 
+  const [badges, setBadges] = useState([]);
+
   // 선택된 profile 없으면 바로 프로필 선택 화면으로
   useEffect(() => {
     if (!selectedProfile) {
-      navigation.navigate("ProfileSelectFromSettings");
+      navigation.navigate("ProfileSelect");
     }
   }, [selectedProfile, navigation]);
 
-  if (!selectedProfile) return null;
+  useEffect(() => {
+  const loadBadges = async () => {
+    if (!selectedProfile?.profileId) {
+      setBadges([]);
+      return;
+    }
 
-  // 뒤로가기 → 앱 종료
+    try {
+      const res = await searchBadgeList(selectedProfile.profileId);
+      const list = res?.result?.badgeLists ?? [];
+      setBadges(list);
+    } catch (e) {
+      console.log("LOAD BADGE LIST FAIL:", e);
+      setBadges([]);
+    }
+  };
+
+  loadBadges();
+}, [selectedProfile?.profileId]);
+
+// 뒤로가기 → 앱 종료
   useEffect(() => {
     const onBackPress = () => {
       if (Platform.OS === "android") {
@@ -79,6 +101,8 @@ export default function MyPageScreen({ navigation }) {
     const sub = BackHandler.addEventListener("hardwareBackPress", onBackPress);
     return () => sub.remove();
   }, []);
+
+  if (!selectedProfile) return null;
 
   const profileName = selectedProfile.name;
   const profileBirth = formatBirth(selectedProfile.birth);
@@ -160,11 +184,21 @@ export default function MyPageScreen({ navigation }) {
 
         {/* 배지 영역 (View + flexWrap) */}
         <View style={styles.badgeGrid}>
-          {TEST_BADGES.map((item) => (
+          {/* {TEST_BADGES.map((item) => (
             <View key={item.id} style={styles.badgeWrap}>
               <Image source={item.src} style={styles.badgeImage} resizeMode="contain" />
             </View>
+          ))} */}
+          {badges.map((item) => (
+            <View key={item.badgeId} style={styles.badgeWrap}>
+              <Image
+                source={item.imageUrl ? { uri: item.imageUrl } : require("../assets/images/attendance_bedge1.png")}
+                style={styles.badgeImage}
+                resizeMode="contain"
+              />
+            </View>
           ))}
+
         </View>
       </ScrollView>
 
