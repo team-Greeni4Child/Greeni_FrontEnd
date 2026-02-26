@@ -11,6 +11,7 @@ export default {
   lightGray: "#D3D3D3",
   lightGray60: "#D3D3D360",
   lightGray95: "#D3D3D395",
+  lightGrayPh: "#999999",
 
   // Green tones
   green: "#BEEA8B", 
@@ -21,4 +22,7 @@ export default {
   pink: "#FFE1E1", 
   pinkMid: "#FFD1D1",
   pinkDark: "#FFB5BF",
+
+  // Red tones
+  red: "#f36945",
 };
