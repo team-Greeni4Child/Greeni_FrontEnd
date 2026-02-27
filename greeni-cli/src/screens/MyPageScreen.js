@@ -12,8 +12,7 @@ import {
 } from "react-native";
 import { ProfileContext } from "../context/ProfileContext";
 import { searchBadgeList } from "../api/badge";
-
-// import LinearGradient from "react-native-linear-gradient";
+import LinearGradient from "react-native-linear-gradient";
 import colors from "../theme/colors";
 import NavigationBar from "../components/NavigationBar";
 
@@ -56,7 +55,7 @@ const { width: W, height: H } = Dimensions.get("window");
 
 export default function MyPageScreen({ navigation }) {
   const [tab, setTab] = useState(3);
-  const NAV_H = 90;
+  const NAV_H = H * 0.06 + 60 + 6;
 
   const { selectedProfile } = useContext(ProfileContext);
   const formatBirth = (s) => (typeof s === "string" ? s.replaceAll("-", ".") : "");
@@ -202,17 +201,18 @@ export default function MyPageScreen({ navigation }) {
         </View>
       </ScrollView>
 
-      {/* <LinearGradient 
+      {/* 하단 페이드 마스크 */}
+      <LinearGradient
         pointerEvents="none"
         colors={[
-          "rgba(255, 255, 255, 0)",
-          "rgba(255, 255, 255, 0.6)",
-          colors.ivory,
+          "rgba(255, 253, 238, 0)",
+          "rgba(255, 253, 238, 0.55)",
+          "rgba(255, 253, 238, 0.9)",
+          "rgba(255, 253, 238, 1)",
         ]}
-        locations={[0, 0.55, 1]}
-        style={[styles.bottomFade, { bottom: NAV_H + 20 }]}
-      /> */}
-
+        locations={[0, 0.45, 0.75, 1]}
+        style={[styles.bottomFade, { bottom: NAV_H }]}
+      />
     </View>
   );
 }
@@ -230,15 +230,17 @@ const styles = StyleSheet.create({
     top: 0,
     left: 0,
     right: 0,
-    height: H * 0.5,
+    height: H * 0.48,
     backgroundColor: colors.pink,
     borderBottomLeftRadius: 30,
     borderBottomRightRadius: 30,
+    zIndex: 1,
   },
   header: {
     position: "absolute",
     top: 80,
     right: 40,
+    zIndex: 1,
   },
   title: {
     position: "absolute",
@@ -246,6 +248,7 @@ const styles = StyleSheet.create({
     fontFamily: "Maplestory_Bold",
     fontSize: 24,
     color: colors.brown,
+    zIndex: 1,
   },
   settingBtn: {
     padding: 0,
@@ -262,6 +265,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     // borderWidth: 2,
     // borderColor: 'red'
+    zIndex: 1,
   },
   avatar: {
     width: 94,
@@ -316,7 +320,7 @@ const styles = StyleSheet.create({
 
   scrollWrap: {
     width: W,
-    marginTop: H * 0.035,
+    padding: H * 0.03,
     marginBottom: H * 0.15,
   },
 
@@ -355,6 +359,6 @@ const styles = StyleSheet.create({
     position: "absolute",
     left: 0,
     right: 0,
-    height: 120,   // 흐려지는 범위
+    height: 60,   // 흐려지는 범위
   },
 });
