@@ -76,6 +76,8 @@ function MainStack() {
       <Stack.Screen name="DiaryRecord" component={DiaryRecordScreen}/>
       <Stack.Screen name="MyPage" component={MyPageScreen}/>
       <Stack.Screen name="SettingsPassword" component={SettingsPasswordScreen}/>
+      <Stack.Screen name="FindPassword" component={FindPasswordScreen} />
+      <Stack.Screen name="ResetPassword" component={ResetPasswordScreen} />
       <Stack.Screen name="Settings" component={SettingsScreen}/>
       <Stack.Screen name="ParentsPage" component={ParentsPageScreen}/>
       <Stack.Screen name="ProfileSelectFromSettings" component={ProfileSelectScreen}/>
