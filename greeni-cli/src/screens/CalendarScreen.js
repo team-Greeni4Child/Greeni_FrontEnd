@@ -8,7 +8,9 @@ import {
   Image,
   ImageBackground,
   Alert,
+  BackHandler,
 } from "react-native";
+import { useFocusEffect } from "@react-navigation/native";
 import colors from "../theme/colors";
 import NavigationBar from "../components/NavigationBar";
 
@@ -52,6 +54,19 @@ export default function CalendarScreen({ navigation }) {
   const [year, setYear] = useState(today.getFullYear());
   const [month, setMonth] = useState(today.getMonth()); // 0~11
   const [tab, setTab] = useState(1);
+
+  // 뒤로가기 누르면 Home으로
+  useFocusEffect(
+    useCallback(() => {
+      const onBackPress = () => {
+        navigation.navigate("Home");
+        return true; // 이벤트 소비 → 앱 종료 방지
+      };
+
+      const sub = BackHandler.addEventListener("hardwareBackPress", onBackPress);
+      return () => sub.remove();
+    }, [navigation])
+  );
 
   const stickerMap = useMemo(
     () => ({

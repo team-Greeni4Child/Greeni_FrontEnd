@@ -1,4 +1,4 @@
-import React, { useState, useContext } from "react";
+import React, { useState, useContext, useCallback } from "react";
 import { 
   View, 
   Text, 
@@ -11,9 +11,10 @@ import {
   Keyboard,
   Modal,
   ScrollView,
+  BackHandler,
 } from "react-native";
 import DateTimePicker from "react-native-modal-datetime-picker";
-
+import { useFocusEffect } from "@react-navigation/native";
 import { ProfileContext } from "../context/ProfileContext";
 import Button from "../components/Button";
 import BackButton from "../components/BackButton";
@@ -44,6 +45,19 @@ export default function StatisticsScreen({route, navigation}) {
     const { selectedProfile } = useContext(ProfileContext);
 
     const profileName = selectedProfile.name;
+
+    // 뒤로가기 누르면 Home으로
+    useFocusEffect(
+      useCallback(() => {
+        const onBackPress = () => {
+          navigation.navigate("Home");
+          return true;
+        };
+
+        const sub = BackHandler.addEventListener("hardwareBackPress", onBackPress);
+        return () => sub.remove();
+      }, [navigation])
+    );
 
     return (
         <View style={styles.root}>
