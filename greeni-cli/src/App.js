@@ -1,6 +1,6 @@
 import "react-native-gesture-handler";
-import React, { useState, createContext } from "react";
-import { Text, TextInput } from "react-native";
+import React, { useEffect, useRef, useState, createContext } from "react";
+import { Text, TextInput, BackHandler } from "react-native";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { ProfileProvider } from "./context/ProfileContext";
@@ -93,11 +93,31 @@ export default function App() {
   const [showSplash, setShowSplash] = useState(true);
   const [step, setStep] = useState("auth"); 
 
+  const navigationRef = useRef(null);
+
+  // 기기의 백버튼과 커스텀 백버튼 통일
+  useEffect(() => {
+    const onHardwareBackPress = () => {
+      const nav = navigationRef.current;
+
+      if (nav?.canGoBack?.()) {
+        nav.goBack();
+        return true;
+      }
+
+      return false;
+    };
+
+    const sub = BackHandler.addEventListener( "hardwareBackPress", onHardwareBackPress );
+
+    return () => sub.remove();
+  }, []);
+
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <ProfileProvider>
         <AuthContext.Provider value={{ step, setStep }}>
-          <NavigationContainer>
+          <NavigationContainer ref={navigationRef}>
             {showSplash ? (
               <Stack.Navigator screenOptions={{ headerShown: false }}>
                 <Stack.Screen name="Splash">
