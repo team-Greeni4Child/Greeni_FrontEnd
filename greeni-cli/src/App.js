@@ -80,17 +80,7 @@ function MainStack() {
       <Stack.Screen name="ParentsPage" component={ParentsPageScreen}/>
       <Stack.Screen name="Summary" component={SummaryScreen}/>
       <Stack.Screen name="Statistics" component={StatisticsScreen}/>
-
-      {/* Settings에서만 쓰는 리다이렉트용 route들 */}
-      {/* <Stack.Screen name="ProfileSelectFromSettings" component={ProfileSelectScreen}/>
-      <Stack.Screen name="ProfileImageSelectFromSettings" component={ProfileImageSelectScreen} />
-      <Stack.Screen name="LoginFromSettings" component={LoginScreen} /> */}
-
-      <Stack.Screen name="ProfileSelect" component={ProfileSelectScreen}/>
-      <Stack.Screen name="ProfileImageSelect" component={ProfileImageSelectScreen} />
-      <Stack.Screen name="ProfileInfoForm" component={ProfileInfoFormScreen} />
-      <Stack.Screen name="Login" component={LoginScreen} />
-
+      <Stack.Screen name="ProfileImageSelect" component={ProfileImageSelectScreen}/>
       {/* 나중에 다른 페이지 추가 */}
     </Stack.Navigator>
   );
