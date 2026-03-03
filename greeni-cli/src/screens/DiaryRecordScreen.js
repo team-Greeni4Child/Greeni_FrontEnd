@@ -129,7 +129,36 @@ export default function DiaryRecordScreen({ navigation, route }) {
         onLayout={onSheetLayout}
       >
         <View style={styles.sheetInner}>
-          {/* 나중에 내용 들어갈 자리 */}
+          {/* 감정 + 오늘의 키워드 */}
+          <View style={styles.metaWrap}>
+            <View style={styles.metaRow}>
+              <Text style={styles.metaLabel}>감정 :</Text>
+              <Image
+                source={require("../assets/images/angry.png")} // TODO: 실제 감정 아이콘으로 교체
+                style={styles.emotionIcon}
+                resizeMode="contain"
+              />
+            </View>
+
+            <View style={styles.metaRow}>
+              <Text style={styles.metaLabel}>오늘의 키워드 :</Text>
+              <Text style={styles.keywordText}>수영</Text>
+            </View>
+          </View>
+
+          {/* 분홍 구분선 */}
+          <View style={styles.divider} />
+
+          {/* 일기 요약 텍스트 */}
+          <Text style={styles.summaryText}>
+            오늘 해가 구름에 가려졌다가 비가 내렸다.
+            그리고 수영장에 갔다.
+            비가 와서 그런지 사람이 없어서 좋았다.
+            새로 산 튜브를 꺼내서 놀았는데 기분이 엄청 좋았다.
+            집에 와서 따뜻한 코코아를 마시고 쉬었다.
+            내일은 친구랑도 같이 가고 싶다.
+            요약 텍스트가 길어질수록 이 상자가 더 높아져야 한다.
+          </Text>
         </View>
       </Animated.View>
     </View>
@@ -195,8 +224,53 @@ const styles = StyleSheet.create({
     borderWidth: 3,
     borderColor: colors.pinkDark,
     minHeight: 170,
-    paddingHorizontal: 16,
-    paddingTop: 14,
-    paddingBottom: 18,
+    paddingHorizontal: 25,
+    paddingTop: 25,
+    paddingBottom: 90,
+  },
+
+  metaWrap: {
+    paddingHorizontal: 10,
+  },
+
+  metaRow: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+
+  metaLabel: {
+    fontFamily: "Maplestory_Bold",
+    fontSize: 18,
+    color: colors.brown,
+  },
+
+  emotionIcon: {
+    width: 40,
+    height: 40,
+    marginLeft: 8,
+    bottom: 3,
+  },
+
+  keywordText: {
+    fontFamily: "Maplestory_Bold",
+    fontSize: 18,
+    color: colors.brown,
+    marginLeft: 8,
+  },
+
+  divider: {
+    height: 2,
+    backgroundColor: colors.pinkDark,
+    marginTop: 13,
+    marginBottom: 10,
+    borderRadius: 2,
+  },
+
+  summaryText: {
+    fontFamily: "gangwongyoyuksaeeum",
+    fontSize: 30,
+    color: colors.brown,
+    lineHeight: 30,
+    paddingHorizontal: 10,
   },
 });
