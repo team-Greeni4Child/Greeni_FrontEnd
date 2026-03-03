@@ -6,6 +6,7 @@ import {
   Dimensions,
   TouchableOpacity,
   Image,
+  Alert,
 } from "react-native";
 import Animated, {
   Easing,
@@ -19,7 +20,7 @@ import colors from "../theme/colors";
 import BackButton from "../components/BackButton";
 import DiarySummaryToggle from "../components/DiarySummaryToggle";
 import { ProfileContext } from "../context/ProfileContext";
-import { getDiaryByDay } from "../api/diary";
+import { getDiaryByDay, getDiaryVoiceByDay } from "../api/diary";
 
 const { width: W, height: H } = Dimensions.get("window");
 
@@ -57,6 +58,9 @@ export default function DiaryRecordScreen({ navigation, route }) {
   // 서버에서 받은 일기 데이터
   const [diaryData, setDiaryData] = useState(null);
 
+  // 서버에서 받은 음성 데이터
+  const [voiceData, setVoiceData] = useState(null);
+
   // route.params?.date 가 있으면 그 날짜, 없으면 오늘
   const titleDate = useMemo(() => {
     const paramDate = route?.params?.date; // "YYYY-MM-DD" 기대
@@ -92,7 +96,7 @@ export default function DiaryRecordScreen({ navigation, route }) {
           //if (alive) setDiaryData(null);
 
           // --------------------------------------
-          //테스트용 (나중에 지우고 92번째 줄 주석 풀기)
+          //테스트용 (나중에 지우고 윗줄 주석 풀기)
           if (alive) {
             setDiaryData({
               emotion: "SAD",
@@ -119,9 +123,41 @@ export default function DiaryRecordScreen({ navigation, route }) {
     };
   }, [route?.params?.date, selectedProfile?.profileId]);
 
-  const handlePressHeadset = () => {
-    // TODO: 추후 "그날 일기 음성 대화 기록 재생" 기능 연결
-  };
+  // 헤드셋 버튼: 일기 상세 음성 조회 연동
+  const handlePressHeadset = useCallback(async () => {
+    const profileId = selectedProfile?.profileId;
+    const paramDate = route?.params?.date; // "YYYY-MM-DD"
+
+    if (!profileId || !paramDate) return;
+
+    const [y, m, d] = paramDate.split("-").map(Number);
+
+    try {
+      const res = await getDiaryVoiceByDay({
+        year: y,
+        month: m,
+        day: d,
+        profileId,
+      });
+
+      const result = res?.result ?? null;
+      setVoiceData(result);
+
+      // 아직 재생 UI가 없으니, 임시로 유무만 안내
+      // todo 재생바 만들기
+      const count = result?.voiceList?.length ?? 0;
+      if (count === 0) {
+        Alert.alert("안내", "해당 날짜에 저장된 음성이 없어요.");
+      } else {
+        Alert.alert("안내", `음성 ${count}개를 불러왔어요. (재생 화면 연결 필요)`);
+      }
+    } catch (e) {
+      if (e?.code === "DIARY4004") return;
+      if (e?.message === "NO_ACCESS_TOKEN") return;
+
+      console.log("[VOICE] error:", e);
+    }
+  }, [route?.params?.date, selectedProfile?.profileId]);
 
   const isText = mode === "text";
 
@@ -163,7 +199,7 @@ export default function DiaryRecordScreen({ navigation, route }) {
   }, []);
 
   const emotionKey = String(diaryData?.emotion ?? "").toUpperCase();
-  const emotionIcon = emotionToIcon[emotionKey];
+  const emotionIcon = emotionToIcon[emotionKey]; // 이상한 값이면 undefined -> 이미지 렌더 안 함
 
   return (
     <View style={styles.root}>
@@ -206,12 +242,14 @@ export default function DiaryRecordScreen({ navigation, route }) {
           <View style={styles.metaWrap}>
             <View style={styles.metaRow}>
               <Text style={styles.metaLabel}>감정 :</Text>
-              {emotionIcon && (
+              {emotionIcon ? (
                 <Image
                   source={emotionIcon}
                   style={styles.emotionIcon}
                   resizeMode="contain"
                 />
+              ) : (
+                <View style={styles.emotionIcon} />
               )}
             </View>
 
