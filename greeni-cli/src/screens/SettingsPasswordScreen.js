@@ -8,52 +8,106 @@ import {
   Dimensions, 
   ImageBackground,
   TouchableOpacity,
+  Modal,
 } from "react-native";
 import { StatusBar } from "react-native";
 import Button from "../components/Button";
 import BackButton from "../components/BackButton";
 import colors from "../theme/colors";
 import { useFocusEffect } from "@react-navigation/native";
+import { verifyParentPassword } from "../api/auth";
+import { getAccessToken } from "../utils/tokenStorage";
 
 // 현재 기기의 화면 너비 W, 화면 높이 H
 const { width: W, height: H } = Dimensions.get("window");
 
-// 임시: 가입된 이메일/비밀번호 목록 (나중에 API 연동 시 수정)
-const MOCK_USERS = {
-  "pputtymin@gmail.com": "minseo2002.",
-  "aaa": "aaa",
-};
-
 export default function SettingsPasswordScreen({navigation}) {
+  const [password, setPassword] = useState("");
+  const [passwordError, setPasswordError] = useState("");
 
-    const [password, setPassword] = useState("");
-    const [passwordError, setPasswordError] = useState("");
+  // 네트워크/서버 오류 모달
+  const [showErrorModal, setShowErrorModal] = useState(false);
 
-    const validate = () => {
-      setPasswordError("");
-      let valid = true;
-      const registeredPassword = "aaa";
+  // 요청 중 중복 클릭 방지
+  const [isVerifying, setIsVerifying] = useState(false);
 
-      if (registeredPassword !== password) {
-        setPassword("");
-        setPasswordError("비밀번호가 일치하지 않습니다");
-        valid = false;
+  const handleErrorOk = () => {
+    setShowErrorModal(false);
+  };
+
+  const validate = () => {
+    setPasswordError("");
+    let valid = true;
+
+    const trimmedPw = password.trim();
+
+    // 비밀번호 불일치
+    if (!trimmedPw) {
+      setPassword("");
+      setPasswordError("비밀번호가 일치하지 않습니다");
+      valid = false;
+      return;
+    }
+
+    return valid;
+  };
+
+  const handlePassword = async () => {
+    if (isVerifying) return;
+    if (!validate()) return;
+
+    const trimmedPw = password.trim();
+
+    try {
+      setIsVerifying(true);
+
+      const accessToken = await getAccessToken();
+
+      if (!accessToken) {
+        console.log("NO_ACCESS_TOKEN");
+        setShowErrorModal(true);
         return;
       }
 
-      return valid;
-    };
+      const res = await verifyParentPassword({
+        accessToken,
+        password: trimmedPw,
+      });
 
-    const handlePassword = () => {
-      if (!validate()) return;
-      navigation.navigate("Settings", { password })
-    }
+      if (res?.code === "COMMON200") {
+        navigation.replace("Settings");
+        return;
+      }
 
-    useFocusEffect(
-      useCallback(() => {
+      // 예상치 못한 응답
+      console.log("UNEXPECTED_RESPONSE:", res);
+      setShowErrorModal(true);
+
+    } catch (e) {
+      console.log("PARENT PASSWORD VERIFY FAIL:", e);
+
+      // 비밀번호 불일치
+      if (e?.code === "MEMBER4007") {
         setPassword("");
-      }, [])
-    );
+        setPasswordError("비밀번호가 일치하지 않습니다");
+        return;
+      }
+
+      // 그 외는 모달
+      setShowErrorModal(true);
+    } finally {
+      setIsVerifying(false);
+    }
+  };
+
+  useFocusEffect(
+    useCallback(() => {
+      setPassword("");
+      setPasswordError("");
+      setShowErrorModal(false);
+      setIsVerifying(false);
+    }, [])
+  );
 
     // return (
     //     <View style={styles.root}>
@@ -175,11 +229,28 @@ export default function SettingsPasswordScreen({navigation}) {
                     title="다음"
                     onPress={handlePassword}
                     icon={require("../assets/images/next.png")}
-                    disabled={password.length === 0}
+                    disabled={password.length === 0 || isVerifying}
                 />
             </View>
+
+            {/* 네트워크/서버 오류 모달 */}
+            <Modal transparent visible={showErrorModal}>
+                <View style={styles.modalBackground}>
+                    <View style={styles.modalWrap}>
+                        <Text style={styles.modalText}>
+                            {"오류가 발생했습니다.\n잠시 후 다시 시도해주세요."}
+                        </Text>
+
+                        <View style={styles.modalButtonWrap}>
+                            <TouchableOpacity style={[styles.modalButton]} onPress={handleErrorOk}>
+                                <Text style={styles.modalButtonText}>확인</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                </View>
+            </Modal>
         </View>
-    )
+    );
 }
 
 // const styles = StyleSheet.create({
@@ -228,7 +299,7 @@ export default function SettingsPasswordScreen({navigation}) {
 //     alignItems: 'center',
 //   },
 //   input: {
-//     fontSize: 14,
+//</Modal>     fontSize: 14,
 //     fontFamily: "Maplestory_Light",
 //     height: 40,
 //     letterSpacing: -0.32,
@@ -363,4 +434,46 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontFamily: "Maplestory_Light",
   },
-})
+
+  // 모달창
+  modalBackground: {
+    flex: 1,
+    backgroundColor: colors.lightGray95,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalWrap: {
+    width: W * 0.7,
+    backgroundColor: "white",
+    borderRadius: 20,
+    borderWidth: 3,
+    borderColor: colors.greenDark,
+    padding: 0,
+    alignItems: "center",
+    justifyContent: "flex-end",
+    overflow: "hidden",
+  },
+  modalText: {
+    fontSize: 16,
+    fontFamily: "Maplestory_Light",
+    color: colors.brown,
+    textAlign: "center",
+    margin: 30,
+  },
+  modalButtonWrap: {
+    flexDirection: "row",
+    height: 45,
+    width: "100%",
+  },
+  modalButton: {
+    justifyContent: "center",
+    alignItems: "center",
+    width: "100%",
+    backgroundColor: colors.green,
+  },
+  modalButtonText: {
+    color: colors.brown,
+    fontSize: 16,
+    fontFamily: "Maplestory_Light",
+  },
+});
