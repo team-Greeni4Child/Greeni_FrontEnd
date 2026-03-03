@@ -6,7 +6,6 @@ import { StatusBar } from "react-native";
 import colors from "../theme/colors";
 import Button from "../components/Button";
 import BackButton from "../components/BackButton";
-import { AuthContext } from "../App";
 import { ProfileContext } from "../context/ProfileContext";
 import { createProfile, searchProfileList } from "../api/profile";
 import { uploadProfileAsset } from "../api/s3";
@@ -19,8 +18,7 @@ const { width: W, height: H } = Dimensions.get("window");
 
 export default function ProfileInfoFormScreen({ route, navigation }) {
   
-  const { profiles, setProfiles } = useContext(ProfileContext);
-  const { setStep } = useContext(AuthContext);
+  const { setProfiles } = useContext(ProfileContext);
 
   const [selectedImage, setSelectedImage] = useState(route.params?.selectedImage || null);
   const selectedIndex = route.params?.selectedIndex;
@@ -132,8 +130,11 @@ export default function ProfileInfoFormScreen({ route, navigation }) {
       }));
       setProfiles(mapped);
 
-      // 프로필 선택 화면으로
-      setStep("profile");
+      // 생성 완료 후 프로필 선택 화면으로 돌아가기
+      navigation.reset({
+        index: 0,
+        routes: [{ name: "ProfileSelect" }],
+      });
     } catch (e) {
       console.log("CREATE PROFILE FAIL:", e);
       console.log("[CREATE_PROFILE][ERR] status:", e?.status);

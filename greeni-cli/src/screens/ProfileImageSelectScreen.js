@@ -8,7 +8,6 @@ import {
   TouchableOpacity,
 } from "react-native";
 import { StatusBar } from "react-native";
-import { launchImageLibrary } from "react-native-image-picker";
 
 import Button from "../components/Button";
 import BackButton from "../components/BackButton";
@@ -29,7 +28,6 @@ const profileImages = [
   require("../assets/images/umbrella_greeni_green.png"),
   require("../assets/images/mustache_greeni_pink.png"),
   require("../assets/images/mustache_greeni_green.png"),
-  require("../assets/images/greeni_image_upload.png"), // 업로드 버튼
 ];
 
 // 프로필 아이템 컴포넌트
@@ -49,55 +47,14 @@ function Profile({ image, onPress, selected }) {
 export default function ProfileImageSelectScreen({ navigation, route }) {
   // 선택한 이미지의 index
   const [selectedIndex, setSelectedIndex] = useState(null);
-  const [uploadImage, setUploadImage] = useState(null);
-  const [uploadedAsset, setUploadedAsset] = useState(null);
-  const [pickerError, setPickerError] = useState("");
-  const uploadBtnIndex = profileImages.length - 1;
-
-  const openGallery = () =>
-    launchImageLibrary({
-      mediaType: "photo",
-      selectionLimit: 1,
-      includeBase64: false,
-    });
-
-  const handleSelect = async (index) => {
-    if (index === uploadBtnIndex) {
-      try {
-        setPickerError("");
-        const result = await openGallery();
-
-        if (result.didCancel) return;
-
-        if (result.errorCode) {
-          setPickerError(result.errorMessage || "이미지를 불러오지 못했습니다.");
-          return;
-        }
-
-        const asset = result.assets?.[0];
-        if (!asset?.uri) {
-          setPickerError("선택한 이미지 정보를 가져오지 못했습니다.");
-          return;
-        }
-
-        setUploadImage({ uri: asset.uri });
-        setUploadedAsset(asset);
-        setSelectedIndex(index);
-      } catch (e) {
-        setPickerError(e?.message || "이미지 선택 중 문제가 발생했습니다.");
-      }
-    } else {
-      setPickerError("");
-      setSelectedIndex(index);
-      setUploadImage(null);
-      setUploadedAsset(null);
-    }
+  const handleSelect = (index) => {
+    setSelectedIndex(index);
   };
 
   // 선택된 이미지 가져오기
   const getSelectedImage = () => {
     if (selectedIndex === null) return null;
-    return selectedIndex === uploadBtnIndex ? uploadImage : profileImages[selectedIndex];
+    return profileImages[selectedIndex];
   };
 
   const handleNext = async () => {
@@ -110,8 +67,6 @@ export default function ProfileImageSelectScreen({ navigation, route }) {
       await onSelectImage({
         imageSource: selected,
         selectedIndex,
-        isUploaded: selectedIndex === uploadBtnIndex,
-        uploadedAsset,
       });
       navigation.goBack();
       return;
@@ -120,8 +75,6 @@ export default function ProfileImageSelectScreen({ navigation, route }) {
     navigation.navigate("ProfileInfoForm", {
       selectedImage: selected,
       selectedIndex,
-      isUploaded: selectedIndex === uploadBtnIndex,
-      uploadedAsset,
     });
   };
 
@@ -141,18 +94,16 @@ export default function ProfileImageSelectScreen({ navigation, route }) {
       {/* 이미지 선택시 선택한 이미지 index를 넘겨줌 */}
       <View style={styles.profileWrap}>
         {profileImages.map((img, idx) => {
-          const source = idx === uploadBtnIndex && uploadImage ? uploadImage : img;
           return (
             <Profile
               key={idx}
-              image={source}
+              image={img}
               onPress={() => handleSelect(idx)}
               selected={selectedIndex === idx}
             />
           );
         })}
       </View>
-      {!!pickerError && <Text style={styles.errorText}>{pickerError}</Text>}
 
       {/* 다음 버튼 */}
       {/* 이미지 선택하면 다음 버튼 활성화, 선택 안 하면 회색으로 비활성화 */}
@@ -241,12 +192,6 @@ const styles = StyleSheet.create({
     justifyContent: "flex-end",
     alignItems: "center",
     paddingRight: W * 0.09,
-  },
-  errorText: {
-    marginTop: 8,
-    color: colors.red,
-    fontFamily: "Maplestory_Light",
-    fontSize: 12,
   },
 });
 
