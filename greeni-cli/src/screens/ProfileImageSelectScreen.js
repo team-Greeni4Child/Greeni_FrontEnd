@@ -1,13 +1,13 @@
-import React, { useState } from "react";
+﻿import React, { useState } from "react";
 import { 
   View, 
   Text, 
   Image, 
   StyleSheet, 
   Dimensions, 
-  TouchableOpacity 
+  TouchableOpacity,
 } from "react-native";
-import { StatusBar, Alert } from "react-native";
+import { StatusBar } from "react-native";
 import { launchImageLibrary } from "react-native-image-picker";
 
 import Button from "../components/Button";
@@ -50,32 +50,47 @@ export default function ProfileImageSelectScreen({ navigation, route }) {
   // 선택한 이미지의 index
   const [selectedIndex, setSelectedIndex] = useState(null);
   const [uploadImage, setUploadImage] = useState(null);
+  const [uploadedAsset, setUploadedAsset] = useState(null);
+  const [pickerError, setPickerError] = useState("");
   const uploadBtnIndex = profileImages.length - 1;
 
-  const nextScreen = route?.params?.nextScreen ?? "ProfileInfoForm";
+  const openGallery = () =>
+    launchImageLibrary({
+      mediaType: "photo",
+      selectionLimit: 1,
+      includeBase64: false,
+    });
 
   const handleSelect = async (index) => {
     if (index === uploadBtnIndex) {
-      const result = await launchImageLibrary({
-        mediaType: "photo",
-        selectionLimit: 1,
-        includeBase64: false,
-      });
+      try {
+        setPickerError("");
+        const result = await openGallery();
 
-      if (result.didCancel) return;
+        if (result.didCancel) return;
 
-      if (result.errorCode) {
-        Alert.alert("오류", "이미지를 불러오지 못했습니다.");
-        return;
-      }
+        if (result.errorCode) {
+          setPickerError(result.errorMessage || "이미지를 불러오지 못했습니다.");
+          return;
+        }
 
-      if (result.assets && result.assets.length > 0) {
-        setUploadImage({ uri: result.assets[0].uri });
+        const asset = result.assets?.[0];
+        if (!asset?.uri) {
+          setPickerError("선택한 이미지 정보를 가져오지 못했습니다.");
+          return;
+        }
+
+        setUploadImage({ uri: asset.uri });
+        setUploadedAsset(asset);
         setSelectedIndex(index);
+      } catch (e) {
+        setPickerError(e?.message || "이미지 선택 중 문제가 발생했습니다.");
       }
     } else {
+      setPickerError("");
       setSelectedIndex(index);
       setUploadImage(null);
+      setUploadedAsset(null);
     }
   };
 
@@ -85,17 +100,18 @@ export default function ProfileImageSelectScreen({ navigation, route }) {
     return selectedIndex === uploadBtnIndex ? uploadImage : profileImages[selectedIndex];
   };
 
-  const handleNext = () => {
+  const handleNext = async () => {
     const selected = getSelectedImage();
     const onSelectImage = route?.params?.onSelectImage;
 
     if (!selected) return;
     
     if (typeof onSelectImage === "function") {
-      onSelectImage({
+      await onSelectImage({
         imageSource: selected,
         selectedIndex,
         isUploaded: selectedIndex === uploadBtnIndex,
+        uploadedAsset,
       });
       navigation.goBack();
       return;
@@ -104,7 +120,8 @@ export default function ProfileImageSelectScreen({ navigation, route }) {
     navigation.navigate("ProfileInfoForm", {
       selectedImage: selected,
       selectedIndex,
-      isUploaded: selectedIndex == uploadBtnIndex,
+      isUploaded: selectedIndex === uploadBtnIndex,
+      uploadedAsset,
     });
   };
 
@@ -135,12 +152,13 @@ export default function ProfileImageSelectScreen({ navigation, route }) {
           );
         })}
       </View>
+      {!!pickerError && <Text style={styles.errorText}>{pickerError}</Text>}
 
       {/* 다음 버튼 */}
       {/* 이미지 선택하면 다음 버튼 활성화, 선택 안 하면 회색으로 비활성화 */}
       <View style={styles.bottomWrap}>
         <Button
-          // title="선택"
+          // title="?선택"
           // onPress={() =>{
           //   const selected = getSelectedImage();
           //   if (!selected) return;
@@ -224,4 +242,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingRight: W * 0.09,
   },
+  errorText: {
+    marginTop: 8,
+    color: colors.red,
+    fontFamily: "Maplestory_Light",
+    fontSize: 12,
+  },
 });
+

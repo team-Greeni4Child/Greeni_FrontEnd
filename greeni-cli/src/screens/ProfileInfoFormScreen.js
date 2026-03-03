@@ -1,4 +1,4 @@
-import React, { useState, useContext } from "react";
+﻿import React, { useState, useContext } from "react";
 import { View, Text, Image, TextInput, TouchableOpacity, StyleSheet, Dimensions, Platform, Alert } from "react-native";
 
 import { StatusBar } from "react-native";
@@ -6,8 +6,10 @@ import { StatusBar } from "react-native";
 import colors from "../theme/colors";
 import Button from "../components/Button";
 import BackButton from "../components/BackButton";
+import { AuthContext } from "../App";
 import { ProfileContext } from "../context/ProfileContext";
 import { createProfile, searchProfileList } from "../api/profile";
+import { uploadProfileAsset } from "../api/s3";
 import { fileByIndex, toImageSource } from "../utils/profileImageMap";
 
 import DateTimePicker from "react-native-modal-datetime-picker";
@@ -18,10 +20,12 @@ const { width: W, height: H } = Dimensions.get("window");
 export default function ProfileInfoFormScreen({ route, navigation }) {
   
   const { profiles, setProfiles } = useContext(ProfileContext);
+  const { setStep } = useContext(AuthContext);
 
   const [selectedImage, setSelectedImage] = useState(route.params?.selectedImage || null);
   const selectedIndex = route.params?.selectedIndex;
   const isUploaded = route.params?.isUploaded === true;
+  const uploadedAsset = route.params?.uploadedAsset ?? null;
 
   const [name, setName] = useState("");
   const [birth, setBirth] = useState("");
@@ -74,18 +78,16 @@ export default function ProfileInfoFormScreen({ route, navigation }) {
   const handleCreate = async () => {
     if (isCreating) return;
     if (!validate()) return;
-
-    if (isUploaded) {
-      Alert.alert(
-        "알림",
-        "현재 업로드 이미지로 프로필 생성은 아직 API 연동이 필요합니다.\n 기본 이미지로 먼저 생성해 주세요."
-      );
-      return;
-    }
-
     try {
       setIsCreating(true);
-      const profileImage = typeof selectedIndex === "number" ? fileByIndex(selectedIndex) : null;
+      let profileImage = typeof selectedIndex === "number" ? fileByIndex(selectedIndex) : null;
+      if (isUploaded) {
+        if (!uploadedAsset?.uri) {
+          Alert.alert("오류", "업로드 이미지 정보를 가져올 수 없습니다.");
+          return;
+        }
+        profileImage = await uploadProfileAsset(uploadedAsset);
+      }
       
       if (!profileImage) {
         Alert.alert("오류", "프로필 이미지를 다시 선택해 주세요.");
@@ -131,7 +133,7 @@ export default function ProfileInfoFormScreen({ route, navigation }) {
       setProfiles(mapped);
 
       // 프로필 선택 화면으로
-      navigation.navigate("ProfileSelect");
+      setStep("profile");
     } catch (e) {
       console.log("CREATE PROFILE FAIL:", e);
       console.log("[CREATE_PROFILE][ERR] status:", e?.status);
@@ -320,7 +322,7 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start'
   },
 
-  // 생성버튼 
+  // 생성버튼
   bottomWrap: {
     position: "absolute",
     bottom: H * 0.15,
@@ -329,3 +331,7 @@ const styles = StyleSheet.create({
     paddingRight: W * 0.09,
   },
 });
+
+
+
+

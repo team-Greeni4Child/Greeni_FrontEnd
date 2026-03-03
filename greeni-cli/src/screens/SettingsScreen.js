@@ -1,4 +1,4 @@
-import React, { useState, useContext, useEffect, useCallback, useRef } from "react";
+﻿import React, { useState, useContext, useEffect, useCallback, useRef } from "react";
 import {
   View,
   Text,
@@ -17,6 +17,7 @@ import DateTimePicker from "react-native-modal-datetime-picker";
 import { AuthContext } from "../App";
 import { ProfileContext } from "../context/ProfileContext";
 import { deleteProfile, modifyProfile, searchProfileList } from "../api/profile";
+import { uploadProfileAsset } from "../api/s3";
 import { logout } from "../api/auth";
 import { clearAuth } from "../utils/tokenStorage";
 import { fileByIndex, toImageSource } from "../utils/profileImageMap";
@@ -63,13 +64,9 @@ export default function SettingsScreen({ route, navigation }) {
   // selectedProfile 없이 Settings로 들어오는 것 방지
   useEffect(() => {
     if (!selectedProfile) {
-      navigation.reset({
-        index: 0,
-        // routes: [{ name: "ProfileSelectFromSettings" }],
-        routes: [{ name: "ProfileSelect" }],
-      });
+      setStep("profile");
     }
-  }, [selectedProfile, navigation]);
+  }, [selectedProfile, setStep]);
 
   // 렌더 중에 절대 selectedProfile을 직접 dereference 하지 말고 safe 객체 사용
   const safeProfile = selectedProfile ?? {
@@ -200,15 +197,7 @@ export default function SettingsScreen({ route, navigation }) {
       await deleteProfile(deletingId);
 
       setDeleteModalVisible(false);
-
-      // 1) ProfileSelect로 이동
-      navigation.reset({
-        index: 0,
-        // routes: [{ name: "ProfileSelectFromSettings" }],
-        routes: [{ name: "ProfileSelect" }],
-      });
-
-      // 2) 상태 정리
+      setStep("profile");
       setSelectedProfile(null);
 
       // 3) 목록 갱신
@@ -236,12 +225,7 @@ export default function SettingsScreen({ route, navigation }) {
     } finally {
       await clearAuth();
       setLogoutModalVisible(false);
-      setStep?.(0);
-      navigation.reset({
-        index: 0,
-        // routes: [{ name: "LoginFromSettings" }],
-        routes: [{ name: "Login" }],
-      });
+      setStep("auth");
     }
   };
 
@@ -270,19 +254,20 @@ export default function SettingsScreen({ route, navigation }) {
                   onPress={() =>
                     // navigation.navigate("ProfileImageSelectFromSettings", {
                     navigation.navigate("ProfileImageSelect", {
-                      onSelectImage: async ({ imageSource, selectedIndex, isUploaded }) => {
+                      onSelectImage: async ({ selectedIndex, isUploaded, uploadedAsset }) => {
                         try {
                           if (!selectedProfile) return;
 
+                          let profileImage = null;
                           if (isUploaded) {
-                            Alert.alert(
-                              "알림",
-                              "업로드 이미지 수정은 아직 api 연동이 필요합니다. 기본 이미지로 수정해주세요."
-                            );
-                            return;
+                            if (!uploadedAsset?.uri) {
+                              Alert.alert("오류", "업로드 이미지 정보를 가져올 수 없습니다.");
+                              return;
+                            }
+                            profileImage = await uploadProfileAsset(uploadedAsset);
+                          } else {
+                            profileImage = fileByIndex(selectedIndex);
                           }
-
-                          const profileImage = fileByIndex(selectedIndex);
                           if (!profileImage) {
                             Alert.alert("오류", "프로필 이미지를 다시 선택해 주세요.");
                             return;
@@ -405,7 +390,7 @@ export default function SettingsScreen({ route, navigation }) {
               width={345}
               height={51}
               style={{ marginBottom: 12 }}
-              onPress={() => navigation.navigate("ProfileSelect")}
+              onPress={() => setStep("profile")}
             />
             <Button
               title="프로필 삭제"
@@ -693,3 +678,4 @@ const styles = StyleSheet.create({
     fontFamily: "Maplestory_Light",
   },
 });
+
