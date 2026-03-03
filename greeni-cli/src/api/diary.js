@@ -22,3 +22,23 @@ export async function getDiariesByMonth({ year, month, profileId }) {
     },
   });
 }
+
+/** 일별 일기 조회: GET /api/diaries/day */
+export async function getDiaryByDay({ year, month, day, profileId }) {
+  const accessToken = await getAccessToken();
+  if (!accessToken) throw new Error("NO_ACCESS_TOKEN");
+
+  const qs = new URLSearchParams({
+    year: String(year),
+    month: String(month), // 1~12
+    day: String(day),
+    profileId: String(profileId),
+  }).toString();
+
+  return request(`/api/diaries/day?${qs}`, {
+    method: "GET",
+    headers: { 
+        Authorization: `Bearer ${accessToken}`,
+    },
+  });
+}

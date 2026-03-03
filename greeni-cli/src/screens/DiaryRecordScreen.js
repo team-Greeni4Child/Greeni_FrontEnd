@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState, useCallback } from "react";
+import React, { useEffect, useMemo, useState, useCallback, useContext } from "react";
 import {
   View,
   Text,
@@ -18,6 +18,8 @@ import Animated, {
 import colors from "../theme/colors";
 import BackButton from "../components/BackButton";
 import DiarySummaryToggle from "../components/DiarySummaryToggle";
+import { ProfileContext } from "../context/ProfileContext";
+import { getDiaryByDay } from "../api/diary";
 
 const { width: W, height: H } = Dimensions.get("window");
 
@@ -35,7 +37,16 @@ const toMD = (input) => {
   return `${d.getMonth() + 1}/${d.getDate()}`;
 };
 
+const emotionToIcon = {
+  HAPPY: require("../assets/images/happy.png"),
+  SAD: require("../assets/images/sad.png"),
+  ANGRY: require("../assets/images/angry.png"),
+  SURPRISED: require("../assets/images/surprised.png"),
+  ANXIETY: require("../assets/images/anxiety.png"),
+};
+
 export default function DiaryRecordScreen({ navigation, route }) {
+  const { selectedProfile } = useContext(ProfileContext);
 
   // 토글 상태: "picture" | "text"
   const [mode, setMode] = useState("picture");
@@ -43,11 +54,70 @@ export default function DiaryRecordScreen({ navigation, route }) {
   // 일기 요약 높이 측정용
   const [sheetH, setSheetH] = useState(0);
 
+  // 서버에서 받은 일기 데이터
+  const [diaryData, setDiaryData] = useState(null);
+
   // route.params?.date 가 있으면 그 날짜, 없으면 오늘
   const titleDate = useMemo(() => {
     const paramDate = route?.params?.date; // "YYYY-MM-DD" 기대
     return toMD(paramDate || new Date());
   }, [route?.params?.date]);
+
+  // 일별 일기 조회 연동
+  useEffect(() => {
+
+    let alive = true;
+
+    async function loadDiary() {
+      const profileId = selectedProfile?.profileId;
+      const paramDate = route?.params?.date; // "YYYY-MM-DD"
+
+      // date 없이 들어온 경우(오늘 보기 등)에는 서버 조회 스킵
+      if (!profileId || !paramDate) return;
+
+      const [y, m, d] = paramDate.split("-").map(Number);
+
+      try {
+        const res = await getDiaryByDay({
+          year: y,
+          month: m,
+          day: d,
+          profileId,
+        });
+
+        if (alive) setDiaryData(res?.result ?? null);
+      } catch (e) {
+        // 해당 날짜에 일기 없음
+        if (e?.code === "DIARY4004") {
+          //if (alive) setDiaryData(null);
+
+          // --------------------------------------
+          //테스트용 (나중에 지우고 92번째 줄 주석 풀기)
+          if (alive) {
+            setDiaryData({
+              emotion: "SAD",
+              keyword: "임시확인",
+              summary: "연동 구조 테스트 중입니다. 잉. 재진이가 제임스랑 엘리자베스 만들면서 내 o계정을 지운 것 같다. 그리고 민아는 지워진 그 계정에 일기를 10개 넣어준 것 같다. 테스트 하고 싶은데 아무것도 없다.",
+            });
+          }
+          //-----------------------------------------
+          
+          return;
+        }
+
+        if (e?.message === "NO_ACCESS_TOKEN") {
+          return;
+        }
+
+        console.log("[DAY] error:", e);
+      }
+    }
+
+    loadDiary();
+    return () => {
+      alive = false;
+    };
+  }, [route?.params?.date, selectedProfile?.profileId]);
 
   const handlePressHeadset = () => {
     // TODO: 추후 "그날 일기 음성 대화 기록 재생" 기능 연결
@@ -92,6 +162,9 @@ export default function DiaryRecordScreen({ navigation, route }) {
     if (h > 0) setSheetH(h);
   }, []);
 
+  const emotionKey = String(diaryData?.emotion ?? "").toUpperCase();
+  const emotionIcon = emotionToIcon[emotionKey];
+
   return (
     <View style={styles.root}>
 
@@ -133,16 +206,18 @@ export default function DiaryRecordScreen({ navigation, route }) {
           <View style={styles.metaWrap}>
             <View style={styles.metaRow}>
               <Text style={styles.metaLabel}>감정 :</Text>
-              <Image
-                source={require("../assets/images/angry.png")} // TODO: 실제 감정 아이콘으로 교체
-                style={styles.emotionIcon}
-                resizeMode="contain"
-              />
+              {emotionIcon && (
+                <Image
+                  source={emotionIcon}
+                  style={styles.emotionIcon}
+                  resizeMode="contain"
+                />
+              )}
             </View>
 
             <View style={styles.metaRow}>
               <Text style={styles.metaLabel}>오늘의 키워드 :</Text>
-              <Text style={styles.keywordText}>수영</Text>
+              <Text style={styles.keywordText}>{diaryData?.keyword ?? ""}</Text>
             </View>
           </View>
 
@@ -150,15 +225,7 @@ export default function DiaryRecordScreen({ navigation, route }) {
           <View style={styles.divider} />
 
           {/* 일기 요약 텍스트 */}
-          <Text style={styles.summaryText}>
-            오늘 해가 구름에 가려졌다가 비가 내렸다.
-            그리고 수영장에 갔다.
-            비가 와서 그런지 사람이 없어서 좋았다.
-            새로 산 튜브를 꺼내서 놀았는데 기분이 엄청 좋았다.
-            집에 와서 따뜻한 코코아를 마시고 쉬었다.
-            내일은 친구랑도 같이 가고 싶다.
-            요약 텍스트가 길어질수록 이 상자가 더 높아져야 한다.
-          </Text>
+          <Text style={styles.summaryText}>{diaryData?.summary ?? ""}</Text>
         </View>
       </Animated.View>
     </View>
