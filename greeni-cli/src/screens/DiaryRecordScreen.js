@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState, useCallback } from "react";
 import {
   View,
   Text,
@@ -7,6 +7,14 @@ import {
   TouchableOpacity,
   Image,
 } from "react-native";
+import Animated, {
+  Easing,
+  interpolate,
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from "react-native-reanimated";
+
 import colors from "../theme/colors";
 import BackButton from "../components/BackButton";
 import DiarySummaryToggle from "../components/DiarySummaryToggle";
@@ -28,11 +36,12 @@ const toMD = (input) => {
 };
 
 export default function DiaryRecordScreen({ navigation, route }) {
-  // 하단 탭 상태 (기본: 캘린더)
-  const [tab, setTab] = useState(0);
 
   // 토글 상태: "picture" | "text"
   const [mode, setMode] = useState("picture");
+
+  // 일기 요약 높이 측정용
+  const [sheetH, setSheetH] = useState(0);
 
   // route.params?.date 가 있으면 그 날짜, 없으면 오늘
   const titleDate = useMemo(() => {
@@ -43,6 +52,45 @@ export default function DiaryRecordScreen({ navigation, route }) {
   const handlePressHeadset = () => {
     // TODO: 추후 "그날 일기 음성 대화 기록 재생" 기능 연결
   };
+
+  const isText = mode === "text";
+
+  // 측정된 높이를 기반으로 완전히 숨길 translateY 계산
+  // sheetH가 아직 0이면 임시값으로 조금 크게 숨김
+  const HIDE_Y = (sheetH || 220) + 40;
+
+  // 토글이 일기 요약 위로 얼마나 뜰지 (값이 클수록 갭이 작음)
+  const TOGGLE_GAP = 80;
+
+  const t = useSharedValue(isText ? 1 : 0);
+
+  useEffect(() => {
+    t.value = withTiming(isText ? 1 : 0, {
+      duration: 220,
+      easing: Easing.out(Easing.cubic),
+    });
+  }, [isText, t]);
+
+  const sheetAnimStyle = useAnimatedStyle(() => {
+    const ty = interpolate(t.value, [0, 1], [HIDE_Y, 0]);
+    return {
+      transform: [{ translateY: ty }],
+      opacity: t.value,
+    };
+  }, [HIDE_Y]);
+
+  const toggleAnimStyle = useAnimatedStyle(() => {
+    const lift = interpolate(t.value, [0, 1], [0, HIDE_Y - TOGGLE_GAP]);
+    return {
+      transform: [{ translateY: -lift }],
+    };
+  }, [HIDE_Y]);
+
+  // 일기 요약 높이 측정
+  const onSheetLayout = useCallback((e) => {
+    const h = e?.nativeEvent?.layout?.height ?? 0;
+    if (h > 0) setSheetH(h);
+  }, []);
 
   return (
     <View style={styles.root}>
@@ -70,9 +118,20 @@ export default function DiaryRecordScreen({ navigation, route }) {
       <View style={styles.drawArea} />
 
       {/* 토글 */}
-      <View style={styles.toggleWrap}>
+      <Animated.View style={[styles.toggleWrap, toggleAnimStyle]}>
         <DiarySummaryToggle value={mode} onChange={setMode} />
-      </View>
+      </Animated.View>
+
+      {/* 일기 요약 sheet */}
+      <Animated.View
+        pointerEvents={isText ? "auto" : "none"}
+        style={[styles.sheet, sheetAnimStyle]}
+        onLayout={onSheetLayout}
+      >
+        <View style={styles.sheetInner}>
+          {/* 나중에 내용 들어갈 자리 */}
+        </View>
+      </Animated.View>
     </View>
   );
 }
@@ -109,6 +168,10 @@ const styles = StyleSheet.create({
     height: 30,
   },
 
+  drawArea: {
+    flex: 1,
+  },
+
   // 토글
   toggleWrap: {
     position: "absolute",
@@ -116,7 +179,24 @@ const styles = StyleSheet.create({
     right: 20,
   },
 
-  drawArea: {
-    flex: 1,
+  // 일기 요약
+  sheet: {
+    position: "absolute",
+    left: 16,
+    right: 16,
+    bottom: -3,
+    backgroundColor: "transparent",
+  },
+
+  sheetInner: {
+    backgroundColor: colors.white,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    borderWidth: 3,
+    borderColor: colors.pinkDark,
+    minHeight: 170,
+    paddingHorizontal: 16,
+    paddingTop: 14,
+    paddingBottom: 18,
   },
 });
