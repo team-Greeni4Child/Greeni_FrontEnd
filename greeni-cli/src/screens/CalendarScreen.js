@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useCallback } from "react";
+import React, { useMemo, useState, useCallback, useEffect, useContext } from "react";
 import {
   View,
   Text,
@@ -13,12 +13,22 @@ import {
 import { useFocusEffect } from "@react-navigation/native";
 import colors from "../theme/colors";
 import NavigationBar from "../components/NavigationBar";
+import { getDiariesByMonth } from "../api/diary";
+import { ProfileContext } from "../context/ProfileContext";
 
 const { width: W, height: H } = Dimensions.get("window");
 
 // -------- Utils --------
 const pad2 = (n) => String(n).padStart(2, "0");
 const ymd = (d) => `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+
+const emotionToSticker = {
+  HAPPY: require("../assets/images/happy.png"),
+  SAD: require("../assets/images/sad.png"),
+  ANGRY: require("../assets/images/angry.png"),
+  SURPRISED: require("../assets/images/surprised.png"),
+  ANXIETY: require("../assets/images/anxiety.png"),
+};
 
 // 월 달력(6x7) 행렬 생성 (일요일 시작)
 function buildMonthMatrix(year, month) {
@@ -55,6 +65,11 @@ export default function CalendarScreen({ navigation }) {
   const [month, setMonth] = useState(today.getMonth()); // 0~11
   const [tab, setTab] = useState(1);
 
+  const { selectedProfile } = useContext(ProfileContext);
+
+  // 서버 연동 스티커 맵: "YYYY-MM-DD" -> require(...)
+  const [stickerMap, setStickerMap] = useState({});
+
   // 뒤로가기 누르면 Home으로
   useFocusEffect(
     useCallback(() => {
@@ -68,48 +83,78 @@ export default function CalendarScreen({ navigation }) {
     }, [navigation])
   );
 
-  const stickerMap = useMemo(
-    () => ({
-      "2025-11-02": require("../assets/images/angry.png"),
-      "2025-11-05": require("../assets/images/angry.png"),
-      "2025-11-14": require("../assets/images/angry.png"),
-      "2025-11-18": require("../assets/images/angry.png"),
-      "2025-11-23": require("../assets/images/angry.png"),
+  // 월별 일기 목록 조회 (year/month/profileId 바뀔 때마다)
+  useEffect(() => {
+    let alive = true;
 
-      "2025-12-01": require("../assets/images/happy.png"),
-      "2025-12-08": require("../assets/images/sad.png"),
-      "2025-12-12": require("../assets/images/anxiety.png"),
-      "2025-12-16": require("../assets/images/surprised.png"),
-      "2025-12-30": require("../assets/images/happy.png"),
-    })
-  )
+    async function loadMonth() {
+      const profileId = selectedProfile?.profileId;
+      if (!profileId) return;
 
-  // 서버에서 가져올 실제 "일기 쓴 날짜들" 
-  // 형식: "YYYY-MM-DD" 문자열 배열로 관리
-  // TODO: 추후 백엔드 연동
-  // const diaryDates = useMemo(
-  //   () =>
-  //     new Set([
-  //       //test
-  //       "2025-11-02",
-  //       "2025-11-05",
-  //       "2025-11-14",
-  //       "2025-11-18",
-  //       "2025-11-23",
-  //     ]),
-  //   []
-  // );
-  const diaryDates = useMemo(
-    () =>
-      new Set(Object.keys(stickerMap)), [stickerMap]
-  );
+      try {
+        const res = await getDiariesByMonth({
+          year,
+          month: month + 1, // API는 1~12
+          profileId,
+        });
+
+        const diaries = res?.result?.diaries ?? [];
+        const next = {};
+
+        for (const item of diaries) {
+          const day = item?.day;
+          const emotion = item?.emotion;
+          if (!day || !emotion) continue;
+
+          const key = `${year}-${pad2(month + 1)}-${pad2(day)}`;
+          const img = emotionToSticker[emotion];
+          if (img) next[key] = img;
+        }
+
+        // 테스트용: 3월 3일
+        if (year === 2026 && month === 2) {
+          const testKey = `${year}-03-03`;
+          next[testKey] = emotionToSticker["HAPPY"];
+        }
+
+        if (alive) setStickerMap(next);
+      } catch (e) {
+        if (e?.code === "DIARY4001") {
+          Alert.alert("안내", "미래의 달은 조회할 수 없어요.");
+          return;
+        }
+        if (e?.code === "DIARY4002") {
+          Alert.alert("오류", "월 값이 올바르지 않아요.");
+          return;
+        }
+        if (e?.code === "PROFILE4041") {
+          Alert.alert("오류", "존재하지 않는 프로필입니다.");
+          return;
+        }
+        if (e?.code === "PROFILE4031") {
+          Alert.alert("오류", "해당 프로필에 접근할 권한이 없습니다.");
+          return;
+        }
+        if (e?.message === "NO_ACCESS_TOKEN") {
+          Alert.alert("오류", "로그인이 필요해요.");
+          return;
+        }
+
+        Alert.alert("오류", "월별 일기 목록을 불러오지 못했어요.");
+      }
+    }
+
+    loadMonth();
+    return () => {
+      alive = false;
+    };
+  }, [year, month, selectedProfile?.profileId]);
+
+  const diaryDates = useMemo(() => new Set(Object.keys(stickerMap)), [stickerMap]);
 
   const matrix = useMemo(() => buildMonthMatrix(year, month), [year, month]);
 
-  const hasDiary = useCallback(
-    (d) => (d ? diaryDates.has(ymd(d)) : false),
-    [diaryDates]
-  );
+  const hasDiary = useCallback((d) => (d ? diaryDates.has(ymd(d)) : false), [diaryDates]);
 
   // 날짜별 스티커 얻기
   const getStickerSource = useCallback(
@@ -129,10 +174,17 @@ export default function CalendarScreen({ navigation }) {
   };
 
   const goNext = () => {
-    if (month === 11) {
-      setYear((y) => y + 1);
-      setMonth(0);
-    } else setMonth((m) => m + 1);
+    const currentY = today.getFullYear();
+    const currentM = today.getMonth(); // 0~11
+
+    const nextY = month === 11 ? year + 1 : year;
+    const nextM = month === 11 ? 0 : month + 1;
+
+    // 미래 달 이동 방지
+    if (nextY > currentY || (nextY === currentY && nextM > currentM)) return;
+
+    setYear(nextY);
+    setMonth(nextM);
   };
 
   const openDiary = (d) => {
