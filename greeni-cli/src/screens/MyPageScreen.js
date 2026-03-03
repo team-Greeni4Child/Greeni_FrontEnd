@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useContext } from "react";
+﻿import React, { useEffect, useState, useContext } from "react";
 import {
   View,
   Text,
@@ -10,54 +10,24 @@ import {
   Platform,
   ScrollView,
 } from "react-native";
+import { AuthContext } from "../App";
 import { ProfileContext } from "../context/ProfileContext";
 import { searchBadgeList } from "../api/badge";
+import { toBadgeImageUrl } from "../utils/badgeImageMap";
 import LinearGradient from "react-native-linear-gradient";
 import colors from "../theme/colors";
 import NavigationBar from "../components/NavigationBar";
 
 const { width: W, height: H } = Dimensions.get("window");
 
-// 테스트 배지 2개만 우선 노출. (나중에 여기 배열만 늘리면 자동 정렬)
-// const TEST_BADGES = [
-//   { id: "b1", src: require("../assets/images/attendance_bedge1.png"), label: "출석 1일" },
-//   { id: "b2", src: require("../assets/images/diary_bedge1.png"), label: "일기작성 1일" },
-  
-//   { id: "b3", src: require("../assets/images/diary_bedge1.png"), label: "출석 7일" },
-//   { id: "b4", src: require("../assets/images/diary_bedge1.png"), label: "출석 7일" },
-//   { id: "b5", src: require("../assets/images/diary_bedge1.png"), label: "출석 7일" },
-//   { id: "b6", src: require("../assets/images/diary_bedge1.png"), label: "출석 7일" },
-//   { id: "b7", src: require("../assets/images/diary_bedge1.png"), label: "출석 7일" },
-//   { id: "b8", src: require("../assets/images/diary_bedge1.png"), label: "출석 7일" },
-//   { id: "b9", src: require("../assets/images/diary_bedge1.png"), label: "출석 7일" },
-//   { id: "b10", src: require("../assets/images/diary_bedge1.png"), label: "출석 7일" },
-//   { id: "b11", src: require("../assets/images/diary_bedge1.png"), label: "출석 7일" },
-//   { id: "b12", src: require("../assets/images/diary_bedge1.png"), label: "출석 7일" },
-//   { id: "b13", src: require("../assets/images/diary_bedge1.png"), label: "출석 7일" },
-//   { id: "b14", src: require("../assets/images/diary_bedge1.png"), label: "출석 7일" },
-//   { id: "b15", src: require("../assets/images/diary_bedge1.png"), label: "출석 7일" },
-//   { id: "b16", src: require("../assets/images/diary_bedge1.png"), label: "출석 7일" },
-//   { id: "b17", src: require("../assets/images/diary_bedge1.png"), label: "출석 7일" },
-//   { id: "b18", src: require("../assets/images/diary_bedge1.png"), label: "출석 7일" },
-//   { id: "b19", src: require("../assets/images/diary_bedge1.png"), label: "출석 7일" },
-//   { id: "b20", src: require("../assets/images/diary_bedge1.png"), label: "출석 7일" },
-//   { id: "b21", src: require("../assets/images/diary_bedge1.png"), label: "출석 7일" },
-//   { id: "b22", src: require("../assets/images/diary_bedge1.png"), label: "출석 7일" },
-//   { id: "b23", src: require("../assets/images/diary_bedge1.png"), label: "출석 7일" },
-//   { id: "b24", src: require("../assets/images/diary_bedge1.png"), label: "출석 7일" },
-//   { id: "b25", src: require("../assets/images/diary_bedge1.png"), label: "출석 7일" },
-//   { id: "b26", src: require("../assets/images/diary_bedge1.png"), label: "출석 7일" },
-//   { id: "b27", src: require("../assets/images/diary_bedge1.png"), label: "출석 7일" },
-//   { id: "b28", src: require("../assets/images/diary_bedge1.png"), label: "출석 7일" },
-//   { id: "b29", src: require("../assets/images/diary_bedge1.png"), label: "출석 7일" },
-   
-// ];
+const BADGE_FALLBACK_IMAGE = require("../assets/images/attendance_bedge1.png");
 
 export default function MyPageScreen({ navigation }) {
   const [tab, setTab] = useState(3);
   const NAV_H = H * 0.06 + 60 + 6;
 
   const { selectedProfile } = useContext(ProfileContext);
+  const { setStep } = useContext(AuthContext);
   const formatBirth = (s) => (typeof s === "string" ? s.replaceAll("-", ".") : "");
 
   const [badges, setBadges] = useState([]);
@@ -65,23 +35,32 @@ export default function MyPageScreen({ navigation }) {
   // 선택된 profile 없으면 바로 프로필 선택 화면으로
   useEffect(() => {
     if (!selectedProfile) {
-      navigation.navigate("ProfileSelect");
+      setStep("profile");
     }
-  }, [selectedProfile, navigation]);
+  }, [selectedProfile, setStep]);
 
   useEffect(() => {
   const loadBadges = async () => {
     if (!selectedProfile?.profileId) {
+      console.log("[BADGE] no profileId");
       setBadges([]);
       return;
     }
 
     try {
+      console.log("[BADGE] profileId:", selectedProfile.profileId);
       const res = await searchBadgeList(selectedProfile.profileId);
+      console.log("[BADGE] raw response:", res);
       const list = res?.result?.badgeLists ?? [];
+      console.log("[BADGE] list length:", list.length);
+      console.log("[BADGE] first item:", list[0]);
       setBadges(list);
     } catch (e) {
       console.log("LOAD BADGE LIST FAIL:", e);
+      console.log("[BADGE][ERR] status:", e?.status);
+      console.log("[BADGE][ERR] code:", e?.code);
+      console.log("[BADGE][ERR] message:", e?.message);
+      console.log("[BADGE][ERR] result:", e?.result);
       setBadges([]);
     }
   };
@@ -179,7 +158,7 @@ export default function MyPageScreen({ navigation }) {
         overScrollMode="never"         
       >
         {/* 섹션 타이틀 */}
-        <Text style={styles.sectionTitle}>활동 배지</Text>
+        <Text style={styles.sectionTitle}>활동배지</Text>
 
         {/* 배지 영역 (View + flexWrap) */}
         <View style={styles.badgeGrid}>
@@ -188,15 +167,34 @@ export default function MyPageScreen({ navigation }) {
               <Image source={item.src} style={styles.badgeImage} resizeMode="contain" />
             </View>
           ))} */}
-          {badges.map((item) => (
+          {/* {badges.map((item) => (
             <View key={item.badgeId} style={styles.badgeWrap}>
               <Image
-                source={item.imageUrl ? { uri: item.imageUrl } : require("../assets/images/attendance_bedge1.png")}
+                source={
+                  toBadgeImageUrl(item.imageUrl)
+                    ? { uri: toBadgeImageUrl(item.imageUrl) }
+                    : BADGE_FALLBACK_IMAGE
+                }
                 style={styles.badgeImage}
                 resizeMode="contain"
               />
             </View>
-          ))}
+          ))} */}
+          {badges.map((item) => {
+            const uri = toBadgeImageUrl(item.imageUrl);
+            console.log("[BADGE] imageUrl(raw):", item.imageUrl);
+            console.log("[BADGE] imageUrl(final):", uri);
+
+            return (
+              <View key={item.badgeId} style={styles.badgeWrap}>
+                <Image
+                  source={uri ? { uri } : require("../assets/images/attendance_bedge1.png")}
+                  style={styles.badgeImage}
+                  resizeMode="contain"
+                />
+              </View>
+            );
+          })}
 
         </View>
       </ScrollView>
@@ -362,3 +360,4 @@ const styles = StyleSheet.create({
     height: 60,   // 흐려지는 범위
   },
 });
+
