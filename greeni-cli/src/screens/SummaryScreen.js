@@ -1,46 +1,94 @@
-    import React, { useState, useEffect } from "react";
+    import React, { useState, useEffect, useContext } from "react";
     import { 
       View, 
       Text, 
-      Image, 
       StyleSheet, 
       Dimensions, 
-      TouchableOpacity, 
-      ImageBackground,
       ScrollView
     } from "react-native";
     import { StatusBar } from "react-native";
+
+    import { getDailyActivityList } from "../api/activity";
+    import { AuthContext } from "../App";
+    import { ProfileContext } from "../context/ProfileContext";
+
     import BackButton from "../components/BackButton";
     import colors from "../theme/colors";
-    import { color } from "react-native-reanimated";
-    import MicButton from "../components/MicButton";
     
     // 현재 기기의 화면 너비 W, 화면 높이 H
     const { width: W, height: H } = Dimensions.get("window");
     
     export default function SummaryScreen({navigation}) {
-    
-        const [mode, setMode] = useState("image");
-        const [animal, setAnimal] = useState({
-          name: '오리',
-          image: require("../assets/images/animal_duck.png"),
-          sound: require("../assets/images/speaker.png"),
-        });
-    
-        // 2가지 모드를 랜덤하게 나오게 한다
-        useEffect(() => {
-          const randomMode = Math.random() > 0.5 ? 'image' : 'sound';
-          setMode(randomMode);
-        }, []);
 
         const [today, setToday] = useState("");
+        const { selectedProfile } = useContext(ProfileContext);
+        const { setStep } = useContext(AuthContext);
+        const [days, setDays] = useState([]);
+        const [cursorCreatedAt, setCursorCreatedAt] = useState(null);
+        const [cursorId, setCursorId] = useState(null);
+        const [hasNext, setHasNext] = useState(true);
+        const [loading, setLoading] = useState(false);
         
         useEffect(() => {
             const date = new Date();
             const formatted = `${date.getFullYear()}년 ${date.getMonth() + 1}월 ${date.getDate()}일`;
             setToday(formatted);
         }, []);
-    
+
+        useEffect(() => {
+            const loadFirst = async () => {
+                if (!selectedProfile?.profileId) return;
+
+                try {
+                setLoading(true);
+                const res = await getDailyActivityList({
+                    profileId: selectedProfile.profileId,
+                    size: 8,
+                });
+                const result = res?.result ?? {};
+                setDays(result.days ?? []);
+                setCursorCreatedAt(result.nextCursorCreatedAt ?? null);
+                setCursorId(result.nextCursorId ?? null);
+                setHasNext(!!result.hasNext);
+                } catch (e) {
+                if (e?.code === "PROFILE4031" || e?.code === "PROFILE4041") {
+                    setStep("profile");
+                    return;
+                }
+                console.log("LOAD SUMMARY LIST FAIL:", e);
+                setDays([]);
+                } finally {
+                setLoading(false);
+                }
+            };
+
+            loadFirst();
+        }, [selectedProfile?.profileId, navigation, setStep]);
+
+        const loadMore = async () => {
+            if (!hasNext || loading || !selectedProfile?.profileId) return;
+
+            try {
+                setLoading(true);
+                const res = await getDailyActivityList({
+                profileId: selectedProfile.profileId,
+                cursorCreatedAt,
+                cursorId,
+                size: 8,
+                });
+                const result = res?.result ?? {};
+                setDays((prev) => [...prev, ...(result.days ?? [])]);
+                setCursorCreatedAt(result.nextCursorCreatedAt ?? null);
+                setCursorId(result.nextCursorId ?? null);
+                setHasNext(!!result.hasNext);
+            } catch (e) {
+                console.log("LOAD MORE SUMMARY FAIL:", e);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+
         return (
             <View style={styles.root}>
                 <StatusBar style="dark-content" />
@@ -57,14 +105,46 @@
                     <ScrollView
                         style={styles.summaryScrollWrap}
                         contentContainerStyle={{ alignItems: 'center', paddingBottom: 20 }}
+                        onMomentumScrollEnd={loadMore}
                     >
+                        {days.length === 0 && !loading ? (
+                            <Text style={styles.activityDetails}>활동 내역이 없어요.</Text>
+                        ) : (
+                            days.map((day) => (
+                            <View key={day.date} style={styles.dailySummaryWrap}>
+                                <View style={styles.dailyDateWrap}>
+                                <Text style={styles.dailyDateText}>{day.date}</Text>
+                                </View>
+                                <View style={styles.dailyActivitiesWrap}>
+                                {(day.activities ?? []).map((a, idx) => (
+                                    <View key={`${day.date}-${idx}`} style={styles.activityItemWrap}>
+                                    <Text style={styles.activityTitle}>[활동] {a.name}</Text>
+                                    <Text style={styles.activityDetails}>{a.description}</Text>
+                                    </View>
+                                ))}
+                                </View>
+                            </View>
+                            ))
+                        )}
                         {/* 당일 */}
-                        <View style={styles.dailySummaryWrap}>
+                        {/* <View style={styles.dailySummaryWrap}>
                             <View style={styles.dailyDateWrap}>
                                 <Text style={styles.dailyDateText}>{today}</Text>
                             </View>
                             <View style={styles.dailyActivitiesWrap}>
-                                <View style={styles.activityItemWrap}>
+                                {loading ? (
+                                    <Text style={styles.activityDetails}>불러오는 중...</Text>
+                                ) : activityList.length === 0 ? (
+                                    <Text style={styles.activityDetails}>오늘 활동 요약이 없어요.</Text>
+                                ) : (
+                                    activityList.map((item, idx) => (
+                                    <View key={`${item}-${idx}`} style={styles.activityItemWrap}>
+                                        <Text style={styles.activityTitle}>[활동]</Text>
+                                        <Text style={styles.activityDetails}>{item}</Text>
+                                    </View>
+                                    ))
+                                )} */}
+                                {/* <View style={styles.activityItemWrap}>
                                     <Text style={styles.activityTitle}>[활동] 역할놀이</Text>
                                     <Text style={styles.activityDetails}>역할놀이에서 친구 역할을 했어요.</Text>
                                 </View>
@@ -83,12 +163,11 @@
                                 <View style={styles.activityItemWrap}>
                                     <Text style={styles.activityTitle}>[활동] 나는야 퀴즈왕</Text>
                                     <Text style={styles.activityDetails}>나는야 퀴즈왕 배지를 획득했어요.</Text>
-                                </View>
-                            </View>
-                        </View>
+                                </View> */}
+                         
 
                         {/* 하루 전 */}
-                        <View style={styles.dailySummaryWrap}>
+                        {/* <View style={styles.dailySummaryWrap}>
                             <View style={styles.dailyDateWrap}>
                                 <Text style={styles.dailyDateText}>2025년 11월 22일</Text>
                             </View>
@@ -114,10 +193,10 @@
                                     <Text style={styles.activityDetails}>나는야 퀴즈왕 배지를 획득했어요.</Text>
                                 </View>
                             </View>
-                        </View>
+                        </View> */}
 
                         {/* 이틀 전 */}
-                        <View style={styles.dailySummaryWrap}>
+                        {/* <View style={styles.dailySummaryWrap}>
                             <View style={styles.dailyDateWrap}>
                                 <Text style={styles.dailyDateText}>2025년 11월 21일</Text>
                             </View>
@@ -143,7 +222,7 @@
                                     <Text style={styles.activityDetails}>나는야 퀴즈왕 배지를 획득했어요.</Text>
                                 </View>
                             </View>
-                        </View>
+                        </View> */}
                     </ScrollView>
                 </View>
     
