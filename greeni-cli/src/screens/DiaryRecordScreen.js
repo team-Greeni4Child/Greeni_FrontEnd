@@ -9,7 +9,7 @@ import {
 } from "react-native";
 import colors from "../theme/colors";
 import BackButton from "../components/BackButton";
-import NavigationBar from "../components/NavigationBar";
+import DiarySummaryToggle from "../components/DiarySummaryToggle";
 
 const { width: W, height: H } = Dimensions.get("window");
 
@@ -30,6 +30,9 @@ const toMD = (input) => {
 export default function DiaryRecordScreen({ navigation, route }) {
   // 하단 탭 상태 (기본: 캘린더)
   const [tab, setTab] = useState(0);
+
+  // 토글 상태: "picture" | "text"
+  const [mode, setMode] = useState("picture");
 
   // route.params?.date 가 있으면 그 날짜, 없으면 오늘
   const titleDate = useMemo(() => {
@@ -65,6 +68,11 @@ export default function DiaryRecordScreen({ navigation, route }) {
 
       {/* 그림 영역 (지금은 빈 공간) */}
       <View style={styles.drawArea} />
+
+      {/* 토글 */}
+      <View style={styles.toggleWrap}>
+        <DiarySummaryToggle value={mode} onChange={setMode} />
+      </View>
     </View>
   );
 }
@@ -101,7 +109,14 @@ const styles = StyleSheet.create({
     height: 30,
   },
 
+  // 토글
+  toggleWrap: {
+    position: "absolute",
+    bottom: 50,
+    right: 20,
+  },
+
   drawArea: {
-    height: H - 180,
+    flex: 1,
   },
 });
