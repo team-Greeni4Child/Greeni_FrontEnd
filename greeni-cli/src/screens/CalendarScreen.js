@@ -111,11 +111,12 @@ export default function CalendarScreen({ navigation }) {
           if (img) next[key] = img;
         }
 
-        // 테스트용: 3월 3일
+        // --------- 테스트용: 3월 3일 ----------
         if (year === 2026 && month === 2) {
           const testKey = `${year}-03-03`;
           next[testKey] = emotionToSticker["HAPPY"];
         }
+        //-------------------------------------
 
         if (alive) setStickerMap(next);
       } catch (e) {
