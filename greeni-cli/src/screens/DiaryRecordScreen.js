@@ -93,19 +93,7 @@ export default function DiaryRecordScreen({ navigation, route }) {
       } catch (e) {
         // 해당 날짜에 일기 없음
         if (e?.code === "DIARY4004") {
-          //if (alive) setDiaryData(null);
-
-          // --------------------------------------
-          //테스트용 (나중에 지우고 윗줄 주석 풀기)
-          if (alive) {
-            setDiaryData({
-              emotion: "SAD",
-              keyword: "임시확인",
-              summary: "연동 구조 테스트 중입니다. 잉. 재진이가 제임스랑 엘리자베스 만들면서 내 o계정을 지운 것 같다. 그리고 민아는 지워진 그 계정에 일기를 10개 넣어준 것 같다. 테스트 하고 싶은데 아무것도 없다.",
-            });
-          }
-          //-----------------------------------------
-          
+          if (alive) setDiaryData(null);          
           return;
         }
 
