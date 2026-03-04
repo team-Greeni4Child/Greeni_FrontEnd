@@ -147,9 +147,16 @@ export default function ResetPasswordScreen({ navigation, route }) {
     }
   };
 
-  // 모달에서 확인 버튼 누르면 로그인 화면으로 이동
+  // 모달에서 확인 버튼 누르면 진입했던 화면(로그인 혹은 설정비밀번호)로 이동
   const handleCompleteOk = () => {
     setShowCompleteModal(false);
+
+    if (navigation.canGoBack()) {
+      navigation.goBack();
+      return;
+    }
+
+    // 비정상 진입 fallback
     goLoginAndResetStack();
   };
 
@@ -165,7 +172,7 @@ export default function ResetPasswordScreen({ navigation, route }) {
       <View style={styles.topBackground} />
 
       {/* 뒤로가기 버튼 */}
-      <BackButton navigation={{ ...navigation, goBack: goLoginAndResetStack }} />
+      <BackButton navigation={navigation} />
 
       {/* 비밀번호 재설정 박스 */}
       <View style={styles.box}>

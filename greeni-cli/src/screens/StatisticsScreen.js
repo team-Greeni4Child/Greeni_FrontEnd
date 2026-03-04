@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from "react";
+import React, { useState, useEffect, useContext, useCallback } from "react";
 import { 
   View, 
   Text, 
@@ -7,11 +7,12 @@ import {
   Dimensions, 
   TouchableOpacity,
   ScrollView,
+  BackHandler,
 } from "react-native";
 
 import { getProfileCount, getTodayKeyword, getMonthlyEmotionStats } from "../api/statistics";
 import { getDailyActivities } from "../api/activity";
-
+import { useFocusEffect } from "@react-navigation/native";
 import { AuthContext } from "../App";
 import { ProfileContext } from "../context/ProfileContext";
 import Button from "../components/Button";
@@ -128,26 +129,23 @@ export default function StatisticsScreen({route, navigation}) {
       anxiety: monthEmotions.filter((e) => e === "anxiety").length,
     };
 
+    // 뒤로가기 누르면 Home으로
+    useFocusEffect(
+      useCallback(() => {
+        const onBackPress = () => {
+          navigation.navigate("Home");
+          return true;
+        };
+
+        const sub = BackHandler.addEventListener("hardwareBackPress", onBackPress);
+        return () => sub.remove();
+      }, [navigation])
+    );
+
     return (
-        <View style={styles.root}>
-
-          {/* 하단 네비게이션 바 */}
-          <NavigationBar
-            state={tab}
-            onTabPress={(i) => {
-              setTab(i);
-              if (i === 0) navigation.navigate("Home");
-              if (i === 1) navigation.navigate("Calendar");
-              if (i === 2) navigation.navigate("Statistics");
-              if (i === 3) navigation.navigate("MyPage");
-            }}
-          />  
-
+        <View style={styles.root}>  
             <View style={styles.topBackground}>
                 <View style={styles.titleWrap}>
-                    <BackButton navigation={navigation}
-                        top={H * 0.001}
-                        left={W * 0.05}/>
                     <Text style={styles.title}>통계</Text>
                 </View>
             </View>
@@ -298,6 +296,17 @@ export default function StatisticsScreen({route, navigation}) {
                     </TouchableOpacity>
                 </ScrollView>
             </View>
+          {/* 하단 네비게이션 바 */}
+          <NavigationBar
+            state={tab}
+            onTabPress={(i) => {
+              setTab(i);
+              if (i === 0) navigation.navigate("Home");
+              if (i === 1) navigation.navigate("Calendar");
+              if (i === 2) navigation.navigate("Statistics");
+              if (i === 3) navigation.navigate("MyPage");
+            }}
+          />
         </View>
     )
 

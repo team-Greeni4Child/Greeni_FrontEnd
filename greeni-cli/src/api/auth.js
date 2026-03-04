@@ -47,3 +47,14 @@ export function logout() {
     method: "POST",
   });
 }
+
+/** 부모 페이지 비밀번호 확인: POST /api/members/parent-password */
+export function verifyParentPassword({ accessToken, password }) {
+  return request("/api/members/parent-password", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify({ password }),
+  });
+}

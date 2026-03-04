@@ -27,6 +27,9 @@ export default function HomeScreen({ navigation }) {
   // 안내 모달 on/off
   const [showDiaryModal, setShowDiaryModal] = useState(false);
 
+  // 종료 확인 모달 on/off
+  const [showExitModal, setShowExitModal] = useState(false);
+
   // 일기 버튼 클릭 처리
   const handlePressDiary = () => {
     if (hasWrittenTodayDiary) {
@@ -36,25 +39,32 @@ export default function HomeScreen({ navigation }) {
     navigation.navigate("Diary");
   };
 
+  // 종료 모달 띄우기
+  useFocusEffect(
+    useCallback(() => {
+      const onBackPress = () => {
+        if (Platform.OS !== "android") return false;
+
+        // 다른 모달이 열려있으면 닫기
+        if (showDiaryModal) {
+          setShowDiaryModal(false);
+          return true;
+        }
+
+        // 종료 확인 모달 띄우기
+        setShowExitModal(true);
+        return true;
+      };
+
+      const sub = BackHandler.addEventListener("hardwareBackPress", onBackPress);
+      return () => sub.remove();
+    }, [showDiaryModal])
+  );
+
   // 모달 확인 버튼 처리
   const handleDiaryModalOk = () => {
     setShowDiaryModal(false);
   };
-
-  //뒤로가기 앱 종료
-    useFocusEffect(
-      useCallback(() => {
-        const onBackPress = () => {
-          if (Platform.OS === "android") {
-            BackHandler.exitApp();   // 앱 종료
-          }
-          return true; 
-        };
-  
-        const backHandler = BackHandler.addEventListener("hardwareBackPress", onBackPress);
-        return () => backHandler.remove();
-      }, [])
-    );
 
   return (
     <View style={styles.root}>
@@ -73,6 +83,35 @@ export default function HomeScreen({ navigation }) {
                 activeOpacity={1}
               >
                 <Text style={styles.modalButtonText}>확인</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* 앱 종료 확인 모달 */}
+      <Modal transparent visible={showExitModal} onRequestClose={() => setShowExitModal(false)}>
+        <View style={styles.modalBackground}>
+          <View style={styles.modalWrap}>
+            <Text style={styles.modalText}>
+              앱을 종료하시겠습니까?
+            </Text>
+
+            <View style={styles.modalButtonWrap}>
+              <TouchableOpacity
+                style={[styles.modalButton, { width: "50%", backgroundColor: colors.ivory }]}
+                onPress={() => BackHandler.exitApp()}
+                activeOpacity={1}
+              >
+                <Text style={styles.modalButtonText}>예</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.modalButton, { width: "50%" }]}
+                onPress={() => setShowExitModal(false)}
+                activeOpacity={1}
+              >
+                <Text style={styles.modalButtonText}>아니요</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -254,7 +293,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.ivory,
     borderRadius: 20,
     borderWidth: 3,
-    borderColor: colors.pinkDark,
+    borderColor: colors.greenDark,
     padding: 0,
     alignItems: "center",
     justifyContent: "flex-end",
@@ -276,7 +315,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     width: "100%",
-    backgroundColor: colors.pink,
+    backgroundColor: colors.green,
   },
   modalButtonText: {
     color: colors.brown,

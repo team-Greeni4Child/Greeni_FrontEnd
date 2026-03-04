@@ -228,7 +228,7 @@ export default function FindPasswordScreen({ navigation }) {
       console.log("VERIFY CODE OK:", res);
 
       // 성공 → ResetPassword로 email 넘기기
-      navigation.navigate("ResetPassword", { email: trimmedEmail });
+      navigation.replace("ResetPassword", { email: trimmedEmail });
     } catch (e) {
       console.log("VERIFY CODE FAIL:", e);
 

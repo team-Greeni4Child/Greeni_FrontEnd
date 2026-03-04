@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useState, useContext } from "react";
+import React, { useEffect, useState, useContext, useCallback } from "react";
 import {
   View,
   Text,
@@ -7,9 +7,9 @@ import {
   TouchableOpacity,
   Dimensions,
   BackHandler,
-  Platform,
   ScrollView,
 } from "react-native";
+import { useFocusEffect } from "@react-navigation/native";
 import { AuthContext } from "../App";
 import { ProfileContext } from "../context/ProfileContext";
 import { searchBadgeList } from "../api/badge";
@@ -31,6 +31,19 @@ export default function MyPageScreen({ navigation }) {
   const formatBirth = (s) => (typeof s === "string" ? s.replaceAll("-", ".") : "");
 
   const [badges, setBadges] = useState([]);
+
+  // 뒤로가기 누르면 Home으로
+  useFocusEffect(
+    useCallback(() => {
+      const onBackPress = () => {
+        navigation.navigate("Home");
+        return true;
+      };
+
+      const sub = BackHandler.addEventListener("hardwareBackPress", onBackPress);
+      return () => sub.remove();
+    }, [navigation])
+  );
 
   // 선택된 profile 없으면 바로 프로필 선택 화면으로
   useEffect(() => {
