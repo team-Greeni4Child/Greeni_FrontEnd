@@ -273,15 +273,16 @@
         paddingHorizontal: 15,
         backgroundColor: '#E2DCB5',
         borderRadius: 20,
-        fontSize: 18,
-        fontFamily: "gangwongyoyuksaeeum",
+        fontSize: 13,
+        fontFamily: "Maplestory_Light",
         color: colors.brown,
       },
       dailyActivitiesWrap: {
-        flexDirection: 'column'
+        flexDirection: 'column',
       },
       activityItemWrap: {
-        flexDirection: 'column'
+        flexDirection: 'column',
+        marginLeft: 5
       },
       activityTitle: {
         fontSize: 18,
