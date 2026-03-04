@@ -209,11 +209,11 @@ export default function SettingsPasswordScreen({navigation}) {
                 <TextInput
                     style={[styles.input,
                       {
-                        borderBottomColor: passwordError ? '#f36945' : colors.greenDark 
+                        borderBottomColor: passwordError ? colors.red : colors.greenDark 
                       }
                     ]}
                     placeholder={passwordError ? passwordError : "비밀번호를 입력해주세요"}
-                    placeholderTextColor={passwordError ? "#f36945" : "#999"}
+                    placeholderTextColor={passwordError ? colors.red : colors.lightGrayPh}
                     secureTextEntry
                     value={password}
                     onChangeText={(text) => {

@@ -1,20 +1,19 @@
-import React, { useState, useContext, useCallback } from "react";
+import React, { useState, useEffect, useContext, useCallback } from "react";
 import { 
   View, 
   Text, 
   Image, 
   StyleSheet, 
   Dimensions, 
-  TextInput,
   TouchableOpacity,
-  TouchableWithoutFeedback,
-  Keyboard,
-  Modal,
   ScrollView,
   BackHandler,
 } from "react-native";
-import DateTimePicker from "react-native-modal-datetime-picker";
+
+import { getProfileCount, getTodayKeyword, getMonthlyEmotionStats } from "../api/statistics";
+import { getDailyActivities } from "../api/activity";
 import { useFocusEffect } from "@react-navigation/native";
+import { AuthContext } from "../App";
 import { ProfileContext } from "../context/ProfileContext";
 import Button from "../components/Button";
 import BackButton from "../components/BackButton";
@@ -43,8 +42,92 @@ export default function StatisticsScreen({route, navigation}) {
 
     const [tab, setTab] = useState(2);
     const { selectedProfile } = useContext(ProfileContext);
+    const { setStep } = useContext(AuthContext);
 
-    const profileName = selectedProfile.name;
+    const [countData, setCountData] = useState({ attendance: 0, diaryCount: 0, name: "" });
+    const [keyword, setKeyword] = useState("");
+    const [emotionStats, setEmotionStats] = useState([]);
+
+    const [todayActivities, setTodayActivities] = useState([]);
+
+    const profileName = selectedProfile?.name ?? "";
+
+    useEffect(() => {
+      const loadStatistics = async () => {
+        if (!selectedProfile?.profileId) return;
+
+        try {
+          const profileId = selectedProfile.profileId;
+
+          const [countRes, keywordRes, emotionRes] = await Promise.all([
+            getProfileCount(profileId),
+            getTodayKeyword(profileId).catch((e) => {
+              if (e?.code === "DIARY4041") return { result: { keyword: "오늘 작성된 일기가 없어요." } };
+              throw e;
+            }),
+            getMonthlyEmotionStats(profileId),
+          ]);
+
+          setCountData({
+            attendance: countRes?.result?.attendance ?? 0,
+            diaryCount: countRes?.result?.diaryCount ?? 0,
+            name: countRes?.result?.name ?? selectedProfile?.name ?? "",
+          });
+
+          setKeyword(keywordRes?.result?.keyword ?? "");
+          setEmotionStats(emotionRes?.result?.stats ?? []);
+        } catch (e) {
+          if (e?.code === "PROFILE4031" || e?.code === "PROFILE4041") {
+            setStep("profile");
+            return;
+          }
+          console.log("LOAD STATISTICS FAIL:", e);
+        }
+      };
+
+      loadStatistics();
+    }, [selectedProfile?.profileId, selectedProfile?.name, navigation, setStep]);
+
+    useEffect(() => {
+      const loadTodayActivities = async () => {
+        if (!selectedProfile?.profileId) return;
+
+        try {
+          const res = await getDailyActivities(selectedProfile.profileId);
+          setTodayActivities(res?.result?.activityList ?? []);
+        } catch (e) {
+          if (e?.code === "PROFILE4031" || e?.code === "PROFILE4041") {
+            setStep("profile");
+            return;
+          }
+          console.log("LOAD TODAY ACTIVITIES FAIL:", e);
+          setTodayActivities([]);
+        }
+      };
+
+      loadTodayActivities();
+    }, [selectedProfile?.profileId, navigation, setStep]);
+
+
+    const emotionMap = {
+      HAPPY: "happy",
+      SAD: "sad",
+      ANGRY: "angry",
+      SURPRISED: "surprised",
+      ANXIETY: "anxiety",
+    };
+
+    const monthEmotions = emotionStats.flatMap((s) =>
+      Array(s.count ?? 0).fill(emotionMap[s.emotion] ?? "happy")
+    );
+
+    const emotionCount = {
+      happy: monthEmotions.filter((e) => e === "happy").length,
+      sad: monthEmotions.filter((e) => e === "sad").length,
+      angry: monthEmotions.filter((e) => e === "angry").length,
+      surprised: monthEmotions.filter((e) => e === "surprised").length,
+      anxiety: monthEmotions.filter((e) => e === "anxiety").length,
+    };
 
     // 뒤로가기 누르면 Home으로
     useFocusEffect(
@@ -66,12 +149,6 @@ export default function StatisticsScreen({route, navigation}) {
                     <Text style={styles.title}>통계</Text>
                 </View>
             </View>
-            {/* <View style={styles.titleWrap}>
-                <BackButton navigation={navigation}
-                    top={H * 0.001}
-                    left={W * 0.05}/>
-                <Text style={styles.title}>통계</Text>
-            </View> */}
 
             <View style={{ flex: 1, width: W }}>
                 <ScrollView
@@ -85,13 +162,13 @@ export default function StatisticsScreen({route, navigation}) {
                         <View style={styles.attendanceTextWrap}>
                           <Text style={styles.attendanceText}>
                             {profileName}이는{" "}
-                            <Text style={styles.attendanceNumber}>100</Text>
+                            <Text style={styles.attendanceNumber}>{countData.attendance}</Text>
                             일 출석했고
                           </Text>
 
                           <Text style={styles.attendanceText}>
                             함께{" "}
-                            <Text style={styles.attendanceNumber}>99</Text>
+                            <Text style={styles.attendanceNumber}>{countData.diaryCount}</Text>
                             일의 일기를 작성했어!
                           </Text>
                         </View>
@@ -141,11 +218,11 @@ export default function StatisticsScreen({route, navigation}) {
                               />
                             </View>
                             <View style={styles.emotionCountWrap}>
-                                <Text style={{fontFamily: "gangwongyoyuksaeeum", fontSize: 24,}}>기쁨 2</Text>
-                                <Text style={{fontFamily: "gangwongyoyuksaeeum", fontSize: 24,}}>슬픔 3</Text>
-                                <Text style={{fontFamily: "gangwongyoyuksaeeum", fontSize: 24,}}>화남 5</Text>
-                                <Text style={{fontFamily: "gangwongyoyuksaeeum", fontSize: 24,}}>놀람 4</Text>
-                                <Text style={{fontFamily: "gangwongyoyuksaeeum", fontSize: 24,}}>불안 3</Text>
+                                <Text style={{fontFamily: "gangwongyoyuksaeeum", fontSize: 24,}}>기쁨 {emotionCount.happy}</Text>
+                                <Text style={{fontFamily: "gangwongyoyuksaeeum", fontSize: 24,}}>슬픔 {emotionCount.sad}</Text>
+                                <Text style={{fontFamily: "gangwongyoyuksaeeum", fontSize: 24,}}>화남 {emotionCount.angry}</Text>
+                                <Text style={{fontFamily: "gangwongyoyuksaeeum", fontSize: 24,}}>놀람 {emotionCount.surprised}</Text>
+                                <Text style={{fontFamily: "gangwongyoyuksaeeum", fontSize: 24,}}>불안 {emotionCount.anxiety}</Text>
                             </View>
                         </View>
                     </View>
@@ -156,7 +233,7 @@ export default function StatisticsScreen({route, navigation}) {
                             <Text style={{fontFamily: "Maplestory_Bold", fontSize: 18, color:colors.brown,}}>일기 오늘의 키워드</Text>
                         </View>
                         <View style={styles.keywordContent}>
-                            <Text style={{fontFamily: "gangwongyoyuksaeeum", fontSize: 50,}}>파앤피</Text>
+                            <Text style={{fontFamily: "gangwongyoyuksaeeum", fontSize: 30,}}>{keyword}</Text>
                         </View>
                     </View>
 
@@ -172,7 +249,18 @@ export default function StatisticsScreen({route, navigation}) {
                             />
                         </View>
                         <View style={styles.summaryContent}>
-                          <View style={styles.chatLeft}>
+                          {todayActivities.length === 0 ? (
+                            <Text style={styles.bubbleText}>오늘 활동 요약이 없어요.</Text>
+                          ) : (
+                            todayActivities.map((text, idx) => (
+                              <View key={`${text}-${idx}`} style={styles.chatLeft}>
+                                <View style={styles.bubble}>
+                                  <Text style={styles.bubbleText}>{text}</Text>
+                                </View>
+                              </View>
+                            ))
+                          )}
+                          {/* <View style={styles.chatLeft}>
                             <Image 
                               source={require("../assets/images/mustache_greeni_big.png")}
                               style={styles.greeni}
@@ -203,7 +291,7 @@ export default function StatisticsScreen({route, navigation}) {
                             <View style={styles.bubble}>
                               <Text style={[styles.bubbleText, { paddingTop: 10, paddingBottom: 10, textAlign: 'center' }]}>동물퀴즈 10문제를 모두 맞혔어요.</Text>
                             </View>
-                          </View>
+                          </View> */}
                         </View>
                     </TouchableOpacity>
                 </ScrollView>

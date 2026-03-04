@@ -41,6 +41,13 @@ export function login({ email, password }) {
   });
 }
 
+/** 로그아웃: POST /api/auth/logout */
+export function logout() {
+  return request("/api/auth/logout", {
+    method: "POST",
+  });
+}
+
 /** 부모 페이지 비밀번호 확인: POST /api/members/parent-password */
 export function verifyParentPassword({ accessToken, password }) {
   return request("/api/members/parent-password", {

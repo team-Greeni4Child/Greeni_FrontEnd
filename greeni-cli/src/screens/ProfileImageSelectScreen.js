@@ -1,14 +1,13 @@
-import React, { useState } from "react";
+﻿import React, { useState } from "react";
 import { 
   View, 
   Text, 
   Image, 
   StyleSheet, 
   Dimensions, 
-  TouchableOpacity 
+  TouchableOpacity,
 } from "react-native";
-import { StatusBar, Alert } from "react-native";
-import { launchImageLibrary } from "react-native-image-picker";
+import { StatusBar } from "react-native";
 
 import Button from "../components/Button";
 import BackButton from "../components/BackButton";
@@ -29,7 +28,6 @@ const profileImages = [
   require("../assets/images/umbrella_greeni_green.png"),
   require("../assets/images/mustache_greeni_pink.png"),
   require("../assets/images/mustache_greeni_green.png"),
-  require("../assets/images/greeni_image_upload.png"), // 업로드 버튼
 ];
 
 // 프로필 아이템 컴포넌트
@@ -49,50 +47,34 @@ function Profile({ image, onPress, selected }) {
 export default function ProfileImageSelectScreen({ navigation, route }) {
   // 선택한 이미지의 index
   const [selectedIndex, setSelectedIndex] = useState(null);
-  const [uploadImage, setUploadImage] = useState(null);
-  const uploadBtnIndex = profileImages.length - 1;
-
-  const nextScreen = route?.params?.nextScreen ?? "ProfileInfoForm";
-
-  const handleSelect = async (index) => {
-    if (index === uploadBtnIndex) {
-      const result = await launchImageLibrary({
-        mediaType: "photo",
-        selectionLimit: 1,
-        includeBase64: false,
-      });
-
-      if (result.didCancel) return;
-
-      if (result.errorCode) {
-        Alert.alert("오류", "이미지를 불러오지 못했습니다.");
-        return;
-      }
-
-      if (result.assets && result.assets.length > 0) {
-        setUploadImage({ uri: result.assets[0].uri });
-        setSelectedIndex(index);
-      }
-    } else {
-      setSelectedIndex(index);
-      setUploadImage(null);
-    }
+  const handleSelect = (index) => {
+    setSelectedIndex(index);
   };
 
   // 선택된 이미지 가져오기
   const getSelectedImage = () => {
     if (selectedIndex === null) return null;
-    return selectedIndex === uploadBtnIndex ? uploadImage : profileImages[selectedIndex];
+    return profileImages[selectedIndex];
   };
 
-  const handleNext = () => {
+  const handleNext = async () => {
     const selected = getSelectedImage();
+    const onSelectImage = route?.params?.onSelectImage;
+
     if (!selected) return;
+    
+    if (typeof onSelectImage === "function") {
+      await onSelectImage({
+        imageSource: selected,
+        selectedIndex,
+      });
+      navigation.goBack();
+      return;
+    }
 
     navigation.navigate("ProfileInfoForm", {
       selectedImage: selected,
-      selectedIndex: selectedIndex,
-      isUploaded: selectedIndex == uploadBtnIndex,
+      selectedIndex,
     });
   };
 
@@ -112,11 +94,10 @@ export default function ProfileImageSelectScreen({ navigation, route }) {
       {/* 이미지 선택시 선택한 이미지 index를 넘겨줌 */}
       <View style={styles.profileWrap}>
         {profileImages.map((img, idx) => {
-          const source = idx === uploadBtnIndex && uploadImage ? uploadImage : img;
           return (
             <Profile
               key={idx}
-              image={source}
+              image={img}
               onPress={() => handleSelect(idx)}
               selected={selectedIndex === idx}
             />
@@ -128,7 +109,7 @@ export default function ProfileImageSelectScreen({ navigation, route }) {
       {/* 이미지 선택하면 다음 버튼 활성화, 선택 안 하면 회색으로 비활성화 */}
       <View style={styles.bottomWrap}>
         <Button
-          // title="선택"
+          // title="?선택"
           // onPress={() =>{
           //   const selected = getSelectedImage();
           //   if (!selected) return;
@@ -213,3 +194,4 @@ const styles = StyleSheet.create({
     paddingRight: W * 0.09,
   },
 });
+
