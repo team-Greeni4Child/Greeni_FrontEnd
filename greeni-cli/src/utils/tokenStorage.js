@@ -16,6 +16,10 @@ export async function getAccessToken() {
   return AsyncStorage.getItem(KEY_ACCESS);
 }
 
+export async function getRefreshToken() {
+  return AsyncStorage.getItem(KEY_REFRESH);
+}
+
 export async function clearAuth() {
   await AsyncStorage.multiRemove([KEY_ACCESS, KEY_REFRESH, KEY_MEMBER_ID]);
 }

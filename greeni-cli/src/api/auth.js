@@ -40,3 +40,10 @@ export function login({ email, password }) {
     returnHeaders: true,
   });
 }
+
+/** 로그아웃: POST /api/auth/logout */
+export function logout() {
+  return request("/api/auth/logout", {
+    method: "POST",
+  });
+}
