@@ -158,7 +158,7 @@ export default function MyPageScreen({ navigation }) {
         overScrollMode="never"         
       >
         {/* 섹션 타이틀 */}
-        <Text style={styles.sectionTitle}>활동배지</Text>
+        <Text style={styles.sectionTitle}>활동 배지</Text>
 
         {/* 배지 영역 (View + flexWrap) */}
         <View style={styles.badgeGrid}>
