@@ -6,6 +6,7 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { ProfileProvider } from "./context/ProfileContext";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { getAccessToken, getSelectedProfile } from "./utils/tokenStorage";
+import { addLogoutListener } from "./utils/authEvents";
 
 import SplashScreen from "./screens/SplashScreen";
 import LoginScreen from "./screens/LoginScreen";
@@ -118,6 +119,15 @@ export default function App() {
       setIsBootstrapping(false);
     }
   };
+
+  // 토큰 만료 등으로 emitLogout()이 발생하면 로그인 화면으로 이동
+  useEffect(() => {
+    const unsubscribe = addLogoutListener(() => {
+      setStep("auth");
+    });
+
+    return unsubscribe;
+  }, []);
 
   // 기기의 백버튼과 커스텀 백버튼 통일
   useEffect(() => {

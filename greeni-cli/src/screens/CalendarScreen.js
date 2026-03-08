@@ -10,6 +10,7 @@ import {
   Alert,
   BackHandler,
 } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect } from "@react-navigation/native";
 import colors from "../theme/colors";
 import NavigationBar from "../components/NavigationBar";
@@ -88,6 +89,10 @@ export default function CalendarScreen({ navigation }) {
     let alive = true;
 
     async function loadMonth() {
+      // --------- 테스트용: accessToken 깨기 ----------
+      await AsyncStorage.setItem("accessToken", "invalid-access-token-test");
+      //-----------------------------------------------
+
       const profileId = selectedProfile?.profileId;
       if (!profileId) return;
 
