@@ -34,7 +34,7 @@ export default function DiaryDrawScreen({ navigation }) {
   const [penColor, setPenColor] = useState("#000000");
 
   // 지우개 옵션
-  const [eraserWidth, setEraserWidth] = useState(18);
+  const [eraserWidth, setEraserWidth] = useState(25);
 
   // 컬러 모달
   const [showColorModal, setShowColorModal] = useState(false);
