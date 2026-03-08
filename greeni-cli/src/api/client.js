@@ -13,7 +13,7 @@ export class ApiError extends Error {
 }
 
 // refresh token으로 access token을 다시 발급받는 API 경로
-const REFRESH_PATH = "/api/authreissue";
+const REFRESH_PATH = "/api/auth/reissue";
 
 // 잠깐 기다릴 때 쓰는 함수
 function sleep(ms) {
