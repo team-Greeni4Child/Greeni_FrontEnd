@@ -19,7 +19,7 @@ import { ProfileContext } from "../context/ProfileContext";
 import { deleteProfile, modifyProfile, searchProfileList } from "../api/profile";
 import { uploadProfileAsset } from "../api/s3";
 import { logout } from "../api/auth";
-import { clearAuth } from "../utils/tokenStorage";
+import { clearAuth, clearSelectedProfile } from "../utils/tokenStorage";
 import { fileByIndex, toImageSource } from "../utils/profileImageMap";
 import Button from "../components/Button";
 import BackButton from "../components/BackButton";
@@ -390,7 +390,11 @@ export default function SettingsScreen({ route, navigation }) {
               width={345}
               height={51}
               style={{ marginBottom: 12 }}
-              onPress={() => setStep("profile")}
+              onPress={async () => {
+                await clearSelectedProfile();
+                setSelectedProfile(null);
+                setStep("profile");
+              }}
             />
             <Button
               title="프로필 삭제"

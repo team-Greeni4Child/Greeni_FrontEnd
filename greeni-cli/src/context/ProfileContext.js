@@ -1,5 +1,6 @@
 // 앱 전역에서 프로필 리스트를 관리하기 위해 ProfileContext.js 생성
-import React, { createContext, useState } from "react";
+import React, { createContext, useEffect, useState } from "react";
+import { getSelectedProfile } from "../utils/tokenStorage";
 
 // 빈 Context 생성 
 export const ProfileContext = createContext();
@@ -9,6 +10,21 @@ export const ProfileContext = createContext();
 export const ProfileProvider = ({ children }) => {
   const [profiles, setProfiles] = useState([]);
   const [selectedProfile, setSelectedProfile] = useState(null);
+
+  useEffect(() => {
+    const restoreSelectedProfile = async () => {
+      try {
+        const savedProfile = await getSelectedProfile();
+        if (savedProfile) {
+          setSelectedProfile(savedProfile);
+        }
+      } catch (e) {
+        console.log("RESTORE SELECTED PROFILE FAIL:", e);
+      }
+    };
+
+    restoreSelectedProfile();
+  }, []);
 
   return (
     <ProfileContext.Provider value={{ profiles, setProfiles, selectedProfile, setSelectedProfile }}>

@@ -5,6 +5,7 @@ import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { ProfileProvider } from "./context/ProfileContext";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { getAccessToken, getSelectedProfile } from "./utils/tokenStorage";
 
 import SplashScreen from "./screens/SplashScreen";
 import LoginScreen from "./screens/LoginScreen";
@@ -89,10 +90,34 @@ function MainStack() {
 }
 
 export default function App() {
-  const [showSplash, setShowSplash] = useState(true);
+  const [isBootstrapping, setIsBootstrapping] = useState(true);
   const [step, setStep] = useState("auth"); 
 
   const navigationRef = useRef(null);
+
+  const bootstrap = async () => {
+    try {
+      const accessToken = await getAccessToken();
+      const savedProfile = await getSelectedProfile();
+
+      if (!accessToken) {
+        setStep("auth");
+        return;
+      }
+
+      if (!savedProfile) {
+        setStep("profile");
+        return;
+      }
+
+      setStep("main");
+    } catch (e) {
+      console.log("APP BOOTSTRAP FAIL:", e);
+      setStep("auth");
+    } finally {
+      setIsBootstrapping(false);
+    }
+  };
 
   // 기기의 백버튼과 커스텀 백버튼 통일
   useEffect(() => {
@@ -117,15 +142,10 @@ export default function App() {
       <ProfileProvider>
         <AuthContext.Provider value={{ step, setStep }}>
           <NavigationContainer ref={navigationRef}>
-            {showSplash ? (
+            {isBootstrapping ? (
               <Stack.Navigator screenOptions={{ headerShown: false }}>
                 <Stack.Screen name="Splash">
-                  {(props) => (
-                    <SplashScreen
-                      {...props}
-                      onDone={() => setShowSplash(false)}
-                    />
-                  )}
+                  {(props) => <SplashScreen {...props} onDone={bootstrap} />}
                 </Stack.Screen>
               </Stack.Navigator>
             ) : step === "auth" ? (
