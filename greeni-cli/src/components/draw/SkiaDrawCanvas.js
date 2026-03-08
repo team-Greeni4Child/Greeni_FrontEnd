@@ -19,34 +19,42 @@ export default function SkiaDrawCanvas({
     isEraser: false,
   });
   const isDrawingRef = useRef(false);
+  const wasInsideRef = useRef(false);
 
   const [, setTick] = useState(0); // 리렌더 트리거용(값은 안 씀)
 
   const wrapRef = useRef(null);
-  const boundsRef = useRef(null);
+  const originRef = useRef({ x: 0, y: 0 });
+  const sizeRef = useRef({ width: 0, height: 0 });
 
-  const measureBounds = useCallback(() => {
-    // measureInWindow는 비동기 콜백
-    wrapRef.current?.measureInWindow((x, y, width, height) => {
-      boundsRef.current = { x, y, width, height };
+  const updateBounds = useCallback(() => {
+    requestAnimationFrame(() => {
+      wrapRef.current?.measure((x, y, width, height, pageX, pageY) => {
+        originRef.current = { x: pageX, y: pageY };
+        sizeRef.current = { width, height };
+      });
     });
   }, []);
 
-  const toLocal = useCallback((pageX, pageY) => {
-    const b = boundsRef.current;
-    if (!b) return null;
-    return { x: pageX - b.x, y: pageY - b.y };
+  const toLocalFromPage = useCallback((pageX, pageY) => {
+    const { x, y } = originRef.current;
+    return {
+      x: pageX - x,
+      y: pageY - y,
+    };
   }, []);
 
-  const isInsidePage = useCallback((pageX, pageY) => {
-    const b = boundsRef.current;
-    if (!b) return false;
-    return (
-      pageX >= b.x &&
-      pageX <= b.x + b.width &&
-      pageY >= b.y &&
-      pageY <= b.y + b.height
-    );
+  const isInsideLocal = useCallback((x, y) => {
+    const { width, height } = sizeRef.current;
+    return x >= 0 && x <= width && y >= 0 && y <= height;
+  }, []);
+
+  const clampToCanvas = useCallback((x, y) => {
+    const { width, height } = sizeRef.current;
+    return {
+      x: Math.max(0, Math.min(x, width)),
+      y: Math.max(0, Math.min(y, height)),
+    };
   }, []);
 
   const beginStroke = useCallback(
@@ -100,13 +108,14 @@ export default function SkiaDrawCanvas({
 
       onPanResponderGrant: (evt) => {
         if (!canDraw) return;
-        measureBounds();
 
         const { pageX, pageY } = evt.nativeEvent;
-        if (!isInsidePage(pageX, pageY)) return;
+        const local = toLocalFromPage(pageX, pageY);
+        const inside = isInsideLocal(local.x, local.y);
 
-        const local = toLocal(pageX, pageY);
-        if (!local) return;
+        wasInsideRef.current = inside;
+
+        if (!inside) return;
 
         beginStroke(local.x, local.y);
       },
@@ -115,34 +124,50 @@ export default function SkiaDrawCanvas({
         if (!canDraw) return;
 
         const { pageX, pageY } = evt.nativeEvent;
+        const local = toLocalFromPage(pageX, pageY);
+        const inside = isInsideLocal(local.x, local.y);
+        const wasInside = wasInsideRef.current;
 
-        if (!isInsidePage(pageX, pageY)) {
+        if (inside) {
+          if (wasInside) {
+            extendStroke(local.x, local.y);
+          } else {
+            beginStroke(local.x, local.y);
+          }
+        } else if (wasInside) {
+          const edge = clampToCanvas(local.x, local.y);
+          extendStroke(edge.x, edge.y);
           endStroke();
-          return;
         }
 
-        const local = toLocal(pageX, pageY);
-        if (!local) return;
-
-        extendStroke(local.x, local.y);
+        wasInsideRef.current = inside;
       },
 
       onPanResponderRelease: () => {
         if (!canDraw) return;
         endStroke();
+        wasInsideRef.current = false;
       },
 
       onPanResponderTerminate: () => {
         if (!canDraw) return;
         endStroke();
+        wasInsideRef.current = false;
       },
+
+      onPanResponderTerminationRequest: () => false,
     });
-  }, [enabled, tool, measureBounds, isInsidePage, toLocal, beginStroke, extendStroke, endStroke]);
+  }, [enabled, tool, toLocalFromPage, isInsideLocal, clampToCanvas, beginStroke, extendStroke, endStroke]);
 
   const live = currentStyleRef.current;
 
   return (
-    <View ref={wrapRef} style={styles.wrap} onLayout={measureBounds} {...panResponder.panHandlers}>
+    <View
+      ref={wrapRef}
+      style={styles.wrap}
+      onLayout={updateBounds}
+      {...panResponder.panHandlers}
+    >
       <Canvas style={styles.canvas}>
         <Group layer>
           {strokes.map((s, idx) => (
