@@ -1,5 +1,9 @@
 package com.greeni
 
+import android.os.Bundle
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import com.facebook.react.ReactActivity
 import com.facebook.react.ReactActivityDelegate
 import com.facebook.react.defaults.DefaultNewArchitectureEntryPoint.fabricEnabled
@@ -19,4 +23,25 @@ class MainActivity : ReactActivity() {
    */
   override fun createReactActivityDelegate(): ReactActivityDelegate =
       DefaultReactActivityDelegate(this, mainComponentName, fabricEnabled)
+
+  override fun onCreate(savedInstanceState: Bundle?) {
+    super.onCreate(null)
+    hideSystemBars()
+  }
+
+  override fun onResume() {
+    super.onResume()
+    hideSystemBars()
+  }
+
+  private fun hideSystemBars() {
+    WindowCompat.setDecorFitsSystemWindows(window, false)
+
+    val controller = WindowCompat.getInsetsController(window, window.decorView)
+    controller?.let {
+      it.hide(WindowInsetsCompat.Type.systemBars())
+      it.systemBarsBehavior =
+          WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+    }
+  }
 }
