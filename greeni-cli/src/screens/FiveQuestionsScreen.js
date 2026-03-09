@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback, useContext, useRef } from "react";
 import { 
   View, 
   Text, 
@@ -11,11 +11,14 @@ import {
 import BackButton from "../components/BackButton";
 import colors from "../theme/colors";
 import MicButton from "../components/MicButton";
+import { createFiveQuestionsActivity } from "../api/activity";
+import { ProfileContext } from "../context/ProfileContext";
 
 // 현재 기기의 화면 너비 W, 화면 높이 H
 const { width: W, height: H } = Dimensions.get("window");
 
 export default function TwentyQuestionsScreen({navigation}) {
+  const { selectedProfile } = useContext(ProfileContext);
 
   const hints = [
     "나는 세상에서 가장 긴 코를 갖고있어!",
@@ -26,12 +29,46 @@ export default function TwentyQuestionsScreen({navigation}) {
   ];
 
   const [currentHint, setCurrentHint] = useState(0);
+  const [correctCount] = useState(2);
+  const [wrongCount] = useState(3);
+  const initialScoreRef = useRef(null);
+  const isSubmittingRef = useRef(false);
+
+  useEffect(() => {
+    if (!initialScoreRef.current) {
+      initialScoreRef.current = { correctCount, wrongCount };
+    }
+  }, [correctCount, wrongCount]);
 
   const handleNextHint = () => {
     if(currentHint < hints.length - 1) {
       setCurrentHint(currentHint + 1);
     }
   };
+
+  const handleBackPress = useCallback(async () => {
+    if (isSubmittingRef.current) return;
+    isSubmittingRef.current = true;
+
+    try {
+      const initialScore = initialScoreRef.current ?? { correctCount, wrongCount };
+      const hasScoreChanged =
+        initialScore.correctCount !== correctCount ||
+        initialScore.wrongCount !== wrongCount;
+
+      if (hasScoreChanged && selectedProfile?.profileId) {
+        await createFiveQuestionsActivity({
+          profileId: selectedProfile.profileId,
+          count: correctCount,
+        });
+      }
+    } catch (e) {
+      console.log("CREATE FIVE QUESTIONS ACTIVITY FAIL:", e);
+    } finally {
+      isSubmittingRef.current = false;
+      navigation.goBack();
+    }
+  }, [correctCount, wrongCount, navigation, selectedProfile?.profileId]);
 
   const progress = (currentHint + 1) / hints.length;
 
@@ -41,7 +78,7 @@ export default function TwentyQuestionsScreen({navigation}) {
 
         {/* 상단 뒤로가기 버튼 및 '다섯고개' 제목 */}
         <View style={styles.titleWrap}>
-          <BackButton navigation={navigation}
+          <BackButton navigation={{ ...navigation, goBack: handleBackPress }}
                       top={H * 0.001}
                       left={W * 0.05}/>
           <Text style={styles.title}>다섯고개</Text>
@@ -62,9 +99,9 @@ export default function TwentyQuestionsScreen({navigation}) {
 
           <View style={styles.scoreDetailWrap}>
             <Text style={styles.scoreItem}>맞춘 개수</Text>
-            <Text style={styles.scoreItemValue}>2개</Text>
+            <Text style={styles.scoreItemValue}>{correctCount}개</Text>
             <Text style={styles.scoreItem}>틀린 개수</Text>
-            <Text style={[styles.scoreItemValue, { color: colors.pinkDark }]}>3개</Text>
+            <Text style={[styles.scoreItemValue, { color: colors.pinkDark }]}>{wrongCount}개</Text>
           </View>
 
         </View>
