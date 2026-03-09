@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useCallback, useContext, useRef } from "react";
 import { 
   View, 
   Text, 
@@ -13,11 +13,15 @@ import Button from "../components/Button";
 import BackButton from "../components/BackButton";
 import colors from "../theme/colors";
 import MicButton from "../components/MicButton";
+import { createRolePlayingActivity } from "../api/activity";
+import { ProfileContext } from "../context/ProfileContext";
 
 // 현재 기기의 화면 너비 W, 화면 높이 H
 const { width: W, height: H } = Dimensions.get("window");
 
 export default function RolePlayingScreen({navigation}) {
+  const { selectedProfile } = useContext(ProfileContext);
+  const isSubmittingRef = useRef(false);
 
   const [selectedSituation, setSelectedSituation] = useState(null);
   const bubbleText = useMemo(() => {
@@ -33,13 +37,35 @@ export default function RolePlayingScreen({navigation}) {
     setSelectedSituation(key);
   };
 
+  const handleBackPress = useCallback(async () => {
+    if (isSubmittingRef.current) return;
+    isSubmittingRef.current = true;
+
+    try {
+      const roleName = selectedSituation ? "FRIEND" : null;
+      const profileId = Number(selectedProfile?.profileId);
+
+      if (roleName && Number.isFinite(profileId)) {
+        await createRolePlayingActivity({
+          profileId,
+          roleName,
+        });
+      }
+    } catch (e) {
+      console.log("CREATE ROLE PLAYING ACTIVITY FAIL:", e);
+    } finally {
+      isSubmittingRef.current = false;
+      navigation.goBack();
+    }
+  }, [navigation, selectedProfile?.profileId, selectedSituation]);
+
     return (
         <View style={styles.root}>
           <View style={styles.topBackground} />
 
              {/* 상단 뒤로가기 버튼 및 '역할놀이' 제목 */}
             <View style={styles.titleWrap}>
-                <BackButton navigation={navigation}
+                <BackButton navigation={{ ...navigation, goBack: handleBackPress }}
                             top={H * 0.001}
                             left={W * 0.05}/>
                 <Text style={styles.title}>역할놀이</Text>
@@ -56,7 +82,7 @@ export default function RolePlayingScreen({navigation}) {
                 source={require("../assets/images/bubble_diary.png")}
                 resizeMode="stretch"
               >
-                <Text style={[styles.bubbleText.
+                <Text style={[styles.bubbleText,
                   selectedSituation ? styles.bubbleTextSelected : styles.bubbleText
                 ]}>{bubbleText}</Text>
               </ImageBackground>
