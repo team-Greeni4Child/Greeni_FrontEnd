@@ -161,7 +161,7 @@ export default function StatisticsScreen({route, navigation}) {
                         <Image style={styles.greeniFace} source={require("../assets/images/greeni_face.png")}/>
                         <View style={styles.attendanceTextWrap}>
                           <Text style={styles.attendanceText}>
-                            {profileName}은(는){" "}
+                            {profileName}이(는){" "}
                             <Text style={styles.attendanceNumber}>{countData.attendance}</Text>
                             일 출석했고
                           </Text>
@@ -218,11 +218,11 @@ export default function StatisticsScreen({route, navigation}) {
                               />
                             </View>
                             <View style={styles.emotionCountWrap}>
-                                <Text style={{fontFamily: "gangwongyoyuksaeeum", fontSize: 24,}}>기쁨 {emotionCount.happy}</Text>
-                                <Text style={{fontFamily: "gangwongyoyuksaeeum", fontSize: 24,}}>슬픔 {emotionCount.sad}</Text>
-                                <Text style={{fontFamily: "gangwongyoyuksaeeum", fontSize: 24,}}>화남 {emotionCount.angry}</Text>
-                                <Text style={{fontFamily: "gangwongyoyuksaeeum", fontSize: 24,}}>놀람 {emotionCount.surprised}</Text>
-                                <Text style={{fontFamily: "gangwongyoyuksaeeum", fontSize: 24,}}>불안 {emotionCount.anxiety}</Text>
+                                <Text style={{fontFamily: "gangwongyoyuksaeeum", fontSize: 24, color: colors.brown}}>기쁨 {emotionCount.happy}</Text>
+                                <Text style={{fontFamily: "gangwongyoyuksaeeum", fontSize: 24, color: colors.brown}}>슬픔 {emotionCount.sad}</Text>
+                                <Text style={{fontFamily: "gangwongyoyuksaeeum", fontSize: 24, color: colors.brown}}>화남 {emotionCount.angry}</Text>
+                                <Text style={{fontFamily: "gangwongyoyuksaeeum", fontSize: 24, color: colors.brown}}>놀람 {emotionCount.surprised}</Text>
+                                <Text style={{fontFamily: "gangwongyoyuksaeeum", fontSize: 24, color: colors.brown}}>불안 {emotionCount.anxiety}</Text>
                             </View>
                         </View>
                     </View>
@@ -233,7 +233,7 @@ export default function StatisticsScreen({route, navigation}) {
                             <Text style={{fontFamily: "Maplestory_Bold", fontSize: 18, color:colors.brown,}}>일기 오늘의 키워드</Text>
                         </View>
                         <View style={styles.keywordContent}>
-                            <Text style={{fontFamily: "gangwongyoyuksaeeum", fontSize: 30,}}>{keyword}</Text>
+                            <Text style={{fontFamily: "Maplestory_Light", fontSize: 34, color: colors.brown}}>{keyword}</Text>
                         </View>
                     </View>
 
@@ -435,7 +435,7 @@ const styles = StyleSheet.create({
     height: '90%',
     justifyContent: 'center',
     alignItems: 'center',
-    right: 4
+    right: 4,
   },
   keywordWrap: {
     borderWidth: 2,
