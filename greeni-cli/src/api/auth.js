@@ -1,4 +1,5 @@
 import { request } from "./client";
+import { getAccessToken } from "../utils/tokenStorage";
 
 /** 이메일 인증 요청: POST /api/members/email */
 export function requestEmailVerification(email) {
@@ -42,9 +43,14 @@ export function login({ email, password }) {
 }
 
 /** 로그아웃: POST /api/auth/logout */
-export function logout() {
+export async function logout() {
+  const accessToken = await getAccessToken();
+
   return request("/api/auth/logout", {
     method: "POST",
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
   });
 }
 

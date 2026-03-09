@@ -5,6 +5,7 @@ import { AuthContext } from "../App";
 import { ProfileContext } from "../context/ProfileContext";
 import { searchProfileList, searchSingleProfile } from "../api/profile";
 import { toImageSource } from "../utils/profileImageMap";
+import { saveSelectedProfile, clearAuth } from "../utils/tokenStorage";
 import colors from "../theme/colors";
 
 const { width: W, height: H } = Dimensions.get("window");
@@ -24,6 +25,29 @@ export default function ProfileSelectScreen({ route, navigation }) {
     } else {
       setStep("main");
     }
+  };
+
+  const goAuthAndReset = async () => {
+    try {
+      await clearAuth();
+    } catch (err) {
+      console.log("CLEAR AUTH FAIL:", err);
+    } finally {
+      setSelectedProfile(null);
+      setProfiles([]);
+      setStep("auth");
+    }
+  };
+
+  const isAuthError = (e) => {
+    return (
+      e?.status === 401 ||
+      e?.code === "AUTH401" ||
+      e?.code === "COMMON401" ||
+      e?.message?.includes("인증") ||
+      e?.message?.includes("로그인") ||
+      e?.message?.includes("토큰")
+    );
   };
 
   const handleSelectProfile = async (p) => {
@@ -50,16 +74,23 @@ export default function ProfileSelectScreen({ route, navigation }) {
       }
 
       setSelectedProfile(selected);
+      await saveSelectedProfile(selected);
       console.log("pressed profile", p.profileId);
       goNext();
     } catch (e) {
       console.log("Select Profile Fail:", e);
+
+      if (isAuthError(e)) {
+        await goAuthAndReset();
+        return;
+      }
 
       const fallbackSelected = {
         ...p,
         image: toImageSource(p.profileImage),
       };
       setSelectedProfile(fallbackSelected);
+      await saveSelectedProfile(fallbackSelected);
       goNext();
     } finally {
       setIsSelecting(false);
@@ -83,11 +114,15 @@ export default function ProfileSelectScreen({ route, navigation }) {
         setProfiles(mapped);
       } catch (e) {
         console.log("LOAD PROFILE LIST FAIL:", e);
+
+        if (isAuthError(e)) {
+          await goAuthAndReset();
+        }
       }
     };
 
     load();
-  }, [setProfiles]);
+  }, [setProfiles, setSelectedProfile, setStep]);
 
   return (
     <View style={styles.root}>

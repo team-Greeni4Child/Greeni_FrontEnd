@@ -1,38 +1,21 @@
-import React, { useEffect, useMemo, useState, useCallback } from "react";
+import React, { useEffect, useState } from "react";
 import { Modal, View, Text, StyleSheet, Pressable, TouchableOpacity } from "react-native";
 import colors from "../../theme/colors";
-import { runOnJS } from "react-native-reanimated";
 import ColorPicker, { Panel1, HueSlider } from "reanimated-color-picker";
 
 export default function ColorPickerModal({ visible, initialColor = "#FF0000", onClose, onApply }) {
   const [temp, setTemp] = useState(initialColor);      // 확정값(손 뗐을 때 확정)
   const [preview, setPreview] = useState(initialColor); // 미리보기(드래그 중)
+  const [pickerKey, setPickerKey] = useState(0);
 
   useEffect(() => {
     // 모달 열릴 때 초기화
     if (visible) {
       setTemp(initialColor);
       setPreview(initialColor);
+      setPickerKey((prev) => prev + 1);
     }
   }, [visible, initialColor]);
-
-  const setPreviewJS = useCallback((hex) => setPreview(hex), []);
-  const setTempJS = useCallback((hex) => {
-    setTemp(hex);
-    setPreview(hex);
-  }, []);
-
-  const onChangePick = useCallback((result) => {
-    "worklet";
-    if (result?.hex) runOnJS(setPreviewJS)(result.hex);
-  }, [setPreviewJS]);
-
-  const onCompletePick = useCallback((result) => {
-    "worklet";
-    if (result?.hex) runOnJS(setTempJS)(result.hex);
-  }, [setTempJS]);
-
-  const previewStyle = useMemo(() => [{ backgroundColor: preview }], [preview]);
 
   return (
     <Modal transparent visible={visible} animationType="fade">
@@ -45,9 +28,17 @@ export default function ColorPickerModal({ visible, initialColor = "#FF0000", on
 
           <View style={styles.pickerWrap}>
             <ColorPicker
-              value={preview}
-              onChange={onChangePick}       // 드래그 중 미리보기
-              onComplete={onCompletePick}   // 손 떼면 확정
+              key={pickerKey}
+              value={initialColor}
+              onChangeJS={(result) => {
+                if (result?.hex) setPreview(result.hex);
+              }}
+              onCompleteJS={(result) => {
+                if (result?.hex) {
+                  setTemp(result.hex);
+                  setPreview(result.hex);
+                }
+              }}
               style={{ flex: 1 }}
             >
               <Panel1 style={styles.panel} />
@@ -57,7 +48,7 @@ export default function ColorPickerModal({ visible, initialColor = "#FF0000", on
           </View>
 
           <View style={styles.previewRow}>
-            <View style={[styles.previewBox, ...previewStyle]} />
+            <View style={[styles.previewBox, { backgroundColor: preview }]} />
             <Text style={styles.previewText}>{preview}</Text>
           </View>
 

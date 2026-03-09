@@ -24,6 +24,62 @@ export default function PenOptionsPanel({
 }) {
   return (
     <View style={styles.penPanel}>
+      <View style={styles.presetRow}>
+        <TouchableOpacity
+          style={[
+            styles.presetBtn,
+            penWidth === 5 && styles.presetBtnActive,
+          ]}
+          onPress={() => setPenWidth(5)}
+          activeOpacity={0.8}
+        >
+          <Text
+            style={[
+              styles.presetText,
+              penWidth === 5 && styles.presetTextActive,
+            ]}
+          >
+            작음
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[
+            styles.presetBtn,
+            penWidth === 15 && styles.presetBtnActive,
+          ]}
+          onPress={() => setPenWidth(15)}
+          activeOpacity={0.8}
+        >
+          <Text
+            style={[
+              styles.presetText,
+              penWidth === 15 && styles.presetTextActive,
+            ]}
+          >
+            보통
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[
+            styles.presetBtn,
+            penWidth === 25 && styles.presetBtnActive,
+          ]}
+          onPress={() => setPenWidth(25)}
+          activeOpacity={0.8}
+        >
+          <Text
+            style={[
+              styles.presetText,
+              penWidth === 25 && styles.presetTextActive,
+            ]}
+          >
+            큼
+          </Text>
+        </TouchableOpacity>
+      </View>
+
       {/* 두께 */}
       <View style={styles.thicknessRow}>
         <TouchableOpacity
@@ -99,6 +155,34 @@ const styles = StyleSheet.create({
     borderColor: colors.green,
     borderRadius: 12,
     backgroundColor: colors.white,
+  },
+
+  presetRow: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    marginBottom: 10,
+  },
+  presetBtn: {
+    minWidth: 80,
+    paddingVertical: 7,
+    paddingHorizontal: 10,
+    borderRadius: 10,
+    borderWidth: 2,
+    borderColor: colors.green,
+    backgroundColor: colors.white,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  presetBtnActive: {
+    backgroundColor: colors.green,
+  },
+  presetText: {
+    fontFamily: "Maplestory_Bold",
+    color: colors.brown,
+    fontSize: 15,
+  },
+  presetTextActive: {
+    color: colors.white,
   },
 
   thicknessRow: {

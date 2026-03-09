@@ -1,4 +1,4 @@
-import React, { useCallback } from "react";
+import React, { useCallback, useContext } from "react";
 import {
   View,
   Text,
@@ -15,10 +15,14 @@ import colors from "../theme/colors";
 import NavigationBar from "../components/NavigationBar";
 import { useState } from "react";
 import { useFocusEffect } from "@react-navigation/native";
+import { AuthContext } from "../App";
+import { getAccessToken, clearAuth } from "../utils/tokenStorage";
 
 const { width: W, height: H } = Dimensions.get("window");
 
 export default function HomeScreen({ navigation }) {
+  const { setStep } = useContext(AuthContext);
+
   const [tab, setTab] = useState(0);
 
   // "오늘 일기 작성 완료" 여부 (나중에 API/스토리지로 대체)
@@ -29,6 +33,29 @@ export default function HomeScreen({ navigation }) {
 
   // 종료 확인 모달 on/off
   const [showExitModal, setShowExitModal] = useState(false);
+
+  // 인증 상태 확인
+  const checkAuth = async () => {
+    try {
+      const token = await getAccessToken();
+
+      if (!token) {
+        await clearAuth();
+        setStep("auth");
+      }
+    } catch (e) {
+      console.log("AUTH CHECK FAIL:", e);
+      await clearAuth();
+      setStep("auth");
+    }
+  };
+
+  // 화면 들어올 때 인증 체크
+  useFocusEffect(
+    useCallback(() => {
+      checkAuth();
+    }, [])
+  );
 
   // 일기 버튼 클릭 처리
   const handlePressDiary = () => {
