@@ -10,7 +10,6 @@ import {
   TouchableWithoutFeedback,
   Keyboard,
   Modal,
-  Alert,
 } from "react-native";
 import DateTimePicker from "react-native-modal-datetime-picker";
 
@@ -52,6 +51,18 @@ export default function SettingsScreen({ route, navigation }) {
   const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
   const [isDeleteModalVisible, setDeleteModalVisible] = useState(false);
   const [isLogoutModalVisible, setLogoutModalVisible] = useState(false);
+  const [showErrorModal, setShowErrorModal] = useState(false);
+  const [errorModalMessage, setErrorModalMessage] = useState("");
+
+  const openErrorModal = (message) => {
+    setErrorModalMessage(message);
+    setShowErrorModal(true);
+  };
+
+  const handleErrorOk = () => {
+    setShowErrorModal(false);
+    setErrorModalMessage("");
+  };
 
   // selectedProfile 바뀔 때 draft 동기화
   useEffect(() => {
@@ -129,7 +140,7 @@ export default function SettingsScreen({ route, navigation }) {
       }
     } catch (e) {
       console.log("Modify Profile Fail", e);
-      Alert.alert("오류", e?.message || "프로필 수정에 실패했습니다.");
+      openErrorModal(e?.message || "프로필 수정에 실패했습니다.");
 
       setDraftName(selectedProfile.name);
       setDraftBirth(selectedProfile.birth);
@@ -175,7 +186,7 @@ export default function SettingsScreen({ route, navigation }) {
       );
     } catch (e) {
       console.log("Modify Birth Fail:", e);
-      Alert.alert("오류", e?.message || "생년월일 수정에 실패했습니다.");
+      openErrorModal(e?.message || "생년월일 수정에 실패했습니다.");
       setDraftBirth(selectedProfile.birth);
     } finally {
       setDatePickerVisibility(false);
@@ -213,7 +224,7 @@ export default function SettingsScreen({ route, navigation }) {
       setProfiles(mapped);
     } catch (e) {
       console.log("Delete Profile Fail:", e);
-      Alert.alert("오류", e?.message || "프로필 삭제에 실패했습니다.");
+      openErrorModal(e?.message || "프로필 삭제에 실패했습니다.");
     }
   };
 
@@ -261,7 +272,7 @@ export default function SettingsScreen({ route, navigation }) {
                           let profileImage = null;
                           if (isUploaded) {
                             if (!uploadedAsset?.uri) {
-                              Alert.alert("오류", "업로드 이미지 정보를 가져올 수 없습니다.");
+                              openErrorModal("업로드 이미지 정보를 가져올 수 없습니다.");
                               return;
                             }
                             profileImage = await uploadProfileAsset(uploadedAsset);
@@ -269,7 +280,7 @@ export default function SettingsScreen({ route, navigation }) {
                             profileImage = fileByIndex(selectedIndex);
                           }
                           if (!profileImage) {
-                            Alert.alert("오류", "프로필 이미지를 다시 선택해 주세요.");
+                            openErrorModal("프로필 이미지를 다시 선택해 주세요.");
                             return;
                           }
 
@@ -295,7 +306,7 @@ export default function SettingsScreen({ route, navigation }) {
                           );
                         } catch (e) {
                           console.log("Modify Profile Image Fail:", e);
-                          Alert.alert("오류", e?.message || "프로필 이미지 수정에 실패했습니다.");
+                          openErrorModal(e?.message || "프로필 이미지 수정에 실패했습니다.");
                         }
                       },
                     })
@@ -496,6 +507,20 @@ export default function SettingsScreen({ route, navigation }) {
             </TouchableWithoutFeedback>
           </TouchableOpacity>
         </Modal>
+
+        <Modal transparent visible={showErrorModal} onRequestClose={handleErrorOk}>
+          <View style={styles.errorModalBackground}>
+            <View style={styles.errorModalWrap}>
+              <Text style={styles.errorModalText}>{errorModalMessage}</Text>
+
+              <View style={styles.errorModalButtonWrap}>
+                <TouchableOpacity style={styles.errorModalButton} onPress={handleErrorOk}>
+                  <Text style={styles.errorModalButtonText}>확인</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </Modal>
       </View>
     </TouchableWithoutFeedback>
   );
@@ -673,6 +698,47 @@ const styles = StyleSheet.create({
     width: "50%",
   },
   modalButtonText: {
+    color: colors.brown,
+    fontSize: 16,
+    fontFamily: "Maplestory_Light",
+  },
+
+  errorModalBackground: {
+    flex: 1,
+    backgroundColor: colors.lightGray95,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  errorModalWrap: {
+    width: W * 0.7,
+    backgroundColor: "white",
+    borderRadius: 20,
+    borderWidth: 3,
+    borderColor: colors.greenDark,
+    padding: 0,
+    alignItems: "center",
+    justifyContent: "flex-end",
+    overflow: "hidden",
+  },
+  errorModalText: {
+    fontSize: 16,
+    fontFamily: "Maplestory_Light",
+    color: colors.brown,
+    textAlign: "center",
+    margin: 30,
+  },
+  errorModalButtonWrap: {
+    flexDirection: "row",
+    height: 45,
+    width: "100%",
+  },
+  errorModalButton: {
+    justifyContent: "center",
+    alignItems: "center",
+    width: "100%",
+    backgroundColor: colors.green,
+  },
+  errorModalButtonText: {
     color: colors.brown,
     fontSize: 16,
     fontFamily: "Maplestory_Light",

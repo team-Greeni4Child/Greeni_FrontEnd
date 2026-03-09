@@ -1,5 +1,5 @@
 ﻿import React, { useState, useContext } from "react";
-import { View, Text, Image, TextInput, TouchableOpacity, StyleSheet, Dimensions, Platform, Alert } from "react-native";
+import { View, Text, Image, TextInput, TouchableOpacity, StyleSheet, Dimensions, Platform, Modal } from "react-native";
 
 import { StatusBar } from "react-native";
 
@@ -33,9 +33,21 @@ export default function ProfileInfoFormScreen({ route, navigation }) {
 
   const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
+  const [showErrorModal, setShowErrorModal] = useState(false);
+  const [errorModalMessage, setErrorModalMessage] = useState("");
 
   const showDatePicker = () => setDatePickerVisibility(true);
   const hideDatePicker = () => setDatePickerVisibility(false);
+
+  const openErrorModal = (message) => {
+    setErrorModalMessage(message);
+    setShowErrorModal(true);
+  };
+
+  const handleErrorOk = () => {
+    setShowErrorModal(false);
+    setErrorModalMessage("");
+  };
 
   const handleConfirm = (date) => {
     const formatted = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
@@ -81,21 +93,21 @@ export default function ProfileInfoFormScreen({ route, navigation }) {
       let profileImage = typeof selectedIndex === "number" ? fileByIndex(selectedIndex) : null;
       if (isUploaded) {
         if (!uploadedAsset?.uri) {
-          Alert.alert("오류", "업로드 이미지 정보를 가져올 수 없습니다.");
+          openErrorModal("업로드 이미지 정보를 가져올 수 없습니다.");
           return;
         }
         profileImage = await uploadProfileAsset(uploadedAsset);
       }
       
       if (!profileImage) {
-        Alert.alert("오류", "프로필 이미지를 다시 선택해 주세요.");
+        openErrorModal("프로필 이미지를 다시 선택해 주세요.");
         return;
       }
       if (typeof profileImage !== "string" || profileImage.trim().length === 0) {
-      Alert.alert("오류", "프로필 이미지 값이 올바르지 않습니다. (문자열 필요)");
-      console.log("[CREATE_PROFILE] INVALID profileImage:", profileImage);
-      return;
-}
+        openErrorModal("프로필 이미지 값이 올바르지 않습니다. (문자열 필요)");
+        console.log("[CREATE_PROFILE] INVALID profileImage:", profileImage);
+        return;
+      }
 
       const safeName = name.trim();
       const safeBirth = birth.trim();
@@ -141,18 +153,17 @@ export default function ProfileInfoFormScreen({ route, navigation }) {
       console.log("[CREATE_PROFILE][ERR] code:", e?.code);
       console.log("[CREATE_PROFILE][ERR] message:", e?.message);
       console.log("[CREATE_PROFILE][ERR] result:", e?.result);
-      Alert.alert("오류", e?.message || "프로필 생성에 실패했습니다.\n잠시 후 다시 시도해주세요.");
       console.log("CREATE PROFILE FAIL:", e);
 
       if (e?.code === "PROFILE4002") {
-        Alert.alert("알림", "프로필은 최대 6개까지 생성할 수 있습니다.");
+        openErrorModal("프로필은 최대 6개까지 생성할 수 있습니다.");
         return;
       }
       if (e?.code === "MEMBER4041"){
-        Alert.alert("오류", "존재하지 않는 회원입니다. 다시 로그인해 주세요.");
+        openErrorModal("존재하지 않는 회원입니다. 다시 로그인해 주세요.");
         return;
       }
-      Alert.alert("오류", "프로필 생성에 실패했습니다.\n잠시 후 다시 시도해주세요.");
+      openErrorModal(e?.message || "프로필 생성에 실패했습니다.\n잠시 후 다시 시도해주세요.");
     } finally {
       setIsCreating(false);
     }
@@ -246,6 +257,20 @@ export default function ProfileInfoFormScreen({ route, navigation }) {
           disabled={isCreating}
         />
       </View>
+
+      <Modal transparent visible={showErrorModal} onRequestClose={handleErrorOk}>
+        <View style={styles.modalBackground}>
+          <View style={styles.modalWrap}>
+            <Text style={styles.modalText}>{errorModalMessage}</Text>
+
+            <View style={styles.modalButtonWrap}>
+              <TouchableOpacity style={styles.modalButton} onPress={handleErrorOk}>
+                <Text style={styles.modalButtonText}>확인</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -330,6 +355,46 @@ const styles = StyleSheet.create({
     width: W,
     alignItems: "flex-end",
     paddingRight: W * 0.09,
+  },
+  modalBackground: {
+    flex: 1,
+    backgroundColor: colors.lightGray95,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalWrap: {
+    width: W * 0.7,
+    backgroundColor: "white",
+    borderRadius: 20,
+    borderWidth: 3,
+    borderColor: colors.greenDark,
+    padding: 0,
+    alignItems: "center",
+    justifyContent: "flex-end",
+    overflow: "hidden",
+  },
+  modalText: {
+    fontSize: 16,
+    fontFamily: "Maplestory_Light",
+    color: colors.brown,
+    textAlign: "center",
+    margin: 30,
+  },
+  modalButtonWrap: {
+    flexDirection: "row",
+    height: 45,
+    width: "100%",
+  },
+  modalButton: {
+    justifyContent: "center",
+    alignItems: "center",
+    width: "100%",
+    backgroundColor: colors.green,
+  },
+  modalButtonText: {
+    color: colors.brown,
+    fontSize: 16,
+    fontFamily: "Maplestory_Light",
   },
 });
 
