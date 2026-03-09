@@ -161,7 +161,7 @@ export default function StatisticsScreen({route, navigation}) {
                         <Image style={styles.greeniFace} source={require("../assets/images/greeni_face.png")}/>
                         <View style={styles.attendanceTextWrap}>
                           <Text style={styles.attendanceText}>
-                            {profileName}이는{" "}
+                            {profileName}은(는){" "}
                             <Text style={styles.attendanceNumber}>{countData.attendance}</Text>
                             일 출석했고
                           </Text>
