@@ -457,6 +457,7 @@ export default function SignUpScreen({ navigation }) {
             if (passwordError) setPasswordError("");
             if (ruleError) setRuleError(false);
           }}
+          autoCapitalize="none"
         />
 
         {/* 비밀번호 확인 */}
@@ -474,6 +475,7 @@ export default function SignUpScreen({ navigation }) {
             setCheckPassword(text);
             if (checkPasswordError) setCheckPasswordError("");
           }}
+          autoCapitalize="none"
         />
 
         {/* 비밀번호 규칙 안내문 */}

@@ -195,6 +195,7 @@ export default function ResetPasswordScreen({ navigation, route }) {
               if (passwordError) setPasswordError("");
               if (ruleError) setRuleError(false);
             }}
+            autoCapitalize="none"
           />
 
           {/* 비밀번호 확인 */}
@@ -216,6 +217,7 @@ export default function ResetPasswordScreen({ navigation, route }) {
               setCheckPassword(text);
               if (checkPasswordError) setCheckPasswordError("");
             }}
+            autoCapitalize="none"
           />
 
           {/* 비밀번호 규칙 안내문 (기본 갈색, 규칙 위반 시 빨간색) */}
