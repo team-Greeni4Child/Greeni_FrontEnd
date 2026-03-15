@@ -11,7 +11,6 @@ import {
   Modal,
 } from "react-native";
 import { launchImageLibrary } from "react-native-image-picker";
-import ViewShot from "react-native-view-shot";
 
 import colors from "../theme/colors";
 import BackButton from "../components/BackButton";
@@ -21,11 +20,12 @@ import PenOptionsPanel from "../components/draw/PenOptionsPanel";
 import EraserOptionsPanel from "../components/draw/EraserOptionsPanel";
 import ColorPickerModal from "../components/draw/ColorPickerModal";
 import SkiaDrawCanvas from "../components/draw/SkiaDrawCanvas";
+import { uploadDiaryJpeg } from "../api/s3";
 
 const { width: W, height: H } = Dimensions.get("window");
 
 export default function DiaryDrawScreen({ navigation }) {
-  const viewShotRef = useRef(null);
+  const canvasRef = useRef(null);
 
   const [activeTool, setActiveTool] = useState("pen"); // pen | eraser | photo
 
@@ -105,28 +105,25 @@ export default function DiaryDrawScreen({ navigation }) {
       setShowSaveModal(false);
       closeAllPanels();
 
-      const uri = await viewShotRef.current.capture?.({
-        format: "jpg",
-        quality: 0.95,
-        result: "tmpfile",
-        fileName: `diary_${Date.now()}`,
-      });
+      const base64 = canvasRef.current?.exportBase64?.();
 
-      if (!uri) {
-        Alert.alert("오류", "그림일기를 저장하지 못했어요.");
+      if (!base64) {
+        Alert.alert("오류", "그림을 저장하지 못했어요.");
         return;
       }
 
-      console.log("[DIARY JPEG SAVED]:", uri);
+      const uploaded = await uploadDiaryJpeg(base64);
 
-      // 여기서 uri를 S3 업로드 API로 넘기면 됨
-      // 예:
-      // await uploadDiaryImage(uri);
+      console.log("[DIARY S3 KEY]:", uploaded.key);
+      console.log("[DIARY S3 FILE URL]:", uploaded.fileUrl);
 
-      navigation.navigate("Home");
+      navigation.reset({
+        index: 0,
+        routes: [{ name: "Home" }],
+      });
     } catch (e) {
       console.log("SAVE DIARY JPEG FAIL:", e);
-      Alert.alert("오류", "그림일기를 저장하지 못했어요.");
+      Alert.alert("오류", e?.message || "그림일기를 저장하지 못했어요.");
     } finally {
       setIsSaving(false);
     }
@@ -135,7 +132,8 @@ export default function DiaryDrawScreen({ navigation }) {
   return (
     <View style={styles.root}>
       <View style={styles.topBar}>
-        <BackButton navigation={navigation}
+        <BackButton
+          navigation={navigation}
           top={H * 0.08}
         />    
 
@@ -197,33 +195,19 @@ export default function DiaryDrawScreen({ navigation }) {
 
       {/* 그림 영역 */}
       <View style={styles.drawArea}>
-        <ViewShot
-          ref={viewShotRef}
-          style={styles.captureArea}
-          options={{
-            format: "jpg",
-            quality: 0.95,
-            result: "tmpfile",
-          }}
-        >
-          {/* 배경 사진 */}
-          {backgroundUri ? (
-            <Image
-              source={{ uri: backgroundUri }}
-              style={styles.bgImage}
-              resizeMode="cover"
-            />
-          ) : null}
+        <View style={styles.captureArea}>
 
           {/* 캔버스 */}
           <SkiaDrawCanvas
+            ref={canvasRef}
             tool={activeTool}
             penColor={penColor}
             penWidth={penWidth}
             eraserWidth={eraserWidth}
             enabled={activeTool === "pen" || activeTool === "eraser"}
+            backgroundUri={backgroundUri}
           />
-        </ViewShot>
+        </View>
 
         {/* 바깥 터치 → 열려있는 패널 닫기 */}
         {isAnyPanelOpen && (
@@ -360,11 +344,6 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.ivory,
     overflow: "hidden",
-  },
-
-  // 배경 이미지
-  bgImage: {
-    ...StyleSheet.absoluteFillObject,
   },
 
   backdrop: {

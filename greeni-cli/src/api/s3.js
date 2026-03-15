@@ -1,83 +1,83 @@
+import { Buffer } from "buffer";
 import { request } from "./client";
-import { getAccessToken } from "../utils/tokenStorage";
 
-function buildUploadFileName(asset) {
-  const original = asset?.fileName || "profile.jpg";
-  const safe = String(original).replace(/[^a-zA-Z0-9._-]/g, "_");
-  return `${Date.now()}_${safe}`;
+const S3_PUBLIC_BASE_URL = "https://greeni-upload-files.s3.ap-northeast-2.amazonaws.com";
+
+function buildDiaryFileName() {
+  return `diary_${Date.now()}.jpg`;
 }
 
-function toPublicUrl(presignedUrl) {
-  if (!presignedUrl || typeof presignedUrl !== "string") return "";
-  const qIndex = presignedUrl.indexOf("?");
-  return qIndex >= 0 ? presignedUrl.slice(0, qIndex) : presignedUrl;
+function buildPublicUrl(key) {
+  if (!key) return "";
+  return `${S3_PUBLIC_BASE_URL}/${key}`;
 }
 
-function uriToBlob(uri) {
-  return new Promise((resolve, reject) => {
-    const xhr = new XMLHttpRequest();
-    xhr.onerror = () => reject(new Error("Failed to convert uri to blob"));
-    xhr.onload = () => resolve(xhr.response);
-    xhr.responseType = "blob";
-    xhr.open("GET", uri, true);
-    xhr.send(null);
-  });
-}
-
-export async function getS3PresignedUrl({ path = "profiles", fileName }) {
-  const accessToken = await getAccessToken();
+export async function createDiaryPresignedUrl(fileName) {
   const params = new URLSearchParams({
-    path,
     fileName,
+    path: "diary",
   });
 
   const res = await request(`/api/s3-presigned-url?${params.toString()}`, {
     method: "GET",
-    headers: {
-      Authorization: `Bearer ${accessToken || ""}`,
-    },
   });
 
   const result = res?.result ?? res;
+
   return {
     url: result?.url || "",
     key: result?.key || "",
   };
 }
 
-export async function uploadImageToS3({ presignedUrl, asset }) {
-  const blob = await uriToBlob(asset.uri);
-  try {
-    const uploadRes = await fetch(presignedUrl, {
-      method: "PUT",
-      headers: {
-        "Content-Type": asset?.type || "image/jpeg",
-      },
-      body: blob,
-    });
+export async function uploadJpegToPresignedUrl(uploadUrl, base64) {
+  console.log("[S3][UPLOAD URL EXISTS]:", !!uploadUrl);
+  console.log("[S3][BASE64 LENGTH]:", base64?.length);
 
-    if (!uploadRes.ok) {
-      throw new Error(`S3 upload failed: ${uploadRes.status}`);
-    }
-  } finally {
-    if (typeof blob?.close === "function") {
-      blob.close();
-    }
+  const binary = Buffer.from(base64, "base64");
+
+  console.log("[S3][BINARY LENGTH]:", binary?.length);
+
+  const res = await fetch(uploadUrl, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "image/jpeg",
+    },
+    body: binary,
+  });
+
+  console.log("[S3][PUT STATUS]:", res.status);
+
+  if (!res.ok) {
+    const text = await res.text().catch(() => "");
+    console.log("[S3][PUT ERROR BODY]:", text);
+
+    const err = new Error("S3 이미지 업로드에 실패했습니다.");
+    err.status = res.status;
+    err.body = text;
+    throw err;
   }
+
+  return true;
 }
 
-export async function uploadProfileAsset(asset) {
-  if (!asset?.uri) {
-    throw new Error("Invalid image asset");
+export async function uploadDiaryJpeg(base64) {
+  if (!base64) {
+    throw new Error("업로드할 이미지가 없습니다.");
   }
 
-  const fileName = buildUploadFileName(asset);
-  const { url } = await getS3PresignedUrl({ path: "profiles", fileName });
+  const fileName = buildDiaryFileName();
+  const presigned = await createDiaryPresignedUrl(fileName);
 
-  if (!url) {
-    throw new Error("Failed to get presigned URL");
+  if (!presigned?.url) {
+    throw new Error("Presigned URL을 받지 못했습니다.");
   }
 
-  await uploadImageToS3({ presignedUrl: url, asset });
-  return toPublicUrl(url);
+  await uploadJpegToPresignedUrl(presigned.url, base64);
+
+  return {
+    key: presigned.key,
+    uploadUrl: presigned.url,
+    fileUrl: buildPublicUrl(presigned.key),
+  };
 }
