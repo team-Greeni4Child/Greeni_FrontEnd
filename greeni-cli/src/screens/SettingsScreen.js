@@ -237,7 +237,8 @@ export default function SettingsScreen({ route, navigation }) {
 
   const handleLogout = async () => {
     try {
-      await logout();
+      {/* 로그아웃 api 수정 완료되면 주석 풀기 */}
+      // await logout(); 
     } catch (e) {
       console.log("Logout Fail:", e);
     } finally {

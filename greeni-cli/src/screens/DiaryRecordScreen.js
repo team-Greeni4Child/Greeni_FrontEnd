@@ -24,6 +24,8 @@ import { getDiaryByDay, getDiaryVoiceByDay } from "../api/diary";
 
 const { width: W, height: H } = Dimensions.get("window");
 
+const S3_PUBLIC_BASE_URL = "https://greeni-upload-files.s3.ap-northeast-2.amazonaws.com";
+
 // "YYYY-MM-DD" | Date -> "M/D"
 const toMD = (input) => {
   let d;
@@ -46,6 +48,18 @@ const emotionToIcon = {
   ANXIETY: require("../assets/images/anxiety.png"),
 };
 
+function buildDiaryImageUri(diaryImage) {
+  if (!diaryImage || typeof diaryImage !== "string") return "";
+
+  const trimmed = diaryImage.trim();
+
+  if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
+    return trimmed;
+  }
+
+  return `${S3_PUBLIC_BASE_URL}/${trimmed}`;
+}
+
 export default function DiaryRecordScreen({ navigation, route }) {
   const { selectedProfile } = useContext(ProfileContext);
 
@@ -66,6 +80,10 @@ export default function DiaryRecordScreen({ navigation, route }) {
     const paramDate = route?.params?.date; // "YYYY-MM-DD" 기대
     return toMD(paramDate || new Date());
   }, [route?.params?.date]);
+
+  const diaryImageUri = useMemo(() => {
+    return buildDiaryImageUri(diaryData?.diaryImage);
+  }, [diaryData?.diaryImage]);
 
   // 일별 일기 조회 연동
   useEffect(() => {
@@ -211,8 +229,18 @@ export default function DiaryRecordScreen({ navigation, route }) {
         </TouchableOpacity>
       </View>
 
-      {/* 그림 영역 (지금은 빈 공간) */}
-      <View style={styles.drawArea} />
+      {/* 그림 영역 */}
+      <View style={styles.drawArea}>
+        {diaryImageUri ? (
+          <Image
+            source={{ uri: diaryImageUri }}
+            style={styles.diaryImage}
+            resizeMode="contain"
+          />
+        ) : (
+          <View style={styles.emptyWrap}/>
+        )}
+      </View>
 
       {/* 토글 */}
       <Animated.View style={[styles.toggleWrap, toggleAnimStyle]}>
@@ -292,6 +320,19 @@ const styles = StyleSheet.create({
 
   drawArea: {
     flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  diaryImage: {
+    width: "100%",
+    height: "100%",
+  },
+
+  emptyWrap: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
   },
 
   // 토글

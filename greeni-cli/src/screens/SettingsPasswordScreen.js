@@ -220,6 +220,7 @@ export default function SettingsPasswordScreen({navigation}) {
                       setPassword(text);
                     }}
                     onPressIn={() => setPasswordError("")}
+                    autoCapitalize="none"
                 />
             </View>
 

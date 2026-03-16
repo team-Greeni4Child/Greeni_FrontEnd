@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import {
   View,
   Text,
@@ -8,6 +8,7 @@ import {
   Dimensions,
   Pressable,
   Alert,
+  Modal,
 } from "react-native";
 import { launchImageLibrary } from "react-native-image-picker";
 
@@ -19,10 +20,13 @@ import PenOptionsPanel from "../components/draw/PenOptionsPanel";
 import EraserOptionsPanel from "../components/draw/EraserOptionsPanel";
 import ColorPickerModal from "../components/draw/ColorPickerModal";
 import SkiaDrawCanvas from "../components/draw/SkiaDrawCanvas";
+import { uploadDiaryJpeg } from "../api/s3";
 
 const { width: W, height: H } = Dimensions.get("window");
 
 export default function DiaryDrawScreen({ navigation }) {
+  const canvasRef = useRef(null);
+
   const [activeTool, setActiveTool] = useState("pen"); // pen | eraser | photo
 
   // 패널 on/off
@@ -38,6 +42,12 @@ export default function DiaryDrawScreen({ navigation }) {
 
   // 컬러 모달
   const [showColorModal, setShowColorModal] = useState(false);
+
+  // 저장 확인 모달
+  const [showSaveModal, setShowSaveModal] = useState(false);
+
+  // 저장 중 중복 클릭 방지
+  const [isSaving, setIsSaving] = useState(false);
 
   // 배경 사진
   const [backgroundUri, setBackgroundUri] = useState(null);
@@ -78,10 +88,52 @@ export default function DiaryDrawScreen({ navigation }) {
     }
   };
 
+  const handlePressSave = () => {
+    if (isSaving) return;
+    setShowSaveModal(true);
+  };
+
+  const handleCancelSave = () => {
+    setShowSaveModal(false);
+  };
+
+  const handleConfirmSave = async () => {
+    if (isSaving) return;
+
+    try {
+      setIsSaving(true);
+      setShowSaveModal(false);
+      closeAllPanels();
+
+      const base64 = canvasRef.current?.exportBase64?.();
+
+      if (!base64) {
+        Alert.alert("오류", "그림을 저장하지 못했어요.");
+        return;
+      }
+
+      const uploaded = await uploadDiaryJpeg(base64);
+
+      console.log("[DIARY S3 KEY]:", uploaded.key);
+      console.log("[DIARY S3 FILE URL]:", uploaded.fileUrl);
+
+      navigation.reset({
+        index: 0,
+        routes: [{ name: "Home" }],
+      });
+    } catch (e) {
+      console.log("SAVE DIARY JPEG FAIL:", e);
+      Alert.alert("오류", e?.message || "그림일기를 저장하지 못했어요.");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   return (
     <View style={styles.root}>
       <View style={styles.topBar}>
-        <BackButton navigation={navigation}
+        <BackButton
+          navigation={navigation}
           top={H * 0.08}
         />    
 
@@ -143,19 +195,19 @@ export default function DiaryDrawScreen({ navigation }) {
 
       {/* 그림 영역 */}
       <View style={styles.drawArea}>
-        {/* 배경 사진 */}
-        {backgroundUri ? (
-          <Image source={{ uri: backgroundUri }} style={styles.bgImage} resizeMode="cover" />
-        ) : null}
+        <View style={styles.captureArea}>
 
-        {/* 캔버스 */}
-        <SkiaDrawCanvas
-          tool={activeTool}
-          penColor={penColor}
-          penWidth={penWidth}
-          eraserWidth={eraserWidth}
-          enabled={activeTool === "pen" || activeTool === "eraser"}
-        />
+          {/* 캔버스 */}
+          <SkiaDrawCanvas
+            ref={canvasRef}
+            tool={activeTool}
+            penColor={penColor}
+            penWidth={penWidth}
+            eraserWidth={eraserWidth}
+            enabled={activeTool === "pen" || activeTool === "eraser"}
+            backgroundUri={backgroundUri}
+          />
+        </View>
 
         {/* 바깥 터치 → 열려있는 패널 닫기 */}
         {isAnyPanelOpen && (
@@ -198,6 +250,8 @@ export default function DiaryDrawScreen({ navigation }) {
           title="저장하기" 
           width={130}
           backgroundColor={colors.greenLight} 
+          onPress={handlePressSave}
+          disabled={isSaving}
         />
       </View>
 
@@ -211,6 +265,37 @@ export default function DiaryDrawScreen({ navigation }) {
           setShowColorModal(false);
         }}
       />
+
+      {/* 저장 확인 모달 */}
+      <Modal transparent visible={showSaveModal} animationType="fade">
+        <View style={styles.modalBackground}>
+          <View style={styles.modalWrap}>
+            <Text style={styles.modalText}>
+              오늘의 일기 작성을{"\n"}마무리할까요?
+            </Text>
+
+            <View style={styles.modalButtonWrap}>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.modalCancelButton]}
+                onPress={handleCancelSave}
+                activeOpacity={0.8}
+              >
+                <Text style={[styles.modalButtonText, { color: colors.brown }]}>
+                  아니오
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.modalButton, styles.modalConfirmButton]}
+                onPress={handleConfirmSave}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.modalButtonText}>예</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -255,9 +340,10 @@ const styles = StyleSheet.create({
     position: "relative",
   },
 
-  // 배경 이미지
-  bgImage: {
-    ...StyleSheet.absoluteFillObject,
+  captureArea: {
+    flex: 1,
+    backgroundColor: colors.ivory,
+    overflow: "hidden",
   },
 
   backdrop: {
@@ -279,5 +365,59 @@ const styles = StyleSheet.create({
     right: 0, 
     alignItems: "center",
     bottom: H * 0.05,
+  },
+
+  modalBackground: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.25)",
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 24,
+  },
+  modalWrap: {
+    width: W * 0.8,
+    backgroundColor: colors.ivory,
+    borderRadius: 20,
+    borderWidth: 2,
+    borderColor: colors.greenDark,
+    paddingHorizontal: 20,
+    paddingTop: 28,
+    paddingBottom: 18,
+    alignItems: "center",
+  },
+  modalText: {
+    fontFamily: "Maplestory_Light",
+    fontSize: 16,
+    color: colors.brown,
+    textAlign: "center",
+    lineHeight: 24,
+  },
+  modalButtonWrap: {
+    flexDirection: "row",
+    marginTop: 22,
+    gap: 12,
+  },
+  modalButton: {
+    minWidth: 110,
+    height: 44,
+    borderRadius: 10,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 14,
+  },
+  modalCancelButton: {
+    backgroundColor: colors.white,
+    borderWidth: 2,
+    borderColor: colors.greenDark,
+  },
+  modalConfirmButton: {
+    backgroundColor: colors.greenLight,
+    borderWidth: 2,
+    borderColor: colors.greenDark,
+  },
+  modalButtonText: {
+    fontFamily: "Maplestory_Bold",
+    fontSize: 14,
+    color: colors.brown,
   },
 });

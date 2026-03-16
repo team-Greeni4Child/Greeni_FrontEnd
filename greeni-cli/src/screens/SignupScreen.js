@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import colors from "../theme/colors";
 import BackButton from "../components/BackButton";
 import Button from "../components/Button";
+import TermsConsentModal from "../components/TermsConsentModal";
 import {
   View,
   Text,
@@ -50,6 +51,15 @@ export default function SignUpScreen({ navigation }) {
 
   // 이미 가입된 이메일 모달
   const [showDuplicateEmailModal, setShowDuplicateEmailModal] = useState(false);
+
+  // 약관 동의 모달
+  const [showTermsModal, setShowTermsModal] = useState(false);
+  const [terms, setTerms] = useState({
+    parentConsent: false,
+    privacyConsent: false,
+    serviceConsent: false,
+    marketingConsent: false,
+  });
 
   // 인증코드 유효시간 타이머
   const [secondsLeft, setSecondsLeft] = useState(null); // null이면 미표시
@@ -142,6 +152,15 @@ export default function SignUpScreen({ navigation }) {
     setCheckPasswordError("");
     setRuleError(false);
 
+    // 약관
+    setShowTermsModal(false);
+    setTerms({
+      parentConsent: false,
+      privacyConsent: false,
+      serviceConsent: false,
+      marketingConsent: false,
+    });
+
     // 타이머/쿨다운
     clearTimer();
     clearCooldown();
@@ -168,6 +187,18 @@ export default function SignUpScreen({ navigation }) {
   const handleDuplicateEmailOk = () => {
     setShowDuplicateEmailModal(false);
     resetSignUpForm();
+  };
+
+  const handleToggleTerm = (key) => {
+    setTerms((prev) => ({
+      ...prev,
+      [key]: !prev[key],
+    }));
+  };
+
+  const handlePressTermDetail = (key) => {
+    // TODO: 약관 상세보기
+    console.log("TERM DETAIL:", key);
   };
 
   // 이메일 인증 버튼
@@ -302,6 +333,16 @@ export default function SignUpScreen({ navigation }) {
 
     // 에러 하나라도 있으면 회원가입 중단
     if (hasError) return;
+    // 이용약관 모달 띄움
+    setShowTermsModal(true);
+  };
+
+  const handleSubmitFinalSignUp = async () => {
+    if (isSigningUp) return;
+
+    const trimmedEmail = email.trim();
+    const trimmedCode = code.trim();
+    const trimmedPw = password.trim();
 
     try {
       setIsSigningUp(true);
@@ -310,9 +351,15 @@ export default function SignUpScreen({ navigation }) {
         email: trimmedEmail,
         password: trimmedPw,
         code: trimmedCode,
+        parentConsent: terms.parentConsent,
+        privacyConsent: terms.privacyConsent,
+        serviceConsent: terms.serviceConsent,
+        marketingConsent: terms.marketingConsent,
       });
       console.log("SIGNUP OK:", res);
 
+      // 이용약관 모달 접음
+      setShowTermsModal(false);
       // 회원가입 완료 모달 띄우기
       setShowCompleteModal(true);
     } catch (e) {
@@ -320,10 +367,12 @@ export default function SignUpScreen({ navigation }) {
 
       // 이미 가입된 이메일 => 모달
       if (e?.code === "MEMBER4001") {
+        setShowTermsModal(false);
         setShowDuplicateEmailModal(true);
         return;
       }
       if (e?.code === "MEMBER4002") {
+        setShowTermsModal(false);
         setCode("");
         setCodeError("인증코드가 만료되었습니다.");
 
@@ -335,6 +384,7 @@ export default function SignUpScreen({ navigation }) {
         return;
       }
       if (e?.code === "MEMBER4003") {
+        setShowTermsModal(false);
         setCode("");
         setCodeError("인증코드가 일치하지 않습니다.");
         return;
@@ -342,6 +392,7 @@ export default function SignUpScreen({ navigation }) {
 
       // 비밀번호 형식 오류
       if (e?.code === "COMMON400") {
+        setShowTermsModal(false);
         setPassword("");
         setCheckPassword("");
         setRuleError(true);
@@ -349,6 +400,7 @@ export default function SignUpScreen({ navigation }) {
       }
 
       // 그 외(네트워크/서버 오류 등) => 모달
+      setShowTermsModal(false);
       openErrorModal(e);
     } finally {
       setIsSigningUp(false);
@@ -457,6 +509,7 @@ export default function SignUpScreen({ navigation }) {
             if (passwordError) setPasswordError("");
             if (ruleError) setRuleError(false);
           }}
+          autoCapitalize="none"
         />
 
         {/* 비밀번호 확인 */}
@@ -474,6 +527,7 @@ export default function SignUpScreen({ navigation }) {
             setCheckPassword(text);
             if (checkPasswordError) setCheckPasswordError("");
           }}
+          autoCapitalize="none"
         />
 
         {/* 비밀번호 규칙 안내문 */}
@@ -507,6 +561,15 @@ export default function SignUpScreen({ navigation }) {
           disabled={isSigningUp}
         />
       </View>
+
+      <TermsConsentModal
+        visible={showTermsModal}
+        terms={terms}
+        onClose={() => setShowTermsModal(false)}
+        onToggleTerm={handleToggleTerm}
+        onPressDetail={handlePressTermDetail}
+        onSubmit={handleSubmitFinalSignUp}
+      />
 
       {/* 회원가입 완료 모달 */}
       <Modal transparent visible={showCompleteModal}>

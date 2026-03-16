@@ -17,12 +17,13 @@ const Button = ({
     onPress = () => null,
     icon = null,
     disabled = false,
+    disabledColor = '#fcf8db',
     style={},
 }) => {
 
-    // 비활성화 상태일 때 배경색은 lightGray60으로 하고
+    // 비활성화 상태일 때는 disabledColor
     //  활성화 상태일 때는 backgroundColor로
-    const btnBackgroundColor = disabled ? '#fcf8db' : backgroundColor;
+    const btnBackgroundColor = disabled ? disabledColor : backgroundColor;
 
     return (
         <TouchableOpacity

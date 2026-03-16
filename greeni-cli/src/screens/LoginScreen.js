@@ -187,6 +187,7 @@ export default function LoginScreen({ navigation }) {
               if (passwordError) setPasswordError("");
             }}
             secureTextEntry
+            autoCapitalize="none"
           />
         </View>
 

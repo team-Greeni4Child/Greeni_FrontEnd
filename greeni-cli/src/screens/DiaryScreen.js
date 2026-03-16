@@ -37,7 +37,11 @@ export default function DiaryScreen({ navigation }) {
       </View>
 
       {/* 마이크 버튼 */}
-      <MicButton />
+      <MicButton
+        onRecordComplete={(filePath) => {
+          console.log("녹음 파일 경로:", filePath);
+        }}
+      />
 
       {/* 일기 그리러 가는 임시 버튼 */}
       <View style={styles.diaryButton} >

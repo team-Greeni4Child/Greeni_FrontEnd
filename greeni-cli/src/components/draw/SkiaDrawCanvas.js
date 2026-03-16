@@ -1,16 +1,39 @@
-import React, { useCallback, useMemo, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useMemo,
+  useRef,
+  useState,
+  forwardRef,
+  useImperativeHandle,
+} from "react";
 import { View, StyleSheet, PanResponder } from "react-native";
-import { Canvas, Path, Skia, Group } from "@shopify/react-native-skia";
+import {
+  Canvas,
+  Path,
+  Skia,
+  Group,
+  Image as SkiaImage,
+  useCanvasRef,
+  useImage,
+  ImageFormat,
+} from "@shopify/react-native-skia";
 
 // stroke: { path: SkPath, color: string, width: number, isEraser: boolean }
-export default function SkiaDrawCanvas({
-  tool = "pen", // "pen" | "eraser" | "photo"
-  penColor = "#000000",
-  penWidth = 10,
-  eraserWidth = 18,
-  enabled = true,
-}) {
+const SkiaDrawCanvas = forwardRef(function SkiaDrawCanvas(
+  {
+    tool = "pen", // "pen" | "eraser" | "photo"
+    penColor = "#000000",
+    penWidth = 10,
+    eraserWidth = 18,
+    enabled = true,
+    backgroundUri = null,
+  },
+  ref
+) {
   const [strokes, setStrokes] = useState([]);
+
+  const canvasRef = useCanvasRef();
+  const bgImage = useImage(backgroundUri || "");
 
   const currentPathRef = useRef(Skia.Path.Make());
   const currentStyleRef = useRef({
@@ -32,6 +55,7 @@ export default function SkiaDrawCanvas({
       wrapRef.current?.measure((x, y, width, height, pageX, pageY) => {
         originRef.current = { x: pageX, y: pageY };
         sizeRef.current = { width, height };
+        setTick((t) => t + 1);
       });
     });
   }, []);
@@ -92,7 +116,12 @@ export default function SkiaDrawCanvas({
 
     setStrokes((prev) => [
       ...prev,
-      { path: finished, color: style.color, width: style.width, isEraser: style.isEraser },
+      {
+        path: finished,
+        color: style.color,
+        width: style.width,
+        isEraser: style.isEraser,
+      },
     ]);
 
     currentPathRef.current = Skia.Path.Make();
@@ -157,9 +186,33 @@ export default function SkiaDrawCanvas({
 
       onPanResponderTerminationRequest: () => false,
     });
-  }, [enabled, tool, toLocalFromPage, isInsideLocal, clampToCanvas, beginStroke, extendStroke, endStroke]);
+  }, [
+    enabled,
+    tool,
+    toLocalFromPage,
+    isInsideLocal,
+    clampToCanvas,
+    beginStroke,
+    extendStroke,
+    endStroke,
+  ]);
+
+  useImperativeHandle(ref, () => ({
+    exportBase64: () => {
+      const image = canvasRef.current?.makeImageSnapshot();
+
+      if (!image) {
+        return "";
+      }
+
+      const base64 = image.encodeToBase64(ImageFormat.JPEG, 100);
+      return base64 || "";
+    },
+  }));
 
   const live = currentStyleRef.current;
+  const canvasWidth = sizeRef.current.width;
+  const canvasHeight = sizeRef.current.height;
 
   return (
     <View
@@ -168,7 +221,18 @@ export default function SkiaDrawCanvas({
       onLayout={updateBounds}
       {...panResponder.panHandlers}
     >
-      <Canvas style={styles.canvas}>
+      <Canvas ref={canvasRef} style={styles.canvas}>
+        {bgImage && canvasWidth > 0 && canvasHeight > 0 ? (
+          <SkiaImage
+            image={bgImage}
+            x={0}
+            y={0}
+            width={canvasWidth}
+            height={canvasHeight}
+            fit="cover"
+          />
+        ) : null}
+
         <Group layer>
           {strokes.map((s, idx) => (
             <Path
@@ -196,7 +260,9 @@ export default function SkiaDrawCanvas({
       </Canvas>
     </View>
   );
-}
+});
+
+export default SkiaDrawCanvas;
 
 const styles = StyleSheet.create({
   wrap: { flex: 1 },
