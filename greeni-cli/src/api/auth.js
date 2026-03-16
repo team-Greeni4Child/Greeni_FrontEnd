@@ -54,6 +54,18 @@ export async function logout() {
   });
 }
 
+/** 회원탈퇴: DELETE /api/auth/me */
+export async function deleteAccount() {
+  const accessToken = await getAccessToken();
+
+  return request("/api/auth/me", {
+    method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
+}
+
 /** 부모 페이지 비밀번호 확인: POST /api/members/parent-password */
 export function verifyParentPassword({ accessToken, password }) {
   return request("/api/members/parent-password", {

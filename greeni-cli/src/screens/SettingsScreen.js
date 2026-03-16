@@ -10,6 +10,7 @@ import {
   TouchableWithoutFeedback,
   Keyboard,
   Modal,
+  ScrollView,
 } from "react-native";
 import DateTimePicker from "react-native-modal-datetime-picker";
 
@@ -17,9 +18,12 @@ import { AuthContext } from "../App";
 import { ProfileContext } from "../context/ProfileContext";
 import { deleteProfile, modifyProfile, searchProfileList } from "../api/profile";
 import { uploadProfileAsset } from "../api/s3";
-import { logout } from "../api/auth";
+import { logout, deleteAccount } from "../api/auth";
 import { clearAuth, clearSelectedProfile } from "../utils/tokenStorage";
 import { fileByIndex, toImageSource } from "../utils/profileImageMap";
+import PrivacyPolicyContent from "../contents/PrivacyPolicyContent";
+import TermsOfServiceContent from "../contents/TermsOfServiceContent";
+import CreditsContent from "../contents/CreditsContent";
 import Button from "../components/Button";
 import BackButton from "../components/BackButton";
 import colors from "../theme/colors";
@@ -51,8 +55,11 @@ export default function SettingsScreen({ route, navigation }) {
   const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
   const [isDeleteModalVisible, setDeleteModalVisible] = useState(false);
   const [isLogoutModalVisible, setLogoutModalVisible] = useState(false);
+  const [isDeleteAccountModalVisible, setDeleteAccountModalVisible] = useState(false);
   const [showErrorModal, setShowErrorModal] = useState(false);
   const [errorModalMessage, setErrorModalMessage] = useState("");
+
+  const [activeSheet, setActiveSheet] = useState(null);
 
   const openErrorModal = (message) => {
     setErrorModalMessage(message);
@@ -241,9 +248,28 @@ export default function SettingsScreen({ route, navigation }) {
     }
   };
 
+  const handleDeleteAccount = async () => {
+    try {
+      await deleteAccount();
+    } catch (e) {
+      console.log("Delete Account Fail:", e);
+      openErrorModal(e?.message || "회원탈퇴에 실패했습니다.");
+      return;
+    }
+
+    await clearAuth();
+    setDeleteAccountModalVisible(false);
+    setStep("auth");
+  }
+
   if (!selectedProfile) {
     return <View style={styles.root} />;
   }
+
+  const handlePrivacyPress = () => setActiveSheet("privacy");
+  const handleTermsPress = () => setActiveSheet("terms");
+  const handleCreditsPress = () => setActiveSheet("credits");
+  const handleCloseSheet = () => setActiveSheet(null);
 
   return (
     <TouchableWithoutFeedback onPress={() => finishEdit()}>
@@ -430,7 +456,32 @@ export default function SettingsScreen({ route, navigation }) {
               style={{ marginBottom: 12 }}
               onPress={() => setLogoutModalVisible(true)}
             />
+            <Button
+              title="회원탈퇴"
+              backgroundColor={colors.ivory}
+              borderRadius={10}
+              borderWidth={2}
+              borderColor={colors.pinkDark}
+              width={345}
+              height={51}
+              style={{ marginBottom: 12 }}
+              onPress={() => setDeleteAccountModalVisible(true)}
+            />
           </View>
+        </View>
+
+        <View style={styles.footer}>
+          <TouchableOpacity onPress={handlePrivacyPress}>
+            <Text style={styles.footerText}>개인정보 처리방침</Text>
+          </TouchableOpacity>
+          <Text style={styles.footerDivider}>|</Text>
+          <TouchableOpacity onPress={handleTermsPress}>
+            <Text style={styles.footerText}>이용약관</Text>
+          </TouchableOpacity>
+          <Text style={styles.footerDivider}>|</Text>
+          <TouchableOpacity onPress={handleCreditsPress}>
+            <Text style={styles.footerText}>만든 사람들</Text>
+          </TouchableOpacity>
         </View>
 
         <DateTimePicker
@@ -513,6 +564,76 @@ export default function SettingsScreen({ route, navigation }) {
           </TouchableOpacity>
         </Modal>
 
+        <Modal
+          transparent
+          visible={isDeleteAccountModalVisible}
+          onRequestClose={() => setDeleteAccountModalVisible(false)}
+        >
+          <TouchableOpacity
+            style={styles.modalBackground}
+            activeOpacity={1}
+            onPressOut={() => setDeleteAccountModalVisible(false)}
+          >
+            <TouchableWithoutFeedback>
+              <View style={styles.modalWrap}>
+                <Text style={styles.modalText}>
+                  정말 탈퇴 하시겠습니까?{"\n"}한 번 탈퇴하면 되돌릴 수 없습니다.
+                </Text>
+                <View style={styles.modalButtonWrap}>
+                  <TouchableOpacity
+                    style={[styles.modalButton, styles.leftButton]}
+                    onPress={handleDeleteAccount}
+                  >
+                    <Text style={styles.modalButtonText}>예</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.modalButton, styles.rightButton]}
+                    onPress={() => setDeleteAccountModalVisible(false)}
+                  >
+                    <Text style={[styles.modalButtonText, { color: colors.brown }]}>
+                      아니오
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </TouchableWithoutFeedback>
+          </TouchableOpacity>
+        </Modal>
+
+        <Modal
+          visible={activeSheet !== null}
+          animationType="slide"
+          transparent={false}
+          onRequestClose={handleCloseSheet}
+        >
+          <View style={styles.sheetScreen}>
+            <View style={styles.sheetHeader}>
+
+              <Text style={styles.sheetTitle}>
+                {activeSheet === "privacy" && "개인정보 처리방침"}
+                {activeSheet === "terms" && "이용약관"}
+                {activeSheet === "credits" && "만든 사람들"}
+              </Text>
+
+              <TouchableOpacity style={styles.sheetCloseButton} onPress={handleCloseSheet}>
+                <Text style={styles.sheetClose}>닫기</Text>
+              </TouchableOpacity>
+
+              <View style={{ width: 40 }} />
+            </View>
+
+            <ScrollView 
+              style={styles.sheetBody}
+              contentContainerStyle={styles.sheetBodyContent}
+              showsVerticalScrollIndicator={true}
+            >
+              {activeSheet === "privacy" && <PrivacyPolicyContent />}
+              {activeSheet === "terms" && <TermsOfServiceContent />}
+              {activeSheet === "credits" && <CreditsContent />}
+            </ScrollView>
+          </View>
+        </Modal>
+
         <Modal transparent visible={showErrorModal} onRequestClose={handleErrorOk}>
           <View style={styles.errorModalBackground}>
             <View style={styles.errorModalWrap}>
@@ -539,7 +660,7 @@ const styles = StyleSheet.create({
   },
   topBackground: {
     width: W,
-    height: H * 0.82,
+    height: H * 0.87,
     backgroundColor: colors.pink,
     borderBottomLeftRadius: 30,
     borderBottomRightRadius: 30,
@@ -747,6 +868,79 @@ const styles = StyleSheet.create({
     color: colors.brown,
     fontSize: 16,
     fontFamily: "Maplestory_Light",
+  },
+  
+  footer: {
+    position: "absolute",
+    bottom: 24,
+    flexDirection: "row",
+    alignItems: 'center',
+    justifyContent: 'center'
+  },
+  footerText: {
+    fontSize: 14,
+    fontFamily: 'MapleStory_Light',
+    color: colors.lightGrayPh
+  },
+  footerDivider: {
+    marginHorizontal: 6,
+    fontSize: 14,
+    fontFamily: 'MapleStory_Light',
+    color: colors.lightGrayPh
+  },
+
+  sheetScreen: {
+    flex: 1,
+    backgroundColor: "white",
+  },
+
+  sheetHeader: {
+    height: 72,
+    paddingHorizontal: 20,
+    alignItems: "center",
+    justifyContent: "center",
+    borderBottomWidth: 1,
+    borderBottomColor: "#EEE",
+    position: "relative",
+  },
+
+  sheetCloseButton: {
+    position: "absolute",
+    right: 20,
+    top: 0,
+    bottom: 0,
+    justifyContent: "center",
+  },
+
+  sheetClose: {
+    fontSize: 16,
+    fontFamily: "Maplestory_Light",
+    color: colors.brown,
+  },
+
+  sheetTitle: {
+    fontSize: 18,
+    fontFamily: "Maplestory_Bold",
+    color: colors.brown,
+    textAlign: "center",
+  },
+
+  sheetBody: {
+    flex: 1,
+    padding: 24,
+    backgroundColor: "white",
+  },
+
+  sheetBodyContent: {
+    padding: 24,
+    paddingBottom: 40,
+  },
+
+  sheetText: {
+    fontSize: 14,
+    lineHeight: 22,
+    fontFamily: "Maplestory_Light",
+    color: colors.brown,
   },
 });
 
