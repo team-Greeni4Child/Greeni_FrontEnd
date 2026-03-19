@@ -1,11 +1,20 @@
 import React, { useContext, useEffect, useState } from "react";
-import { View, Text, Image, StyleSheet, Dimensions, TouchableOpacity } from "react-native";
+import {
+  View,
+  Text,
+  Image,
+  StyleSheet,
+  Dimensions,
+  TouchableOpacity,
+  Modal,
+  TouchableWithoutFeedback,
+} from "react-native";
 import { StatusBar } from "react-native";
 import { AuthContext } from "../App";
 import { ProfileContext } from "../context/ProfileContext";
 import { searchProfileList, searchSingleProfile } from "../api/profile";
 import { toImageSource } from "../utils/profileImageMap";
-import { saveSelectedProfile, clearAuth } from "../utils/tokenStorage";
+import { saveSelectedProfile, clearAuth, clearSelectedProfile } from "../utils/tokenStorage";
 import colors from "../theme/colors";
 
 const { width: W, height: H } = Dimensions.get("window");
@@ -14,7 +23,9 @@ const MAX_PROFILES = 6;
 export default function ProfileSelectScreen({ route, navigation }) {
   const { profiles, setProfiles, setSelectedProfile } = useContext(ProfileContext);
   const { step, setStep } = useContext(AuthContext);
+
   const [isSelecting, setIsSelecting] = useState(false);
+  const [isLogoutModalVisible, setLogoutModalVisible] = useState(false);
 
   const goNext = () => {
     if (step === "main") {
@@ -30,6 +41,7 @@ export default function ProfileSelectScreen({ route, navigation }) {
   const goAuthAndReset = async () => {
     try {
       await clearAuth();
+      await clearSelectedProfile();
     } catch (err) {
       console.log("CLEAR AUTH FAIL:", err);
     } finally {
@@ -97,6 +109,24 @@ export default function ProfileSelectScreen({ route, navigation }) {
     }
   };
 
+  const handleLogout = async () => {
+    try {
+      {
+        /* 로그아웃 api 수정 완료되면 주석 풀기 */
+      }
+      // await logout();
+    } catch (e) {
+      console.log("Logout Fail:", e);
+    } finally {
+      await clearAuth();
+      await clearSelectedProfile();
+      setLogoutModalVisible(false);
+      setSelectedProfile(null);
+      setProfiles([]);
+      setStep("auth");
+    }
+  };
+
   useEffect(() => {
     const load = async () => {
       try {
@@ -155,6 +185,51 @@ export default function ProfileSelectScreen({ route, navigation }) {
           </TouchableOpacity>
         )}
       </View>
+
+      <TouchableOpacity
+        style={styles.logoutTextWrap}
+        activeOpacity={0.7}
+        onPress={() => setLogoutModalVisible(true)}
+      >
+        <Image
+          source={require("../assets/images/logout.png")}
+          style={styles.logoutIcon}
+          resizeMode="contain"
+        />
+        <Text style={styles.logoutText}>로그아웃</Text>
+      </TouchableOpacity>
+
+      <Modal
+        transparent
+        visible={isLogoutModalVisible}
+        onRequestClose={() => setLogoutModalVisible(false)}
+      >
+        <TouchableOpacity
+          style={styles.modalBackground}
+          activeOpacity={1}
+          onPressOut={() => setLogoutModalVisible(false)}
+        >
+          <TouchableWithoutFeedback>
+            <View style={styles.modalWrap}>
+              <Text style={styles.modalText}>정말 로그아웃하시겠습니까?</Text>
+              <View style={styles.modalButtonWrap}>
+                <TouchableOpacity
+                  style={[styles.modalButton, styles.leftButton]}
+                  onPress={handleLogout}
+                >
+                  <Text style={styles.modalButtonText}>예</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.modalButton, styles.rightButton]}
+                  onPress={() => setLogoutModalVisible(false)}
+                >
+                  <Text style={[styles.modalButtonText, { color: colors.brown }]}>아니오</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </TouchableWithoutFeedback>
+        </TouchableOpacity>
+      </Modal>
     </View>
   );
 }
@@ -185,6 +260,7 @@ const styles = StyleSheet.create({
     flexWrap: "wrap",
     justifyContent: "center",
     alignItems: "center",
+    paddingBottom: H * 0.08,
   },
   profile: {
     width: 120,
@@ -219,5 +295,76 @@ const styles = StyleSheet.create({
     width: "70%",
     height: "70%",
     resizeMode: "contain",
+  },
+
+  logoutTextWrap: {
+    position: "absolute",
+    bottom: H * 0.06,
+    alignSelf: "center",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+
+  logoutIcon: {
+    width: 18,
+    height: 18,
+    tintColor: "#E57373",
+  },
+
+  logoutText: {
+    fontSize: 14,
+    fontFamily: "Maplestory_Light",
+    color: "#E57373",
+  },
+
+  modalBackground: {
+    flex: 1,
+    backgroundColor: colors.lightGray95,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalWrap: {
+    width: W * 0.8,
+    backgroundColor: colors.ivory,
+    borderRadius: 20,
+    borderWidth: 3,
+    borderColor: colors.pinkDark,
+    paddingTop: 30,
+    paddingBottom: 0,
+    alignItems: "center",
+    justifyContent: "flex-end",
+  },
+  modalText: {
+    fontSize: 16,
+    fontFamily: "Maplestory_Light",
+    color: colors.brown,
+    textAlign: "center",
+    marginBottom: 30,
+  },
+  modalButtonWrap: {
+    flexDirection: "row",
+    height: 44,
+    width: "100%",
+  },
+  modalButton: {
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  leftButton: {
+    borderBottomLeftRadius: 20,
+    backgroundColor: colors.ivory,
+    width: "50%",
+  },
+  rightButton: {
+    borderBottomRightRadius: 17,
+    borderLeftWidth: 0,
+    backgroundColor: colors.pink,
+    width: "50%",
+  },
+  modalButtonText: {
+    color: colors.brown,
+    fontSize: 16,
+    fontFamily: "Maplestory_Light",
   },
 });
