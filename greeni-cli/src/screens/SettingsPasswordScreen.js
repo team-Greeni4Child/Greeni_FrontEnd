@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { 
-  View, 
+import {
+  View,
   Text,
-  TextInput, 
-  Image, 
-  StyleSheet, 
-  Dimensions, 
+  TextInput,
+  Image,
+  StyleSheet,
+  Dimensions,
   ImageBackground,
   TouchableOpacity,
   Modal,
@@ -21,7 +21,7 @@ import { getAccessToken } from "../utils/tokenStorage";
 // 현재 기기의 화면 너비 W, 화면 높이 H
 const { width: W, height: H } = Dimensions.get("window");
 
-export default function SettingsPasswordScreen({navigation}) {
+export default function SettingsPasswordScreen({ navigation }) {
   const [password, setPassword] = useState("");
   const [passwordError, setPasswordError] = useState("");
 
@@ -82,7 +82,6 @@ export default function SettingsPasswordScreen({navigation}) {
       // 예상치 못한 응답
       console.log("UNEXPECTED_RESPONSE:", res);
       setShowErrorModal(true);
-
     } catch (e) {
       console.log("PARENT PASSWORD VERIFY FAIL:", e);
 
@@ -106,152 +105,151 @@ export default function SettingsPasswordScreen({navigation}) {
       setPasswordError("");
       setShowErrorModal(false);
       setIsVerifying(false);
-    }, [])
+    }, []),
   );
 
-    // return (
-    //     <View style={styles.root}>
-    //         <StatusBar style="dark-content" />
+  // return (
+  //     <View style={styles.root}>
+  //         <StatusBar style="dark-content" />
 
-    //         {/* 상단 뒤로가기 버튼 */}
-    //         <BackButton navigation={navigation} />
+  //         {/* 상단 뒤로가기 버튼 */}
+  //         <BackButton navigation={navigation} />
 
-    //         {/* 그리니 말풍선 */}
-    //         <View style={styles.greeniWrap}>
-    //           <ImageBackground
-    //             style={styles.bubble}
-    //             source={require("../assets/images/bubble_settingspassword.png")}
-    //           >
-    //             <Text style={styles.bubbleText}>여기서부터는 보호자만{"\n"} 볼 수 있어요!</Text>
-    //           </ImageBackground>
-    //           <Image
-    //             style={styles.greeni}
-    //             source={require("../assets/images/settings_greeni_big.png")}/>
-    //         </View>
+  //         {/* 그리니 말풍선 */}
+  //         <View style={styles.greeniWrap}>
+  //           <ImageBackground
+  //             style={styles.bubble}
+  //             source={require("../assets/images/bubble_settingspassword.png")}
+  //           >
+  //             <Text style={styles.bubbleText}>여기서부터는 보호자만{"\n"} 볼 수 있어요!</Text>
+  //           </ImageBackground>
+  //           <Image
+  //             style={styles.greeni}
+  //             source={require("../assets/images/settings_greeni_big.png")}/>
+  //         </View>
 
-    //         {/* 비밀번호 찾기 */}
-    //         <View style={styles.linkWrap}>
-    //           <TouchableOpacity 
-    //             style={styles.linkButton}
-    //             onPress={() => navigation.navigate("FindPassword")}
-    //           >
-    //             <Text style={styles.linkText}>비밀번호 찾기   {'>'}</Text>
-    //           </TouchableOpacity>
-    //         </View>
+  //         {/* 비밀번호 찾기 */}
+  //         <View style={styles.linkWrap}>
+  //           <TouchableOpacity
+  //             style={styles.linkButton}
+  //             onPress={() => navigation.navigate("FindPassword")}
+  //           >
+  //             <Text style={styles.linkText}>비밀번호 찾기   {'>'}</Text>
+  //           </TouchableOpacity>
+  //         </View>
 
-    //         {/* 비밀번호 입력 */}
-    //         <View style={styles.inputWrap}>
-    //             <TextInput
-    //                 style={[styles.input,
-    //                   {
-    //                     borderBottomColor: passwordError ? '#f36945' : colors.greenDark 
-    //                   }
-    //                 ]}
-    //                 placeholder={passwordError ? passwordError : "비밀번호를 입력해주세요"}
-    //                 placeholderTextColor={passwordError ? "#f36945" : "#999"}
-    //                 secureTextEntry
-    //                 value={password}
-    //                 onChangeText={(text) => {
-    //                   setPassword(text);
-    //                 }}
-    //                 onPressIn={() => setPasswordError("")}
-    //             />
-    //         </View>
+  //         {/* 비밀번호 입력 */}
+  //         <View style={styles.inputWrap}>
+  //             <TextInput
+  //                 style={[styles.input,
+  //                   {
+  //                     borderBottomColor: passwordError ? '#f36945' : colors.greenDark
+  //                   }
+  //                 ]}
+  //                 placeholder={passwordError ? passwordError : "비밀번호를 입력해주세요"}
+  //                 placeholderTextColor={passwordError ? "#f36945" : "#999"}
+  //                 secureTextEntry
+  //                 value={password}
+  //                 onChangeText={(text) => {
+  //                   setPassword(text);
+  //                 }}
+  //                 onPressIn={() => setPasswordError("")}
+  //             />
+  //         </View>
 
-    //         {/* 다음 버튼 */}
-    //         <View style={styles.bottomWrap}>
-    //             <Button
-    //                 title="다음"
-    //                 onPress={handlePassword}
-    //                 icon={require("../assets/images/next.png")}
-    //                 disabled={password.length === 0}
-    //             />
-    //         </View>
-    //     </View>
-    // )
+  //         {/* 다음 버튼 */}
+  //         <View style={styles.bottomWrap}>
+  //             <Button
+  //                 title="다음"
+  //                 onPress={handlePassword}
+  //                 icon={require("../assets/images/next.png")}
+  //                 disabled={password.length === 0}
+  //             />
+  //         </View>
+  //     </View>
+  // )
 
+  return (
+    <View style={styles.root}>
+      <StatusBar style="dark-content" />
 
+      {/* 상단 뒤로가기 버튼 */}
+      <BackButton navigation={navigation} />
 
+      {/* 그리니 말풍선 */}
+      <View style={styles.greeniWrap}>
+        <ImageBackground
+          style={styles.bubble}
+          source={require("../assets/images/bubble_settingspassword.png")}
+        >
+          <Text style={styles.bubbleText}>여기서부터는 보호자만{"\n"} 볼 수 있어요!</Text>
+        </ImageBackground>
+        <View style={styles.greeniRow}>
+          <Image
+            style={styles.greeni}
+            source={require("../assets/images/settings_greeni_big.png")}
+          />
+          {/* 비밀번호 찾기 */}
 
-    return (
-        <View style={styles.root}>
-            <StatusBar style="dark-content" />
-
-            {/* 상단 뒤로가기 버튼 */}
-            <BackButton navigation={navigation} />
-
-            {/* 그리니 말풍선 */}
-            <View style={styles.greeniWrap}>
-              <ImageBackground
-                style={styles.bubble}
-                source={require("../assets/images/bubble_settingspassword.png")}
-              >
-                <Text style={styles.bubbleText}>여기서부터는 보호자만{"\n"} 볼 수 있어요!</Text>
-              </ImageBackground>
-              <View style={styles.greeniRow}>
-                <Image
-                  style={styles.greeni}
-                  source={require("../assets/images/settings_greeni_big.png")}/>
-                {/* 비밀번호 찾기 */}
-            
-                <TouchableOpacity 
-                  style={styles.findPasswordBtn}
-                  activeOpacity={0.85}
-                  onPress={() => navigation.navigate("FindPassword")}
-                >
-                  <Text style={styles.findPasswordBtnText}>비밀번호 찾기   {'>'}</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-
-            {/* 비밀번호 입력 */}
-            <View style={styles.inputWrap}>
-                <TextInput
-                    style={[styles.input,
-                      {
-                        borderBottomColor: passwordError ? colors.red : colors.greenDark 
-                      }
-                    ]}
-                    placeholder={passwordError ? passwordError : "비밀번호를 입력해주세요"}
-                    placeholderTextColor={passwordError ? colors.red : colors.lightGrayPh}
-                    secureTextEntry
-                    value={password}
-                    onChangeText={(text) => {
-                      setPassword(text);
-                    }}
-                    onPressIn={() => setPasswordError("")}
-                    autoCapitalize="none"
-                />
-            </View>
-
-            {/* 다음 버튼 */}
-            <View style={styles.bottomWrap}>
-                <Button
-                    title="다음"
-                    onPress={handlePassword}
-                    icon={require("../assets/images/next.png")}
-                    disabled={password.length === 0 || isVerifying}
-                />
-            </View>
-
-            {/* 네트워크/서버 오류 모달 */}
-            <Modal transparent visible={showErrorModal}>
-                <View style={styles.modalBackground}>
-                    <View style={styles.modalWrap}>
-                        <Text style={styles.modalText}>
-                            {"오류가 발생했습니다.\n잠시 후 다시 시도해주세요."}
-                        </Text>
-
-                        <View style={styles.modalButtonWrap}>
-                            <TouchableOpacity style={[styles.modalButton]} onPress={handleErrorOk}>
-                                <Text style={styles.modalButtonText}>확인</Text>
-                            </TouchableOpacity>
-                        </View>
-                    </View>
-                </View>
-            </Modal>
+          <TouchableOpacity
+            style={styles.findPasswordBtn}
+            activeOpacity={0.85}
+            onPress={() => navigation.navigate("FindPassword")}
+          >
+            <Text style={styles.findPasswordBtnText}>비밀번호 찾기 {">"}</Text>
+          </TouchableOpacity>
         </View>
-    );
+      </View>
+
+      {/* 비밀번호 입력 */}
+      <View style={styles.inputWrap}>
+        <TextInput
+          style={[
+            styles.input,
+            {
+              borderBottomColor: passwordError ? colors.red : colors.greenDark,
+            },
+          ]}
+          placeholder={passwordError ? passwordError : "비밀번호를 입력해주세요"}
+          placeholderTextColor={passwordError ? colors.red : colors.lightGrayPh}
+          secureTextEntry
+          value={password}
+          onChangeText={text => {
+            setPassword(text);
+          }}
+          onPressIn={() => setPasswordError("")}
+          autoCapitalize="none"
+        />
+      </View>
+
+      {/* 다음 버튼 */}
+      <View style={styles.bottomWrap}>
+        <Button
+          title="다음"
+          onPress={handlePassword}
+          icon={require("../assets/images/next.png")}
+          disabled={password.length === 0 || isVerifying}
+        />
+      </View>
+
+      {/* 네트워크/서버 오류 모달 */}
+      <Modal transparent visible={showErrorModal}>
+        <View style={styles.modalBackground}>
+          <View style={styles.modalWrap}>
+            <Text style={styles.modalText}>
+              {"오류가 발생했습니다.\n잠시 후 다시 시도해주세요."}
+            </Text>
+
+            <View style={styles.modalButtonWrap}>
+              <TouchableOpacity style={[styles.modalButton]} onPress={handleErrorOk}>
+                <Text style={styles.modalButtonText}>확인</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+    </View>
+  );
 }
 
 // const styles = StyleSheet.create({
@@ -260,7 +258,7 @@ export default function SettingsPasswordScreen({navigation}) {
 //     flexDirection: 'column',
 //     alignItems: "center",
 //     justifyContent: "center",
-//     backgroundColor: colors.ivory, 
+//     backgroundColor: colors.ivory,
 //   },
 
 //   greeniWrap: {
@@ -321,9 +319,8 @@ export default function SettingsPasswordScreen({navigation}) {
 //     paddingRight: W * 0.15,
 //   },
 
-
 //   // linkWrap: {
-//   //   flexDirection: "column", 
+//   //   flexDirection: "column",
 //   //   justifyContent: "flex-end",
 //   //   height: H * 0.2,
 //   // },
@@ -344,37 +341,36 @@ export default function SettingsPasswordScreen({navigation}) {
 //   // },
 // })
 
-
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    flexDirection: 'column',
+    flexDirection: "column",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: colors.ivory, 
+    backgroundColor: colors.ivory,
   },
 
   greeniWrap: {
-    position: 'absolute',
-    flexDirection: 'column',
+    position: "absolute",
+    flexDirection: "column",
     top: H * 0.17,
-    justifyContent: 'center',
-    alignItems: 'flex-start',
+    justifyContent: "center",
+    alignItems: "flex-start",
   },
   greeniRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 8
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 8,
   },
   greeni: {
-    aspectRatio: 90/125,
+    aspectRatio: 90 / 125,
     width: 90,
     height: 125,
   },
   bubble: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    aspectRatio: 230/120,
+    justifyContent: "center",
+    alignItems: "center",
+    aspectRatio: 230 / 120,
     width: 230,
     height: 120,
     marginLeft: 40,
@@ -383,17 +379,17 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontFamily: "gangwongyoyuksaeeum",
     color: colors.brown,
-    textAlign: 'center',
-    maxWidth : 270,
+    textAlign: "center",
+    maxWidth: 270,
   },
 
   inputWrap: {
-    position: 'absolute',
-    top: H * 0.50,
+    position: "absolute",
+    top: H * 0.5,
     width: W,
     height: 60,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   input: {
     fontSize: 14,
@@ -417,7 +413,6 @@ const styles = StyleSheet.create({
     paddingRight: W * 0.15,
   },
 
-
   findPasswordBtn: {
     borderWidth: 2,
     borderColor: colors.greenDark,
@@ -427,8 +422,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     marginTop: H * 0.1,
     alignItems: "center",
-    justifyContent: 'center',
-    marginLeft: 14
+    justifyContent: "center",
+    marginLeft: 14,
   },
   findPasswordBtnText: {
     color: colors.brown,

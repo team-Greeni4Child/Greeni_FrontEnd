@@ -28,7 +28,7 @@ const SkiaDrawCanvas = forwardRef(function SkiaDrawCanvas(
     enabled = true,
     backgroundUri = null,
   },
-  ref
+  ref,
 ) {
   const [strokes, setStrokes] = useState([]);
 
@@ -55,7 +55,7 @@ const SkiaDrawCanvas = forwardRef(function SkiaDrawCanvas(
       wrapRef.current?.measure((x, y, width, height, pageX, pageY) => {
         originRef.current = { x: pageX, y: pageY };
         sizeRef.current = { width, height };
-        setTick((t) => t + 1);
+        setTick(t => t + 1);
       });
     });
   }, []);
@@ -89,22 +89,22 @@ const SkiaDrawCanvas = forwardRef(function SkiaDrawCanvas(
 
       const isEraser = tool === "eraser";
       currentStyleRef.current = {
-        color: isEraser ? "transparent" : penColor, 
+        color: isEraser ? "transparent" : penColor,
         width: isEraser ? eraserWidth : penWidth,
         isEraser,
       };
 
       isDrawingRef.current = true;
 
-      setTick((t) => t + 1);
+      setTick(t => t + 1);
     },
-    [tool, penColor, penWidth, eraserWidth]
+    [tool, penColor, penWidth, eraserWidth],
   );
 
   const extendStroke = useCallback((x, y) => {
     if (!isDrawingRef.current) return;
     currentPathRef.current.lineTo(x, y);
-    setTick((t) => t + 1);
+    setTick(t => t + 1);
   }, []);
 
   const endStroke = useCallback(() => {
@@ -114,7 +114,7 @@ const SkiaDrawCanvas = forwardRef(function SkiaDrawCanvas(
     const finished = currentPathRef.current.copy();
     const style = currentStyleRef.current;
 
-    setStrokes((prev) => [
+    setStrokes(prev => [
       ...prev,
       {
         path: finished,
@@ -125,7 +125,7 @@ const SkiaDrawCanvas = forwardRef(function SkiaDrawCanvas(
     ]);
 
     currentPathRef.current = Skia.Path.Make();
-    setTick((t) => t + 1);
+    setTick(t => t + 1);
   }, []);
 
   const panResponder = useMemo(() => {
@@ -135,7 +135,7 @@ const SkiaDrawCanvas = forwardRef(function SkiaDrawCanvas(
       onStartShouldSetPanResponder: () => canDraw,
       onMoveShouldSetPanResponder: () => canDraw,
 
-      onPanResponderGrant: (evt) => {
+      onPanResponderGrant: evt => {
         if (!canDraw) return;
 
         const { pageX, pageY } = evt.nativeEvent;
@@ -149,7 +149,7 @@ const SkiaDrawCanvas = forwardRef(function SkiaDrawCanvas(
         beginStroke(local.x, local.y);
       },
 
-      onPanResponderMove: (evt) => {
+      onPanResponderMove: evt => {
         if (!canDraw) return;
 
         const { pageX, pageY } = evt.nativeEvent;
@@ -215,12 +215,7 @@ const SkiaDrawCanvas = forwardRef(function SkiaDrawCanvas(
   const canvasHeight = sizeRef.current.height;
 
   return (
-    <View
-      ref={wrapRef}
-      style={styles.wrap}
-      onLayout={updateBounds}
-      {...panResponder.panHandlers}
-    >
+    <View ref={wrapRef} style={styles.wrap} onLayout={updateBounds} {...panResponder.panHandlers}>
       <Canvas ref={canvasRef} style={styles.canvas}>
         {bgImage && canvasWidth > 0 && canvasHeight > 0 ? (
           <SkiaImage

@@ -8,64 +8,38 @@ export default function EraserOptionsPanel({ eraserWidth, setEraserWidth }) {
     <View style={styles.panel}>
       <View style={styles.presetRow}>
         <TouchableOpacity
-          style={[
-            styles.presetBtn,
-            eraserWidth === 10 && styles.presetBtnActive,
-          ]}
+          style={[styles.presetBtn, eraserWidth === 10 && styles.presetBtnActive]}
           onPress={() => setEraserWidth(10)}
           activeOpacity={0.8}
         >
-          <Text
-            style={[
-              styles.presetText,
-              eraserWidth === 10 && styles.presetTextActive,
-            ]}
-          >
+          <Text style={[styles.presetText, eraserWidth === 10 && styles.presetTextActive]}>
             작음
           </Text>
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={[
-            styles.presetBtn,
-            eraserWidth === 30 && styles.presetBtnActive,
-          ]}
+          style={[styles.presetBtn, eraserWidth === 30 && styles.presetBtnActive]}
           onPress={() => setEraserWidth(30)}
           activeOpacity={0.8}
         >
-          <Text
-            style={[
-              styles.presetText,
-              eraserWidth === 30 && styles.presetTextActive,
-            ]}
-          >
+          <Text style={[styles.presetText, eraserWidth === 30 && styles.presetTextActive]}>
             보통
           </Text>
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={[
-            styles.presetBtn,
-            eraserWidth === 60 && styles.presetBtnActive,
-          ]}
+          style={[styles.presetBtn, eraserWidth === 60 && styles.presetBtnActive]}
           onPress={() => setEraserWidth(60)}
           activeOpacity={0.8}
         >
-          <Text
-            style={[
-              styles.presetText,
-              eraserWidth === 60 && styles.presetTextActive,
-            ]}
-          >
-            큼
-          </Text>
+          <Text style={[styles.presetText, eraserWidth === 60 && styles.presetTextActive]}>큼</Text>
         </TouchableOpacity>
       </View>
 
       <View style={styles.thicknessRow}>
         <TouchableOpacity
           style={styles.thicknessBtn}
-          onPress={() => setEraserWidth((v) => Math.max(5, v - 1))}
+          onPress={() => setEraserWidth(v => Math.max(5, v - 1))}
           activeOpacity={0.8}
         >
           <Text style={styles.thicknessBtnText}>—</Text>
@@ -85,7 +59,7 @@ export default function EraserOptionsPanel({ eraserWidth, setEraserWidth }) {
 
         <TouchableOpacity
           style={styles.thicknessBtn}
-          onPress={() => setEraserWidth((v) => Math.min(80, v + 1))}
+          onPress={() => setEraserWidth(v => Math.min(80, v + 1))}
           activeOpacity={0.8}
         >
           <Text style={styles.thicknessBtnText}>＋</Text>

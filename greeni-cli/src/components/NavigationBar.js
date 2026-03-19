@@ -1,12 +1,5 @@
 import React, { useRef, useEffect, useMemo } from "react";
-import {
-  View,
-  TouchableOpacity,
-  StyleSheet,
-  Image,
-  Animated,
-  Dimensions,
-} from "react-native";
+import { View, TouchableOpacity, StyleSheet, Image, Animated, Dimensions } from "react-native";
 import colors from "../theme/colors";
 import MaskedView from "@react-native-masked-view/masked-view";
 import Svg, { Defs, Mask, Rect, Path, G } from "react-native-svg";
@@ -27,13 +20,13 @@ export default function NavigationBar({ state = 0, onTabPress }) {
   const TAB_COUNT = 4;
 
   const animValues = Array.from({ length: TAB_COUNT }).map(
-    () => useRef(new Animated.Value(0)).current
+    () => useRef(new Animated.Value(0)).current,
   );
   const dentAnimValues = Array.from({ length: TAB_COUNT }).map(
-    () => useRef(new Animated.Value(0)).current
+    () => useRef(new Animated.Value(0)).current,
   );
   const dotAnimValues = Array.from({ length: TAB_COUNT }).map(
-    () => useRef(new Animated.Value(0)).current
+    () => useRef(new Animated.Value(0)).current,
   );
 
   useEffect(() => {
@@ -42,7 +35,7 @@ export default function NavigationBar({ state = 0, onTabPress }) {
       Animated.spring(anim, {
         toValue: i === state ? 1 : 0,
         useNativeDriver: false,
-        damping: 30,    
+        damping: 30,
       }).start();
     });
 
@@ -94,7 +87,7 @@ export default function NavigationBar({ state = 0, onTabPress }) {
   const tabCentersX = useMemo(() => {
     const innerW = BAR_W - BAR_PAD_X * 2;
     return Array.from({ length: TAB_COUNT }).map(
-      (_, i) => BAR_PAD_X + (innerW / TAB_COUNT) * (i + 0.5)
+      (_, i) => BAR_PAD_X + (innerW / TAB_COUNT) * (i + 0.5),
     );
   }, [BAR_W]);
 
@@ -133,22 +126,11 @@ export default function NavigationBar({ state = 0, onTabPress }) {
                       { translateY: dentTranslateY },
                     ]}
                   >
-                    <Path
-                      d={DENT_D}
-                      fill="black"
-                      transform={[{ scaleX }, { scaleY }]}
-                    />
+                    <Path d={DENT_D} fill="black" transform={[{ scaleX }, { scaleY }]} />
                   </AnimatedG>
                 </Mask>
               </Defs>
-              <Rect
-                x="0"
-                y="0"
-                width={BAR_W}
-                height={BAR_H}
-                fill="white"
-                mask="url(#barCut)"
-              />
+              <Rect x="0" y="0" width={BAR_W} height={BAR_H} fill="white" mask="url(#barCut)" />
             </Svg>
           }
         >
@@ -183,10 +165,7 @@ export default function NavigationBar({ state = 0, onTabPress }) {
               {/* 점 */}
               {isActive && (
                 <Animated.View
-                  style={[
-                    styles.dot,
-                    { transform: [{ translateY: dotAnimValues[i] }] },
-                  ]}
+                  style={[styles.dot, { transform: [{ translateY: dotAnimValues[i] }] }]}
                 />
               )}
             </Animated.View>

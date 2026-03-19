@@ -1,7 +1,7 @@
 import React, { useMemo, useState, useCallback } from "react";
 import { View, Image, StyleSheet } from "react-native";
 
-const mulberry32 = (a) => () => {
+const mulberry32 = a => () => {
   let t = (a += 0x6d2b79f5);
   t = Math.imul(t ^ (t >>> 15), t | 1);
   t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
@@ -37,7 +37,7 @@ export default function EmotionVanderAggregateStackFixed({
 }) {
   const [box, setBox] = useState({ w: 0, h: 0 });
 
-  const onLayout = useCallback((e) => {
+  const onLayout = useCallback(e => {
     const { width, height } = e.nativeEvent.layout;
     setBox({ w: width, h: height });
   }, []);
@@ -55,8 +55,8 @@ export default function EmotionVanderAggregateStackFixed({
   // 2) 표시할 감정들
   const itemsToShow = useMemo(() => {
     return keys
-      .map((k) => ({ key: k, count: counts[k] || 0 }))
-      .filter((x) => x.count > 0 && !!sourceMap[x.key]);
+      .map(k => ({ key: k, count: counts[k] || 0 }))
+      .filter(x => x.count > 0 && !!sourceMap[x.key]);
   }, [counts, keys, sourceMap]);
 
   const placed = useMemo(() => {
@@ -117,8 +117,7 @@ export default function EmotionVanderAggregateStackFixed({
         if (collides(cand, items, idx)) continue;
 
         const downBetter = cand.cy > best.cy + 0.5;
-        const leftBetter =
-          Math.abs(cand.cy - best.cy) <= 0.5 && cand.cx < best.cx - 0.5;
+        const leftBetter = Math.abs(cand.cy - best.cy) <= 0.5 && cand.cx < best.cx - 0.5;
 
         if (downBetter || leftBetter) {
           best = { cx: cand.cx, cy: cand.cy };
@@ -138,7 +137,7 @@ export default function EmotionVanderAggregateStackFixed({
     const baseMin = minWH * minSizeRatio;
     const baseMax = minWH * maxSizeRatio;
 
-    const countToSize = (count) => {
+    const countToSize = count => {
       const c = clamp(count, 1, maxCount);
 
       // 0..1 정규화 (log)
@@ -154,8 +153,7 @@ export default function EmotionVanderAggregateStackFixed({
     for (let i = 0; i < sorted.length; i++) {
       const { key, count } = sorted[i];
 
-      const rotate =
-        rng() < 0.85 ? rng() * 40 - 20 : rng() * 360 - 180;
+      const rotate = rng() < 0.85 ? rng() * 40 - 20 : rng() * 360 - 180;
       const scale = 0.98 + rng() * 0.04;
 
       // 배치 실패해도 절대 스킵하지 않고,
@@ -168,7 +166,7 @@ export default function EmotionVanderAggregateStackFixed({
       let finalSize = base;
 
       // 강제로라도 놓기 위해 shrink를 넓게(마지막엔 꽤 작아질 수 있음)
-      const shrinkTries = [1.0, 0.92, 0.85, 0.78, 0.72, 0.66, 0.60, 0.54, 0.48];
+      const shrinkTries = [1.0, 0.92, 0.85, 0.78, 0.72, 0.66, 0.6, 0.54, 0.48];
 
       for (const shrink of shrinkTries) {
         const size = base * shrink;
@@ -232,7 +230,7 @@ export default function EmotionVanderAggregateStackFixed({
       }
     }
 
-    return items.map((it) => ({
+    return items.map(it => ({
       key: it.key,
       size: it.size,
       x: it.cx - it.size / 2,
@@ -259,7 +257,7 @@ export default function EmotionVanderAggregateStackFixed({
 
   return (
     <View onLayout={onLayout} style={[styles.container, style]}>
-      {placed.map((p) => (
+      {placed.map(p => (
         <Image
           key={p.key}
           source={sourceMap[p.key]}

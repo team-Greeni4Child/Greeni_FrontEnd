@@ -39,10 +39,5 @@ export async function clearSelectedProfile() {
 }
 
 export async function clearAuth() {
-  await AsyncStorage.multiRemove([
-    KEY_ACCESS,
-    KEY_REFRESH,
-    KEY_MEMBER_ID,
-    KEY_SELECTED_PROFILE,
-  ]);
+  await AsyncStorage.multiRemove([KEY_ACCESS, KEY_REFRESH, KEY_MEMBER_ID, KEY_SELECTED_PROFILE]);
 }

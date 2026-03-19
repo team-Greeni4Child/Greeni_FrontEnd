@@ -3,13 +3,13 @@ import colors from "../theme/colors";
 import BackButton from "../components/BackButton";
 import Button from "../components/Button";
 import { resetPassword } from "../api/auth";
-import { 
-  View, 
-  Text, 
-  TextInput, 
-  StyleSheet, 
-  Image, 
-  Dimensions, 
+import {
+  View,
+  Text,
+  TextInput,
+  StyleSheet,
+  Image,
+  Dimensions,
   TouchableOpacity,
   Modal,
 } from "react-native";
@@ -55,7 +55,7 @@ export default function ResetPasswordScreen({ navigation, route }) {
     }
   }, []);
 
-  const openErrorModal = (err) => {
+  const openErrorModal = err => {
     console.log(err?.message);
     setGoLogin(false);
     setShowErrorModal(true);
@@ -83,7 +83,6 @@ export default function ResetPasswordScreen({ navigation, route }) {
 
     let hasError = false;
     let shouldValidateCheckPw = true; // 비밀번호 규칙에 걸리면 false
-
 
     // 1) 비밀번호 검사
     if (!trimmedPw) {
@@ -181,16 +180,13 @@ export default function ResetPasswordScreen({ navigation, route }) {
         <View style={styles.inputsWrap}>
           {/* 비밀번호 */}
           <TextInput
-            style={[
-              styles.input,
-              passwordError ? { borderBottomColor: "#f36945" } : {},
-            ]}
+            style={[styles.input, passwordError ? { borderBottomColor: "#f36945" } : {}]}
             fontFamily="Maplestory_Light"
             placeholder={passwordError ? passwordError : "비밀번호"}
             placeholderTextColor={passwordError ? "#f36945" : colors.brown}
             secureTextEntry
             value={password}
-            onChangeText={(text) => {
+            onChangeText={text => {
               setPassword(text);
               if (passwordError) setPasswordError("");
               if (ruleError) setRuleError(false);
@@ -200,20 +196,13 @@ export default function ResetPasswordScreen({ navigation, route }) {
 
           {/* 비밀번호 확인 */}
           <TextInput
-            style={[
-              styles.input,
-              checkPasswordError ? { borderBottomColor: "#f36945" } : {},
-            ]}
+            style={[styles.input, checkPasswordError ? { borderBottomColor: "#f36945" } : {}]}
             fontFamily="Maplestory_Light"
-            placeholder={
-              checkPasswordError ? checkPasswordError : "비밀번호 확인"
-            }
-            placeholderTextColor={
-              checkPasswordError ? "#f36945" : colors.brown
-            }
+            placeholder={checkPasswordError ? checkPasswordError : "비밀번호 확인"}
+            placeholderTextColor={checkPasswordError ? "#f36945" : colors.brown}
             secureTextEntry
             value={checkPassword}
-            onChangeText={(text) => {
+            onChangeText={text => {
               setCheckPassword(text);
               if (checkPasswordError) setCheckPasswordError("");
             }}
@@ -258,21 +247,13 @@ export default function ResetPasswordScreen({ navigation, route }) {
       </View>
 
       {/*비밀번호 재설정 완료 모달 */}
-      <Modal
-        transparent
-        visible={showCompleteModal}
-      >
+      <Modal transparent visible={showCompleteModal}>
         <View style={styles.modalBackground}>
           <View style={styles.modalWrap}>
-            <Text style={styles.modalText}>
-              비밀번호가 재설정되었습니다.
-            </Text>
+            <Text style={styles.modalText}>비밀번호가 재설정되었습니다.</Text>
 
             <View style={styles.modalButtonWrap}>
-              <TouchableOpacity
-                style={[styles.modalButton]}
-                onPress={handleCompleteOk}  
-              >
+              <TouchableOpacity style={[styles.modalButton]} onPress={handleCompleteOk}>
                 <Text style={styles.modalButtonText}>확인</Text>
               </TouchableOpacity>
             </View>
@@ -289,10 +270,7 @@ export default function ResetPasswordScreen({ navigation, route }) {
             </Text>
 
             <View style={styles.modalButtonWrap}>
-              <TouchableOpacity
-                style={[styles.modalButton]}
-                onPress={handleErrorOk}
-              >
+              <TouchableOpacity style={[styles.modalButton]} onPress={handleErrorOk}>
                 <Text style={styles.modalButtonText}>확인</Text>
               </TouchableOpacity>
             </View>

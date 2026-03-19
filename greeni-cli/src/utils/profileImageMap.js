@@ -15,19 +15,31 @@ export const PROFILE_IMAGE_FILES = [
 
 export function toImageSource(profileImage) {
   switch (profileImage) {
-    case "basic_greeni_pink.png": return require("../assets/images/basic_greeni_pink.png");
-    case "basic_greeni_green.png": return require("../assets/images/basic_greeni_green.png");
-    case "quiz_greeni_pink.png": return require("../assets/images/quiz_greeni_pink.png");
-    case "quiz_greeni_green.png": return require("../assets/images/quiz_greeni_green.png");
-    case "20_greeni_pink.png": return require("../assets/images/20_greeni_pink.png");
-    case "20_greeni_green.png": return require("../assets/images/20_greeni_green.png");
-    case "umbrella_greeni_pink.png": return require("../assets/images/umbrella_greeni_pink.png");
-    case "umbrella_greeni_green.png": return require("../assets/images/umbrella_greeni_green.png");
-    case "mustache_greeni_pink.png": return require("../assets/images/mustache_greeni_pink.png");
-    case "mustache_greeni_green.png": return require("../assets/images/mustache_greeni_green.png");
+    case "basic_greeni_pink.png":
+      return require("../assets/images/basic_greeni_pink.png");
+    case "basic_greeni_green.png":
+      return require("../assets/images/basic_greeni_green.png");
+    case "quiz_greeni_pink.png":
+      return require("../assets/images/quiz_greeni_pink.png");
+    case "quiz_greeni_green.png":
+      return require("../assets/images/quiz_greeni_green.png");
+    case "20_greeni_pink.png":
+      return require("../assets/images/20_greeni_pink.png");
+    case "20_greeni_green.png":
+      return require("../assets/images/20_greeni_green.png");
+    case "umbrella_greeni_pink.png":
+      return require("../assets/images/umbrella_greeni_pink.png");
+    case "umbrella_greeni_green.png":
+      return require("../assets/images/umbrella_greeni_green.png");
+    case "mustache_greeni_pink.png":
+      return require("../assets/images/mustache_greeni_pink.png");
+    case "mustache_greeni_green.png":
+      return require("../assets/images/mustache_greeni_green.png");
     default:
       // 혹시 서버가 URL을 주는 경우 대비
-      return profileImage ? { uri: profileImage } : require("../assets/images/basic_greeni_pink.png");
+      return profileImage
+        ? { uri: profileImage }
+        : require("../assets/images/basic_greeni_pink.png");
   }
 }
 

@@ -39,7 +39,7 @@ export default function ProfileSelectScreen({ route, navigation }) {
     }
   };
 
-  const isAuthError = (e) => {
+  const isAuthError = e => {
     return (
       e?.status === 401 ||
       e?.code === "AUTH401" ||
@@ -50,7 +50,7 @@ export default function ProfileSelectScreen({ route, navigation }) {
     );
   };
 
-  const handleSelectProfile = async (p) => {
+  const handleSelectProfile = async p => {
     if (isSelecting) return;
 
     try {
@@ -103,7 +103,7 @@ export default function ProfileSelectScreen({ route, navigation }) {
         const res = await searchProfileList();
         const list = res?.result?.profileLists ?? [];
 
-        const mapped = list.map((p) => ({
+        const mapped = list.map(p => ({
           profileId: p.profileId,
           name: p.name,
           birth: p.birth,
@@ -133,8 +133,12 @@ export default function ProfileSelectScreen({ route, navigation }) {
       </View>
 
       <View style={styles.profileWrap}>
-        {profiles.map((p) => (
-          <TouchableOpacity key={p.profileId} style={styles.profile} onPress={() => handleSelectProfile(p)}>
+        {profiles.map(p => (
+          <TouchableOpacity
+            key={p.profileId}
+            style={styles.profile}
+            onPress={() => handleSelectProfile(p)}
+          >
             <Image source={p.image} style={styles.profileImage} />
             <Text style={styles.profileName} numberOfLines={1} ellipsizeMode="tail">
               {p.name}
@@ -143,7 +147,10 @@ export default function ProfileSelectScreen({ route, navigation }) {
         ))}
 
         {profiles.length < MAX_PROFILES && (
-          <TouchableOpacity style={styles.createBtn} onPress={() => navigation.navigate("ProfileImageSelect")}>
+          <TouchableOpacity
+            style={styles.createBtn}
+            onPress={() => navigation.navigate("ProfileImageSelect")}
+          >
             <Image source={require("../assets/images/create.png")} style={styles.createImage} />
           </TouchableOpacity>
         )}

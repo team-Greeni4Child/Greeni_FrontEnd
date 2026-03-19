@@ -18,10 +18,10 @@ const { width: W, height: H } = Dimensions.get("window");
 
 // 원본 비율(레이아웃 안정화)
 const AR = {
-  greeni: 509 / 852
+  greeni: 509 / 852,
 };
 
-// 이메일 규칙 
+// 이메일 규칙
 const emailRule = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 // 인증번호 유효시간 3분
@@ -78,13 +78,13 @@ export default function FindPasswordScreen({ navigation }) {
     }, RESEND_COOLDOWN_SECONDS * 1000);
   };
 
-  const startTimer = (sec) => {
+  const startTimer = sec => {
     clearTimer();
     setIsExpired(false);
     setSecondsLeft(sec);
 
     timerRef.current = setInterval(() => {
-      setSecondsLeft((prev) => {
+      setSecondsLeft(prev => {
         if (prev === null) return null;
 
         if (prev <= 1) {
@@ -109,13 +109,13 @@ export default function FindPasswordScreen({ navigation }) {
     };
   }, []);
 
-  const formatMMSS = (sec) => {
+  const formatMMSS = sec => {
     const m = String(Math.floor(sec / 60)).padStart(1, "0");
     const s = String(sec % 60).padStart(2, "0");
     return `${m}:${s}`;
   };
 
-  const openErrorModal = (err) => {
+  const openErrorModal = err => {
     console.log(err?.message);
     setShowErrorModal(true);
   };
@@ -276,19 +276,14 @@ export default function FindPasswordScreen({ navigation }) {
 
         {/* 이메일, 인증코드 입력 */}
         <View style={styles.inputsWrap}>
-          <View
-            style={[
-              styles.emailWrap,
-              emailError ? { borderBottomColor: "#f36945" } : {},
-            ]}
-          >
+          <View style={[styles.emailWrap, emailError ? { borderBottomColor: "#f36945" } : {}]}>
             <TextInput
               style={styles.email}
               fontFamily="Maplestory_Light"
               placeholder={emailError ? emailError : "이메일"}
               placeholderTextColor={emailError ? "#f36945" : colors.brown}
               value={email}
-              onChangeText={(text) => {
+              onChangeText={text => {
                 setEmail(text);
                 // 이메일 입력 시: 이메일 에러 초기화
                 if (emailError) setEmailError("");
@@ -299,8 +294,7 @@ export default function FindPasswordScreen({ navigation }) {
             <TouchableOpacity
               style={[
                 styles.verificationButton,
-                (isVerifyDisabled || isRequestingEmail) &&
-                  styles.verificationButtonDisabled,
+                (isVerifyDisabled || isRequestingEmail) && styles.verificationButtonDisabled,
               ]}
               onPress={handleVerifyEmail}
               activeOpacity={0.6}
@@ -311,19 +305,14 @@ export default function FindPasswordScreen({ navigation }) {
           </View>
 
           {/* 인증코드 입력칸 + 오른쪽 유효시간 */}
-          <View
-            style={[
-              styles.codeWrap,
-              codeError ? { borderBottomColor: "#f36945" } : {},
-            ]}
-          >
+          <View style={[styles.codeWrap, codeError ? { borderBottomColor: "#f36945" } : {}]}>
             <TextInput
               style={styles.codeInput}
               fontFamily="Maplestory_Light"
               placeholder={codeError ? codeError : "인증코드"}
               placeholderTextColor={codeError ? "#f36945" : colors.brown}
               value={code}
-              onChangeText={(text) => {
+              onChangeText={text => {
                 setCode(text);
                 // 인증코드 입력 시: 코드 에러 초기화
                 if (codeError) setCodeError("");
@@ -348,7 +337,7 @@ export default function FindPasswordScreen({ navigation }) {
           title="완료"
           width="100%"
           height={46}
-          borderRadius= {10}
+          borderRadius={10}
           fontSize={14}
           onPress={handleComplete}
           disabled={isVerifyingCode}
@@ -357,8 +346,8 @@ export default function FindPasswordScreen({ navigation }) {
 
       <View style={styles.bottomWrap}>
         {/* 그리니 */}
-        <Image 
-          source={require("../assets/images/greeni_shy.png")} 
+        <Image
+          source={require("../assets/images/greeni_shy.png")}
           style={styles.greeni}
           resizeMode="contain"
         />
@@ -390,7 +379,7 @@ export default function FindPasswordScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.ivory, 
+    backgroundColor: colors.ivory,
     alignItems: "center",
   },
   topBackground: {
@@ -399,7 +388,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: H * 0.6,
-    backgroundColor: colors.pink, 
+    backgroundColor: colors.pink,
     borderBottomLeftRadius: 30,
     borderBottomRightRadius: 30,
   },
@@ -421,7 +410,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   inputsWrap: {
-    alignItems: "stretch",        
+    alignItems: "stretch",
   },
   emailWrap: {
     flexDirection: "row",
@@ -493,13 +482,13 @@ const styles = StyleSheet.create({
 
   bottomWrap: {
     marginTop: H * 0.08,
-    flexDirection: "row",    
+    flexDirection: "row",
     alignItems: "center",
   },
   greeni: {
-    width: W * 0.35,         
-    aspectRatio: AR.greeni,   
-    marginRight: W * 0.04, 
+    width: W * 0.35,
+    aspectRatio: AR.greeni,
+    marginRight: W * 0.04,
   },
 
   // 모달창

@@ -37,8 +37,8 @@ export async function getDiaryByDay({ year, month, day, profileId }) {
 
   return request(`/api/diaries/day?${qs}`, {
     method: "GET",
-    headers: { 
-        Authorization: `Bearer ${accessToken}`,
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
     },
   });
 }

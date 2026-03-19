@@ -57,17 +57,14 @@ export default function TermsConsentModal({
   const translateY = useSharedValue(H);
   const overlayOpacity = useSharedValue(0);
 
-  const requiredItems = useMemo(
-    () => TERMS_ITEMS.filter((item) => item.required),
-    []
-  );
+  const requiredItems = useMemo(() => TERMS_ITEMS.filter(item => item.required), []);
 
   const isAllChecked = useMemo(() => {
-    return TERMS_ITEMS.every((item) => !!terms[item.key]);
+    return TERMS_ITEMS.every(item => !!terms[item.key]);
   }, [terms]);
 
   const isRequiredChecked = useMemo(() => {
-    return requiredItems.every((item) => !!terms[item.key]);
+    return requiredItems.every(item => !!terms[item.key]);
   }, [requiredItems, terms]);
 
   useEffect(() => {
@@ -89,21 +86,25 @@ export default function TermsConsentModal({
         easing: Easing.in(Easing.cubic),
       });
 
-      overlayOpacity.value = withTiming(0, {
-        duration: 180,
-        easing: Easing.in(Easing.cubic),
-      }, (finished) => {
-        if (finished) {
-          runOnJS(setRenderModal)(false);
-        }
-      });
+      overlayOpacity.value = withTiming(
+        0,
+        {
+          duration: 180,
+          easing: Easing.in(Easing.cubic),
+        },
+        finished => {
+          if (finished) {
+            runOnJS(setRenderModal)(false);
+          }
+        },
+      );
     }
   }, [visible, renderModal, translateY, overlayOpacity]);
 
   const handleToggleAll = () => {
     const nextValue = !isAllChecked;
 
-    TERMS_ITEMS.forEach((item) => {
+    TERMS_ITEMS.forEach(item => {
       if (!!terms[item.key] !== nextValue) {
         onToggleTerm?.(item.key);
       }
@@ -116,14 +117,18 @@ export default function TermsConsentModal({
       easing: Easing.in(Easing.cubic),
     });
 
-    overlayOpacity.value = withTiming(0, {
-      duration: 180,
-      easing: Easing.in(Easing.cubic),
-    }, (finished) => {
-      if (finished) {
-        runOnJS(onClose)?.();
-      }
-    });
+    overlayOpacity.value = withTiming(
+      0,
+      {
+        duration: 180,
+        easing: Easing.in(Easing.cubic),
+      },
+      finished => {
+        if (finished) {
+          runOnJS(onClose)?.();
+        }
+      },
+    );
   };
 
   const handleSubmit = () => {
@@ -159,18 +164,12 @@ export default function TermsConsentModal({
 
         <Animated.View style={[styles.sheet, sheetAnimStyle]}>
           <View style={styles.sheetInner}>
-            <TouchableOpacity
-              style={styles.closeButton}
-              activeOpacity={0.8}
-              onPress={handleClose}
-            >
+            <TouchableOpacity style={styles.closeButton} activeOpacity={0.8} onPress={handleClose}>
               <Text style={styles.closeText}>×</Text>
             </TouchableOpacity>
 
             <Text style={styles.title}>잠시만요!</Text>
-            <Text style={styles.subTitle}>
-              서비스 이용을 위해 약관 동의가 필요해요.
-            </Text>
+            <Text style={styles.subTitle}>서비스 이용을 위해 약관 동의가 필요해요.</Text>
 
             <View style={styles.divider} />
 
@@ -190,7 +189,7 @@ export default function TermsConsentModal({
             </TouchableOpacity>
 
             <View style={styles.termsList}>
-              {TERMS_ITEMS.map((item) => (
+              {TERMS_ITEMS.map(item => (
                 <View key={item.key} style={styles.rowWrap}>
                   <TermsRow
                     checked={!!terms[item.key]}

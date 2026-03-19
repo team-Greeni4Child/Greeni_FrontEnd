@@ -1,5 +1,11 @@
 import { API_BASE_URL } from "../config/env";
-import { getAccessToken, getRefreshToken, getMemberId, saveAuth, clearAuth } from "../utils/tokenStorage";
+import {
+  getAccessToken,
+  getRefreshToken,
+  getMemberId,
+  saveAuth,
+  clearAuth,
+} from "../utils/tokenStorage";
 import { emitLogout } from "../utils/authEvents";
 
 export class ApiError extends Error {
@@ -17,7 +23,7 @@ const REFRESH_PATH = "/api/auth/reissue";
 
 // 잠깐 기다릴 때 쓰는 함수
 function sleep(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
+  return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 // fetch 자체가 실패했을 때만 최대 2회 재시도

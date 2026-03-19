@@ -1,5 +1,15 @@
 ﻿import React, { useState, useContext } from "react";
-import { View, Text, Image, TextInput, TouchableOpacity, StyleSheet, Dimensions, Platform, Modal } from "react-native";
+import {
+  View,
+  Text,
+  Image,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  Dimensions,
+  Platform,
+  Modal,
+} from "react-native";
 
 import { StatusBar } from "react-native";
 
@@ -17,7 +27,6 @@ import DateTimePicker from "react-native-modal-datetime-picker";
 const { width: W, height: H } = Dimensions.get("window");
 
 export default function ProfileInfoFormScreen({ route, navigation }) {
-  
   const { setProfiles } = useContext(ProfileContext);
 
   const [selectedImage, setSelectedImage] = useState(route.params?.selectedImage || null);
@@ -39,7 +48,7 @@ export default function ProfileInfoFormScreen({ route, navigation }) {
   const showDatePicker = () => setDatePickerVisibility(true);
   const hideDatePicker = () => setDatePickerVisibility(false);
 
-  const openErrorModal = (message) => {
+  const openErrorModal = message => {
     setErrorModalMessage(message);
     setShowErrorModal(true);
   };
@@ -49,8 +58,11 @@ export default function ProfileInfoFormScreen({ route, navigation }) {
     setErrorModalMessage("");
   };
 
-  const handleConfirm = (date) => {
-    const formatted = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+  const handleConfirm = date => {
+    const formatted = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(
+      2,
+      "0",
+    )}-${String(date.getDate()).padStart(2, "0")}`;
     setBirth(formatted);
     hideDatePicker();
   };
@@ -64,9 +76,8 @@ export default function ProfileInfoFormScreen({ route, navigation }) {
     if (!nameRegex.test(name)) {
       setName("");
       if (name.length == 0) {
-        setNameError("이름을 입력해주세요")
-      }
-      else {
+        setNameError("이름을 입력해주세요");
+      } else {
         setNameError("20자 이내의 영문, 한글로만 입력 가능합니다.");
       }
       valid = false;
@@ -98,7 +109,7 @@ export default function ProfileInfoFormScreen({ route, navigation }) {
         }
         profileImage = await uploadProfileAsset(uploadedAsset);
       }
-      
+
       if (!profileImage) {
         openErrorModal("프로필 이미지를 다시 선택해 주세요.");
         return;
@@ -122,7 +133,6 @@ export default function ProfileInfoFormScreen({ route, navigation }) {
         birth: safeBirth,
       });
 
-
       // 생성 API
       const res = await createProfile({
         profileImage: profileImage.trim(),
@@ -134,7 +144,7 @@ export default function ProfileInfoFormScreen({ route, navigation }) {
       // 목록 불러오기
       const listRes = await searchProfileList();
       const list = listRes?.result?.profileLists ?? [];
-      const mapped = list.map((p) => ({
+      const mapped = list.map(p => ({
         profileId: p.profileId,
         name: p.name,
         profileImage: p.profileImage,
@@ -159,7 +169,7 @@ export default function ProfileInfoFormScreen({ route, navigation }) {
         openErrorModal("프로필은 최대 6개까지 생성할 수 있습니다.");
         return;
       }
-      if (e?.code === "MEMBER4041"){
+      if (e?.code === "MEMBER4041") {
         openErrorModal("존재하지 않는 회원입니다. 다시 로그인해 주세요.");
         return;
       }
@@ -175,31 +185,28 @@ export default function ProfileInfoFormScreen({ route, navigation }) {
 
       {/* 상단 제목 & 뒤로가기 */}
       <View style={styles.titleWrap}>
-        <BackButton navigation={navigation}
-                    top={H * 0.001}
-                    left={W * 0.05}/>
+        <BackButton navigation={navigation} top={H * 0.001} left={W * 0.05} />
         <Text style={styles.title}>프로필 정보 입력</Text>
       </View>
 
       {/* 프로필 이미지 + 입력 영역 */}
       <View style={styles.profileWrap}>
         <View style={styles.profile}>
-          {selectedImage && (
-            <Image source={selectedImage} style={styles.image} />
-          )}
+          {selectedImage && <Image source={selectedImage} style={styles.image} />}
         </View>
         <View style={styles.inputWrap}>
           <TextInput
             style={[
               styles.input,
               {
-                borderBottomColor: nameError ? '#f36945' : colors.greenDark }
+                borderBottomColor: nameError ? "#f36945" : colors.greenDark,
+              },
             ]}
             fontFamily="Maplestory_Light"
             placeholder={nameError ? nameError : "이름을 입력해주세요"}
             placeholderTextColor={nameError ? "#f36945" : "#999"}
             value={name}
-            onChangeText={(text) => {
+            onChangeText={text => {
               setName(text);
             }}
             onFocus={() => {
@@ -208,30 +215,29 @@ export default function ProfileInfoFormScreen({ route, navigation }) {
             }}
           />
 
-        {/* 생년월일 Picker */}
-        <TouchableOpacity
-          onPress={showDatePicker}
-          style={[
-            styles.input,
-            { justifyContent: "center", borderBottomColor: birthError ? '#f36945' : colors.greenDark },
-          ]}
-          onPressIn={() => {
-            setBirthError("");
-            setBirth("");
-          }}
-        >
-          <Text
-            style={{
-              color: birth ? "#000" : birthError ? "#f36945" : "#999",
-              fontSize: 14,
-              fontFamily: "Maplestory_Light",
+          {/* 생년월일 Picker */}
+          <TouchableOpacity
+            onPress={showDatePicker}
+            style={[
+              styles.input,
+              {
+                justifyContent: "center",
+                borderBottomColor: birthError ? "#f36945" : colors.greenDark,
+              },
+            ]}
+            onPressIn={() => {
+              setBirthError("");
+              setBirth("");
             }}
           >
-              {birth
-                ? birth
-                : birthError
-                ? birthError
-                : "생년월일을 선택해주세요"}
+            <Text
+              style={{
+                color: birth ? "#000" : birthError ? "#f36945" : "#999",
+                fontSize: 14,
+                fontFamily: "Maplestory_Light",
+              }}
+            >
+              {birth ? birth : birthError ? birthError : "생년월일을 선택해주세요"}
             </Text>
           </TouchableOpacity>
 
@@ -300,13 +306,13 @@ const styles = StyleSheet.create({
   profileWrap: {
     width: W * 0.9,
     top: -H * 0.15,
-    justifyContent: 'center',
-    alignItems: 'center'
+    justifyContent: "center",
+    alignItems: "center",
   },
   profile: {
     width: W * 0.9,
     height: 104,
-    justifyContent: 'center',
+    justifyContent: "center",
     alignItems: "center",
     marginBottom: 50,
   },
@@ -315,13 +321,13 @@ const styles = StyleSheet.create({
     width: 104,
     height: 104,
     borderRadius: 52,
-    resizeMode: 'cover',
+    resizeMode: "cover",
   },
   inputWrap: {
     width: W * 0.88,
-    justifyContent: 'center',
-    alignItems: 'center',
-    alignSelf: 'center',
+    justifyContent: "center",
+    alignItems: "center",
+    alignSelf: "center",
     // borderWidth: 2,
     // borderColor: 'red'
   },
@@ -331,10 +337,10 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     height: 40,
     letterSpacing: -0.32,
-    width: '100%',
+    width: "100%",
     marginBottom: 15,
     paddingTop: 12,
-    paddingBottom: Platform.OS ==='ios' ? 5 : 8,
+    paddingBottom: Platform.OS === "ios" ? 5 : 8,
     borderBottomColor: colors.greenDark,
     borderBottomWidth: 2,
     // borderWidth: 2,
@@ -344,8 +350,8 @@ const styles = StyleSheet.create({
     color: "red",
     fontSize: 12,
     marginBottom: 10,
-    textAlign: 'left',
-    alignSelf: 'flex-start'
+    textAlign: "left",
+    alignSelf: "flex-start",
   },
 
   // 생성버튼
@@ -397,7 +403,3 @@ const styles = StyleSheet.create({
     fontFamily: "Maplestory_Light",
   },
 });
-
-
-
-

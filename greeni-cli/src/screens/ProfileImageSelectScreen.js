@@ -1,12 +1,5 @@
 ﻿import React, { useState } from "react";
-import { 
-  View, 
-  Text, 
-  Image, 
-  StyleSheet, 
-  Dimensions, 
-  TouchableOpacity,
-} from "react-native";
+import { View, Text, Image, StyleSheet, Dimensions, TouchableOpacity } from "react-native";
 import { StatusBar } from "react-native";
 
 import Button from "../components/Button";
@@ -47,7 +40,7 @@ function Profile({ image, onPress, selected }) {
 export default function ProfileImageSelectScreen({ navigation, route }) {
   // 선택한 이미지의 index
   const [selectedIndex, setSelectedIndex] = useState(null);
-  const handleSelect = (index) => {
+  const handleSelect = index => {
     setSelectedIndex(index);
   };
 
@@ -62,7 +55,7 @@ export default function ProfileImageSelectScreen({ navigation, route }) {
     const onSelectImage = route?.params?.onSelectImage;
 
     if (!selected) return;
-    
+
     if (typeof onSelectImage === "function") {
       await onSelectImage({
         imageSource: selected,
@@ -84,9 +77,7 @@ export default function ProfileImageSelectScreen({ navigation, route }) {
 
       {/* 상단 제목 & 뒤로가기 */}
       <View style={styles.titleWrap}>
-        <BackButton navigation={navigation}
-                    top={H * 0.001}
-                    left={W * 0.05}/>
+        <BackButton navigation={navigation} top={H * 0.001} left={W * 0.05} />
         <Text style={styles.title}>프로필 이미지 선택</Text>
       </View>
 
@@ -175,15 +166,15 @@ const styles = StyleSheet.create({
   image: {
     width: "100%",
     height: "100%",
-    borderRadius: W * 0.24 / 2,
+    borderRadius: (W * 0.24) / 2,
   },
   imageSelected: {
     borderWidth: 5,
     borderColor: colors.brown,
-    borderRadius: W * 0.24 / 2,
+    borderRadius: (W * 0.24) / 2,
   },
 
-  // '다음' 버튼 감싸는 Wrapper 
+  // '다음' 버튼 감싸는 Wrapper
   bottomWrap: {
     position: "absolute",
     width: W,
@@ -194,4 +185,3 @@ const styles = StyleSheet.create({
     paddingRight: W * 0.09,
   },
 });
-

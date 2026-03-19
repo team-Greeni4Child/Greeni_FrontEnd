@@ -132,10 +132,7 @@ export default function DiaryDrawScreen({ navigation }) {
   return (
     <View style={styles.root}>
       <View style={styles.topBar}>
-        <BackButton
-          navigation={navigation}
-          top={H * 0.08}
-        />    
+        <BackButton navigation={navigation} top={H * 0.08} />
 
         {/* 제목 */}
         <Text style={styles.title}>일기쓰기</Text>
@@ -147,7 +144,7 @@ export default function DiaryDrawScreen({ navigation }) {
             onPress={() => {
               setActiveTool("pen");
               setShowEraserPanel(false);
-              setShowPenPanel((v) => !v);
+              setShowPenPanel(v => !v);
             }}
             activeOpacity={0.85}
           >
@@ -163,7 +160,7 @@ export default function DiaryDrawScreen({ navigation }) {
             onPress={() => {
               setActiveTool("eraser");
               setShowPenPanel(false);
-              setShowEraserPanel((v) => !v);
+              setShowEraserPanel(v => !v);
             }}
             activeOpacity={0.85}
           >
@@ -196,7 +193,6 @@ export default function DiaryDrawScreen({ navigation }) {
       {/* 그림 영역 */}
       <View style={styles.drawArea}>
         <View style={styles.captureArea}>
-
           {/* 캔버스 */}
           <SkiaDrawCanvas
             ref={canvasRef}
@@ -210,9 +206,7 @@ export default function DiaryDrawScreen({ navigation }) {
         </View>
 
         {/* 바깥 터치 → 열려있는 패널 닫기 */}
-        {isAnyPanelOpen && (
-          <Pressable style={styles.backdrop} onPress={closeAllPanels} />
-        )}
+        {isAnyPanelOpen && <Pressable style={styles.backdrop} onPress={closeAllPanels} />}
 
         {/* 펜 옵션 패널 */}
         {activeTool === "pen" && showPenPanel && (
@@ -221,7 +215,7 @@ export default function DiaryDrawScreen({ navigation }) {
               penWidth={penWidth}
               setPenWidth={setPenWidth}
               penColor={penColor}
-              setPenColor={(c) => {
+              setPenColor={c => {
                 setPenColor(c);
                 setShowPenPanel(false);
               }}
@@ -236,20 +230,17 @@ export default function DiaryDrawScreen({ navigation }) {
         {/* 지우개 옵션 패널 */}
         {activeTool === "eraser" && showEraserPanel && (
           <View style={styles.panelOverlay} pointerEvents="box-none">
-            <EraserOptionsPanel
-              eraserWidth={eraserWidth}
-              setEraserWidth={setEraserWidth}
-            />
+            <EraserOptionsPanel eraserWidth={eraserWidth} setEraserWidth={setEraserWidth} />
           </View>
         )}
       </View>
 
       {/* 저장 버튼 */}
       <View style={styles.bottomWrap}>
-        <Button 
-          title="저장하기" 
+        <Button
+          title="저장하기"
           width={130}
-          backgroundColor={colors.greenLight} 
+          backgroundColor={colors.greenLight}
           onPress={handlePressSave}
           disabled={isSaving}
         />
@@ -260,7 +251,7 @@ export default function DiaryDrawScreen({ navigation }) {
         visible={showColorModal}
         initialColor={penColor}
         onClose={() => setShowColorModal(false)}
-        onApply={(c) => {
+        onApply={c => {
           setPenColor(c);
           setShowColorModal(false);
         }}
@@ -270,9 +261,7 @@ export default function DiaryDrawScreen({ navigation }) {
       <Modal transparent visible={showSaveModal} animationType="fade">
         <View style={styles.modalBackground}>
           <View style={styles.modalWrap}>
-            <Text style={styles.modalText}>
-              오늘의 일기 작성을{"\n"}마무리할까요?
-            </Text>
+            <Text style={styles.modalText}>오늘의 일기 작성을{"\n"}마무리할까요?</Text>
 
             <View style={styles.modalButtonWrap}>
               <TouchableOpacity
@@ -280,9 +269,7 @@ export default function DiaryDrawScreen({ navigation }) {
                 onPress={handleCancelSave}
                 activeOpacity={0.8}
               >
-                <Text style={[styles.modalButtonText, { color: colors.brown }]}>
-                  아니오
-                </Text>
+                <Text style={[styles.modalButtonText, { color: colors.brown }]}>아니오</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
@@ -322,7 +309,7 @@ const styles = StyleSheet.create({
   },
   tools: {
     flexDirection: "row",
-    marginTop: 20, 
+    marginTop: 20,
     gap: W * 0.2,
   },
   icon: {
@@ -353,7 +340,7 @@ const styles = StyleSheet.create({
 
   panelOverlay: {
     position: "absolute",
-    top: 10, 
+    top: 10,
     left: 0,
     right: 0,
     alignItems: "center",
@@ -362,7 +349,7 @@ const styles = StyleSheet.create({
   bottomWrap: {
     position: "absolute",
     left: 0,
-    right: 0, 
+    right: 0,
     alignItems: "center",
     bottom: H * 0.05,
   },

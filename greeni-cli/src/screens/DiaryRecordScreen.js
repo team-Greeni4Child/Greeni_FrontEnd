@@ -1,13 +1,5 @@
 import React, { useEffect, useMemo, useState, useCallback, useContext } from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  Dimensions,
-  TouchableOpacity,
-  Image,
-  Alert,
-} from "react-native";
+import { View, Text, StyleSheet, Dimensions, TouchableOpacity, Image, Alert } from "react-native";
 import Animated, {
   Easing,
   interpolate,
@@ -27,10 +19,10 @@ const { width: W, height: H } = Dimensions.get("window");
 const S3_PUBLIC_BASE_URL = "https://greeni-upload-files.s3.ap-northeast-2.amazonaws.com";
 
 // "YYYY-MM-DD" | Date -> "M/D"
-const toMD = (input) => {
+const toMD = input => {
   let d;
   if (typeof input === "string") {
-    const [y, m, day] = input.split("-").map((v) => parseInt(v, 10));
+    const [y, m, day] = input.split("-").map(v => parseInt(v, 10));
     d = new Date(y, m - 1, day);
   } else if (input instanceof Date) {
     d = input;
@@ -87,7 +79,6 @@ export default function DiaryRecordScreen({ navigation, route }) {
 
   // 일별 일기 조회 연동
   useEffect(() => {
-
     let alive = true;
 
     async function loadDiary() {
@@ -111,7 +102,7 @@ export default function DiaryRecordScreen({ navigation, route }) {
       } catch (e) {
         // 해당 날짜에 일기 없음
         if (e?.code === "DIARY4004") {
-          if (alive) setDiaryData(null);          
+          if (alive) setDiaryData(null);
           return;
         }
 
@@ -199,7 +190,7 @@ export default function DiaryRecordScreen({ navigation, route }) {
   }, [HIDE_Y]);
 
   // 일기 요약 높이 측정
-  const onSheetLayout = useCallback((e) => {
+  const onSheetLayout = useCallback(e => {
     const h = e?.nativeEvent?.layout?.height ?? 0;
     if (h > 0) setSheetH(h);
   }, []);
@@ -209,7 +200,6 @@ export default function DiaryRecordScreen({ navigation, route }) {
 
   return (
     <View style={styles.root}>
-
       {/* 상단 바 */}
       <View style={styles.topBar}>
         <BackButton navigation={navigation} />
@@ -232,13 +222,9 @@ export default function DiaryRecordScreen({ navigation, route }) {
       {/* 그림 영역 */}
       <View style={styles.drawArea}>
         {diaryImageUri ? (
-          <Image
-            source={{ uri: diaryImageUri }}
-            style={styles.diaryImage}
-            resizeMode="contain"
-          />
+          <Image source={{ uri: diaryImageUri }} style={styles.diaryImage} resizeMode="contain" />
         ) : (
-          <View style={styles.emptyWrap}/>
+          <View style={styles.emptyWrap} />
         )}
       </View>
 
@@ -259,11 +245,7 @@ export default function DiaryRecordScreen({ navigation, route }) {
             <View style={styles.metaRow}>
               <Text style={styles.metaLabel}>감정 :</Text>
               {emotionIcon ? (
-                <Image
-                  source={emotionIcon}
-                  style={styles.emotionIcon}
-                  resizeMode="contain"
-                />
+                <Image source={emotionIcon} style={styles.emotionIcon} resizeMode="contain" />
               ) : (
                 <View style={styles.emotionIcon} />
               )}

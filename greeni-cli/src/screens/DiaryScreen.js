@@ -12,9 +12,7 @@ export default function DiaryScreen({ navigation }) {
     <View style={styles.root}>
       <View style={styles.topBackground} />
       {/* 상단 뒤로가기 + 제목 */}
-      <BackButton navigation={navigation}
-        top={H * 0.08}
-      />
+      <BackButton navigation={navigation} top={H * 0.08} />
       <Text style={styles.title}>일기쓰기</Text>
 
       {/* 말풍선 + 그리니 */}
@@ -25,7 +23,8 @@ export default function DiaryScreen({ navigation }) {
           resizeMode="stretch"
         >
           <Text style={styles.bubbleText}>
-            안녕 ○○아,{"\n"}오늘의 일기쓰기를 시작해볼까?{/*{"\n"}폰트 크기가 정해져 있으니 어쩔 수 없지. 은서는 작은 글씨를 쓸 수 밖에*/}
+            안녕 ○○아,{"\n"}오늘의 일기쓰기를 시작해볼까?
+            {/*{"\n"}폰트 크기가 정해져 있으니 어쩔 수 없지. 은서는 작은 글씨를 쓸 수 밖에*/}
           </Text>
         </ImageBackground>
 
@@ -38,17 +37,14 @@ export default function DiaryScreen({ navigation }) {
 
       {/* 마이크 버튼 */}
       <MicButton
-        onRecordComplete={(filePath) => {
+        onRecordComplete={filePath => {
           console.log("녹음 파일 경로:", filePath);
         }}
       />
 
       {/* 일기 그리러 가는 임시 버튼 */}
-      <View style={styles.diaryButton} >
-        <Button 
-          title="그림일기"
-          onPress={() => navigation.navigate("DiaryDraw")}
-        />
+      <View style={styles.diaryButton}>
+        <Button title="그림일기" onPress={() => navigation.navigate("DiaryDraw")} />
       </View>
     </View>
   );
@@ -58,7 +54,7 @@ const styles = StyleSheet.create({
   root: {
     flex: 1,
     alignItems: "center",
-    justifyContent: "flex-end", 
+    justifyContent: "flex-end",
     backgroundColor: colors.ivory,
   },
   topBackground: {
@@ -67,7 +63,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: H * 0.14,
-    backgroundColor: colors.pink, 
+    backgroundColor: colors.pink,
     borderBottomLeftRadius: 30,
     borderBottomRightRadius: 30,
   },
