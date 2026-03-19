@@ -88,25 +88,15 @@ export default function DiarySummaryToggle({
             width,
             height,
             borderRadius: height / 2,
-            backgroundColor: colors.pinkDark, 
+            backgroundColor: colors.pinkDark,
           },
         ]}
       >
         {/* 트랙 위 좌/우 OFF 아이콘(항상 아이보리로 보이게) */}
         <View pointerEvents="none" style={[styles.sideIcons, { paddingHorizontal: 12 }]}>
-          <PictureIcon
-            width={pictureSize}
-            height={pictureSize}
-            color={offColor}
-            fill={offColor}
-          />
+          <PictureIcon width={pictureSize} height={pictureSize} color={offColor} fill={offColor} />
 
-          <TextIcon
-            width={textSize}
-            height={textSize}
-            color={offColor}
-            fill={offColor}
-          />
+          <TextIcon width={textSize} height={textSize} color={offColor} fill={offColor} />
         </View>
 
         {/* 흰 썸(좌/우 이동) */}
@@ -135,12 +125,7 @@ export default function DiarySummaryToggle({
               />
             ) : null
           ) : typeof TextIcon === "function" ? (
-            <TextIcon
-              width={textSize}
-              height={textSize}
-              color={onColor}
-              fill={onColor}
-            />
+            <TextIcon width={textSize} height={textSize} color={onColor} fill={onColor} />
           ) : null}
         </Animated.View>
       </View>

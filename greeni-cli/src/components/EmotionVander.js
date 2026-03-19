@@ -3,7 +3,7 @@ import { View, Image, StyleSheet } from "react-native";
 
 // 난수 생성기
 // 같은 Seed(a)면 배치 결과가 항상 동일하게
-const mulberry32 = (a) => {
+const mulberry32 = a => {
   return function () {
     let t = (a += 0x6d2b79f5);
     t = Math.imul(t ^ (t >>> 15), t | 1);
@@ -16,23 +16,23 @@ const mulberry32 = (a) => {
 const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
 
 export default function EmotionVander({
-  emotions = [],       // old → new, 감정 키 배열
-  sourceMap = {},      // 감정 키 -> 이미지 source 매핑
+  emotions = [], // old → new, 감정 키 배열
+  sourceMap = {}, // 감정 키 -> 이미지 source 매핑
   max = 31,
   seed = 1234,
   style,
-  gap = 0,             // 감정 이미지끼리 최소 간격
-  padding = 0,         // 컨테이너 가장자리와 이미지 사이 여백
+  gap = 0, // 감정 이미지끼리 최소 간격
+  padding = 0, // 컨테이너 가장자리와 이미지 사이 여백
 
   // 튜닝(추천 기본값)
-  xSamples = 120,      // 후보 x 샘플 개수 (클수록 더 좋은 자리 찾음)
-  leftBias = 0.75,     // 0~1 (1에 가까울수록 왼쪽 선호)
+  xSamples = 120, // 후보 x 샘플 개수 (클수록 더 좋은 자리 찾음)
+  leftBias = 0.75, // 0~1 (1에 가까울수록 왼쪽 선호)
   compressPasses = 12, // 전체 배치 후 "왼쪽으로 밀고 다시 떨어뜨리기" 반복 횟수
 }) {
   const [box, setBox] = useState({ w: 0, h: 0 }); // 컨테이너 크기 측정 상태
 
   // 실제 렌더된 크기
-  const onLayout = useCallback((e) => {
+  const onLayout = useCallback(e => {
     const { width, height } = e.nativeEvent.layout;
     setBox({ w: width, h: height });
   }, []);
@@ -55,7 +55,8 @@ export default function EmotionVander({
   }, [box.w, box.h, displayEmotions.length, max]);
 
   const placed = useMemo(() => {
-    const w = box.w, h = box.h;
+    const w = box.w,
+      h = box.h;
     const n = displayEmotions.length;
     if (!w || !h || !baseSize || n === 0) return [];
 
@@ -228,7 +229,7 @@ export default function EmotionVander({
     }
 
     // 렌더용 변환
-    return items.map((it) => ({
+    return items.map(it => ({
       key: it.key,
       size: it.size,
       x: it.cx - it.size / 2,
@@ -238,8 +239,17 @@ export default function EmotionVander({
       zIndex: it.zIndex,
     }));
   }, [
-    box.w, box.h, baseSize, displayEmotions, sourceMap,
-    seed, gap, padding, xSamples, leftBias, compressPasses
+    box.w,
+    box.h,
+    baseSize,
+    displayEmotions,
+    sourceMap,
+    seed,
+    gap,
+    padding,
+    xSamples,
+    leftBias,
+    compressPasses,
   ]);
 
   return (

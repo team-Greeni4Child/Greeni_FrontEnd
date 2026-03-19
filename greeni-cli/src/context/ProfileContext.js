@@ -2,7 +2,7 @@
 import React, { createContext, useEffect, useState } from "react";
 import { getSelectedProfile } from "../utils/tokenStorage";
 
-// 빈 Context 생성 
+// 빈 Context 생성
 export const ProfileContext = createContext();
 
 // Context에 데이터를 공급하는 역할

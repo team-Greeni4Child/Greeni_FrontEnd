@@ -9,7 +9,7 @@ import {
   ImageBackground,
   BackHandler,
   Platform,
-  Modal, 
+  Modal,
 } from "react-native";
 import colors from "../theme/colors";
 import NavigationBar from "../components/NavigationBar";
@@ -54,7 +54,7 @@ export default function HomeScreen({ navigation }) {
   useFocusEffect(
     useCallback(() => {
       checkAuth();
-    }, [])
+    }, []),
   );
 
   // 일기 버튼 클릭 처리
@@ -85,7 +85,7 @@ export default function HomeScreen({ navigation }) {
 
       const sub = BackHandler.addEventListener("hardwareBackPress", onBackPress);
       return () => sub.remove();
-    }, [showDiaryModal])
+    }, [showDiaryModal]),
   );
 
   // 모달 확인 버튼 처리
@@ -99,9 +99,7 @@ export default function HomeScreen({ navigation }) {
       <Modal transparent visible={showDiaryModal}>
         <View style={styles.modalBackground}>
           <View style={styles.modalWrap}>
-            <Text style={styles.modalText}>
-              오늘의 일기는{"\n"}이미 작성 완료 됐습니다.
-            </Text>
+            <Text style={styles.modalText}>오늘의 일기는{"\n"}이미 작성 완료 됐습니다.</Text>
 
             <View style={styles.modalButtonWrap}>
               <TouchableOpacity
@@ -120,9 +118,7 @@ export default function HomeScreen({ navigation }) {
       <Modal transparent visible={showExitModal} onRequestClose={() => setShowExitModal(false)}>
         <View style={styles.modalBackground}>
           <View style={styles.modalWrap}>
-            <Text style={styles.modalText}>
-              앱을 종료하시겠습니까?
-            </Text>
+            <Text style={styles.modalText}>앱을 종료하시겠습니까?</Text>
 
             <View style={styles.modalButtonWrap}>
               <TouchableOpacity
@@ -155,7 +151,7 @@ export default function HomeScreen({ navigation }) {
       {/* 네비게이션 바 */}
       <NavigationBar
         state={tab}
-        onTabPress={(i) => {
+        onTabPress={i => {
           setTab(i);
           if (i === 0) navigation.navigate("Home");
           if (i === 1) navigation.navigate("Calendar");
@@ -171,7 +167,8 @@ export default function HomeScreen({ navigation }) {
         resizeMode="stretch"
       >
         <Text style={styles.bubbleText}>
-          안녕 나는 그리니야!{"\n"}오늘은 또 어떤 하루를 보냈어? {/*배고프면 밥을 먹고 움직이자. 내일을 또 살아가야 하니까 말이야...*/}
+          안녕 나는 그리니야!{"\n"}오늘은 또 어떤 하루를 보냈어?{" "}
+          {/*배고프면 밥을 먹고 움직이자. 내일을 또 살아가야 하니까 말이야...*/}
         </Text>
       </ImageBackground>
 
@@ -187,12 +184,9 @@ export default function HomeScreen({ navigation }) {
         {/* 일기 */}
         <TouchableOpacity
           style={[styles.diaryButton, { backgroundColor: colors.pink }]}
-          onPress={handlePressDiary} 
+          onPress={handlePressDiary}
         >
-          <Image
-            source={require("../assets/images/icon_diary.png")}
-            style={styles.icon}
-          />
+          <Image source={require("../assets/images/icon_diary.png")} style={styles.icon} />
           <Text style={styles.buttonText}>일기</Text>
         </TouchableOpacity>
 
@@ -201,10 +195,7 @@ export default function HomeScreen({ navigation }) {
           style={[styles.button, { backgroundColor: colors.green }]}
           onPress={() => navigation.navigate("FiveQuestions")}
         >
-          <Image
-            source={require("../assets/images/icon_twenty.png")}
-            style={styles.icon}
-          />
+          <Image source={require("../assets/images/icon_twenty.png")} style={styles.icon} />
           <Text style={styles.buttonText}>다섯고개</Text>
         </TouchableOpacity>
 
@@ -213,10 +204,7 @@ export default function HomeScreen({ navigation }) {
           style={[styles.button, { backgroundColor: "#E1EE95" }]}
           onPress={() => navigation.navigate("RolePlaying")}
         >
-          <Image
-            source={require("../assets/images/icon_role.png")}
-            style={styles.icon}
-          />
+          <Image source={require("../assets/images/icon_role.png")} style={styles.icon} />
           <Text style={styles.buttonText}>역할놀이</Text>
         </TouchableOpacity>
       </View>
@@ -228,7 +216,7 @@ const styles = StyleSheet.create({
   root: {
     flex: 1,
     backgroundColor: colors.ivory,
-    justifyContent: "flex-end", 
+    justifyContent: "flex-end",
     alignItems: "center",
   },
   pond: {
@@ -296,7 +284,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.15,
     shadowRadius: 6,
-    elevation: 4,    
+    elevation: 4,
   },
   icon: {
     height: "50%",

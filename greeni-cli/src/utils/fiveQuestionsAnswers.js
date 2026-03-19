@@ -1,5 +1,4 @@
 export const FIVE_QUESTIONS_ANSWERS = [
-
   // 동물
   { answer: "기린", initial: "ㄱㄹ", category: "동물" },
   { answer: "코알라", initial: "ㅋㅇㄹ", category: "동물" },
@@ -80,7 +79,6 @@ export const FIVE_QUESTIONS_ANSWERS = [
   { answer: "서점", initial: "ㅅㅈ", category: "장소" },
   { answer: "식물원", initial: "ㅅㅁㅇ", category: "장소" },
   { answer: "학교", initial: "ㅎㄱ", category: "장소" },
-
 ];
 
 // 랜덤으로 정답 뽑기

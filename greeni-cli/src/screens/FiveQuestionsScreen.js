@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useCallback, useContext, useRef } from "react";
-import { 
-  View, 
-  Text, 
-  Image, 
-  StyleSheet, 
-  Dimensions, 
-  TouchableOpacity, 
-  ImageBackground
+import {
+  View,
+  Text,
+  Image,
+  StyleSheet,
+  Dimensions,
+  TouchableOpacity,
+  ImageBackground,
 } from "react-native";
 import BackButton from "../components/BackButton";
 import colors from "../theme/colors";
@@ -17,7 +17,7 @@ import { ProfileContext } from "../context/ProfileContext";
 // 현재 기기의 화면 너비 W, 화면 높이 H
 const { width: W, height: H } = Dimensions.get("window");
 
-export default function TwentyQuestionsScreen({navigation}) {
+export default function TwentyQuestionsScreen({ navigation }) {
   const { selectedProfile } = useContext(ProfileContext);
 
   const hints = [
@@ -25,7 +25,7 @@ export default function TwentyQuestionsScreen({navigation}) {
     "나는 귀가 커!",
     "내 코는 길어!",
     "나는 물을 좋아해!",
-    "나는 큰 몸을 가지고 있어!"
+    "나는 큰 몸을 가지고 있어!",
   ];
 
   const [currentHint, setCurrentHint] = useState(0);
@@ -41,7 +41,7 @@ export default function TwentyQuestionsScreen({navigation}) {
   }, [correctCount, wrongCount]);
 
   const handleNextHint = () => {
-    if(currentHint < hints.length - 1) {
+    if (currentHint < hints.length - 1) {
       setCurrentHint(currentHint + 1);
     }
   };
@@ -53,8 +53,7 @@ export default function TwentyQuestionsScreen({navigation}) {
     try {
       const initialScore = initialScoreRef.current ?? { correctCount, wrongCount };
       const hasScoreChanged =
-        initialScore.correctCount !== correctCount ||
-        initialScore.wrongCount !== wrongCount;
+        initialScore.correctCount !== correctCount || initialScore.wrongCount !== wrongCount;
 
       if (hasScoreChanged && selectedProfile?.profileId) {
         await createFiveQuestionsActivity({
@@ -76,55 +75,56 @@ export default function TwentyQuestionsScreen({navigation}) {
     <View style={styles.root}>
       <View style={styles.topBackground} />
 
-        {/* 상단 뒤로가기 버튼 및 '다섯고개' 제목 */}
-        <View style={styles.titleWrap}>
-          <BackButton navigation={{ ...navigation, goBack: handleBackPress }}
-                      top={H * 0.001}
-                      left={W * 0.05}/>
-          <Text style={styles.title}>다섯고개</Text>
+      {/* 상단 뒤로가기 버튼 및 '다섯고개' 제목 */}
+      <View style={styles.titleWrap}>
+        <BackButton
+          navigation={{ ...navigation, goBack: handleBackPress }}
+          top={H * 0.001}
+          left={W * 0.05}
+        />
+        <Text style={styles.title}>다섯고개</Text>
+      </View>
+
+      {/* 점수/힌트 진행도 */}
+      <View style={styles.scoreWrap}>
+        <View style={styles.progressBarBackground}>
+          <View style={[styles.progressBarFill, { width: `${progress * 100}%` }]} />
         </View>
 
-        {/* 점수/힌트 진행도 */}
-        <View style={styles.scoreWrap}>
-          <View style={styles.progressBarBackground}>
-            <View style={[styles.progressBarFill, { width: `${progress * 100}%` }]} />
-          </View>
-
-          <View style={styles.hintProgressTextWrap}>
-            <Text style={styles.hintProgressLabel}>힌트 진행도</Text>
-            <Text style={styles.hintProgressValue}>
-              {currentHint + 1}/{hints.length}
-            </Text>
-          </View>
-
-          <View style={styles.scoreDetailWrap}>
-            <Text style={styles.scoreItem}>맞춘 개수</Text>
-            <Text style={styles.scoreItemValue}>{correctCount}개</Text>
-            <Text style={styles.scoreItem}>틀린 개수</Text>
-            <Text style={[styles.scoreItemValue, { color: colors.pinkDark }]}>{wrongCount}개</Text>
-          </View>
-
+        <View style={styles.hintProgressTextWrap}>
+          <Text style={styles.hintProgressLabel}>힌트 진행도</Text>
+          <Text style={styles.hintProgressValue}>
+            {currentHint + 1}/{hints.length}
+          </Text>
         </View>
 
-        {/* 문제 */}
-        <TouchableOpacity style={styles.questionsWrap} onPress={handleNextHint}>
-          <Text style={styles.questionText}>ㅋㄲㄹ</Text>
-        </TouchableOpacity>
-
-        {/* greeni  + 힌트*/}
-        <View style={styles.greeniWrap}>
-          <Image style={styles.greeni} source={require("../assets/images/20_greeni_big.png")}/>
-        
-          <ImageBackground
-            source={require("../assets/images/bubble_20.png")}
-            style={styles.hintBubble}
-            resizeMode="stretch"
-          >
-            <Text style={styles.hintText}>{hints[currentHint]}</Text>
-          </ImageBackground>
+        <View style={styles.scoreDetailWrap}>
+          <Text style={styles.scoreItem}>맞춘 개수</Text>
+          <Text style={styles.scoreItemValue}>{correctCount}개</Text>
+          <Text style={styles.scoreItem}>틀린 개수</Text>
+          <Text style={[styles.scoreItemValue, { color: colors.pinkDark }]}>{wrongCount}개</Text>
         </View>
+      </View>
 
-        <MicButton /> 
+      {/* 문제 */}
+      <TouchableOpacity style={styles.questionsWrap} onPress={handleNextHint}>
+        <Text style={styles.questionText}>ㅋㄲㄹ</Text>
+      </TouchableOpacity>
+
+      {/* greeni  + 힌트*/}
+      <View style={styles.greeniWrap}>
+        <Image style={styles.greeni} source={require("../assets/images/20_greeni_big.png")} />
+
+        <ImageBackground
+          source={require("../assets/images/bubble_20.png")}
+          style={styles.hintBubble}
+          resizeMode="stretch"
+        >
+          <Text style={styles.hintText}>{hints[currentHint]}</Text>
+        </ImageBackground>
+      </View>
+
+      <MicButton />
     </View>
   );
 }
@@ -133,10 +133,10 @@ const styles = StyleSheet.create({
   // 전체 화면, 아이템 세로 정렬, 가로세로 중앙 정렬, 배경색
   root: {
     flex: 1,
-    flexDirection: 'column',
+    flexDirection: "column",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: colors.ivory, 
+    backgroundColor: colors.ivory,
   },
   topBackground: {
     position: "absolute",
@@ -144,7 +144,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: H * 0.72,
-    backgroundColor: colors.pink, 
+    backgroundColor: colors.pink,
     borderBottomLeftRadius: 30,
     borderBottomRightRadius: 30,
   },
@@ -152,7 +152,7 @@ const styles = StyleSheet.create({
   // root 기준으로 정렬, 수평 중앙 정렬, colorToken 변경
   titleWrap: {
     position: "absolute",
-    alignItems: 'center',
+    alignItems: "center",
     top: H * 0.08,
     width: W,
   },
@@ -172,8 +172,8 @@ const styles = StyleSheet.create({
     borderWidth: 3,
     borderColor: colors.pinkDark,
     backgroundColor: colors.ivory,
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    justifyContent: "space-between",
+    alignItems: "center",
   },
   progressBarBackground: {
     width: 293,
@@ -182,23 +182,23 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     overflow: "hidden",
     borderWidth: 1,
-    borderColor: colors.green
+    borderColor: colors.green,
   },
   progressBarFill: {
     height: "100%",
-    backgroundColor: "#BEEA8B"
+    backgroundColor: "#BEEA8B",
   },
   hintProgressTextWrap: {
     flexDirection: "row",
-    justifyContent: 'space-between',
+    justifyContent: "space-between",
     top: H * 0.002,
     width: 293,
-    zIndex: 4
+    zIndex: 4,
   },
   hintProgressLabel: {
     fontSize: 14,
     fontFamily: "Maplestory_Light",
-    color: colors.brown
+    color: colors.brown,
   },
   hintProgressValue: {
     fontSize: 14,
@@ -206,9 +206,9 @@ const styles = StyleSheet.create({
     color: colors.brown,
   },
   scoreDetailWrap: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     width: 293,
     top: -H * 0.02,
   },
@@ -232,24 +232,23 @@ const styles = StyleSheet.create({
     borderWidth: 3,
     borderColor: colors.pinkDark,
     backgroundColor: colors.ivory,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     zIndex: 2,
   },
   questionText: {
     fontSize: 40,
     color: colors.brown,
     fontFamily: "Maplestory_Light",
-    fontWeight: 'bold',
-  }, 
+    fontWeight: "bold",
+  },
   hintBubble: {
-    maxWidth: W * 0.65, 
+    maxWidth: W * 0.65,
     paddingHorizontal: 30,
     paddingVertical: 30,
     alignItems: "center",
     justifyContent: "center",
-    top: -45
-
+    top: -45,
   },
   hintText: {
     fontSize: 28,
@@ -265,11 +264,11 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     top: H * 0.53,
     left: W * 0.1,
-    zIndex: 3
+    zIndex: 3,
   },
   greeni: {
     aspectRatio: 92.35 / 124,
     width: 92.35,
     height: 124,
   },
-})
+});

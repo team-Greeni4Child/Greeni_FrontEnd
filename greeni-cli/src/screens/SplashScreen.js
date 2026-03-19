@@ -8,8 +8,8 @@ const { width: W, height: H } = Dimensions.get("window");
 
 // 원본 비율(레이아웃 안정화)
 const AR = {
-  cloud: 522 / 234,   // ≈2.23
-  sun: 117 / 117,     // 1
+  cloud: 522 / 234, // ≈2.23
+  sun: 117 / 117, // 1
   pond: 1136 / 678,
   greeniUmbrella: 250 / 469,
   leaf1: 454 / 164,
@@ -23,7 +23,7 @@ export default function SplashScreen({ onDone }) {
   /*** 애니메이션 값들 ***/
   // 비: 아래로 살짝 떨어지며 사라짐
   const rainOpacity = useRef(new Animated.Value(1)).current;
-  const rainDropY   = useRef(new Animated.Value(0)).current;
+  const rainDropY = useRef(new Animated.Value(0)).current;
 
   // 구름: 좌/우로 화면 밖까지 이동
   const cloud1X = useRef(new Animated.Value(0)).current;
@@ -32,18 +32,18 @@ export default function SplashScreen({ onDone }) {
 
   // 해: 오른쪽 위에서 등장
   const sunOpacity = useRef(new Animated.Value(0)).current;
-  const sunScale   = useRef(new Animated.Value(1)).current;
-  const sunX       = useRef(new Animated.Value(W * 0.12)).current;   // 오른쪽에서 시작
-  const sunY       = useRef(new Animated.Value(-H * 0.12)).current;  // 위에서 시작
+  const sunScale = useRef(new Animated.Value(1)).current;
+  const sunX = useRef(new Animated.Value(W * 0.12)).current; // 오른쪽에서 시작
+  const sunY = useRef(new Animated.Value(-H * 0.12)).current; // 위에서 시작
 
   useEffect(() => {
     runScene();
   }, []);
 
   const runScene = () => {
-    const PRE_ROLL_MS = 1500;   // 비 오는 모습 먼저 보여줌
-    const DURATION    = 2200;   // 전환 시간
-    const EASE        = Easing.inOut(Easing.cubic);
+    const PRE_ROLL_MS = 1500; // 비 오는 모습 먼저 보여줌
+    const DURATION = 2200; // 전환 시간
+    const EASE = Easing.inOut(Easing.cubic);
 
     Animated.sequence([
       Animated.delay(PRE_ROLL_MS),
@@ -63,11 +63,26 @@ export default function SplashScreen({ onDone }) {
         }),
 
         // 구름: 좌우로 완전히 사라짐
-        Animated.timing(cloud1X, { toValue: -W * 1.6, duration: DURATION, easing: EASE, useNativeDriver: true }),
-        Animated.timing(cloud2X, { toValue:  W * 1.6, duration: DURATION, easing: EASE, useNativeDriver: true }),
-        Animated.timing(cloud3X, { toValue: -W * 1.4, duration: DURATION, easing: EASE, useNativeDriver: true }),
+        Animated.timing(cloud1X, {
+          toValue: -W * 1.6,
+          duration: DURATION,
+          easing: EASE,
+          useNativeDriver: true,
+        }),
+        Animated.timing(cloud2X, {
+          toValue: W * 1.6,
+          duration: DURATION,
+          easing: EASE,
+          useNativeDriver: true,
+        }),
+        Animated.timing(cloud3X, {
+          toValue: -W * 1.4,
+          duration: DURATION,
+          easing: EASE,
+          useNativeDriver: true,
+        }),
 
-        // 해: 오른쪽 위에서 → 제자리 
+        // 해: 오른쪽 위에서 → 제자리
         Animated.timing(sunX, {
           toValue: 0,
           duration: DURATION,
@@ -105,23 +120,52 @@ export default function SplashScreen({ onDone }) {
 
       {/* 연못, 연잎, 연꽃, 그리니*/}
       <View style={styles.pondWrap}>
-        <Animated.Image source={require("../assets/images/pond.png")} style={styles.pond} resizeMode="contain" />
-        <Animated.Image source={require("../assets/images/leaf1.png")} style={styles.leaf1} resizeMode="contain" />
-        <Animated.Image source={require("../assets/images/leaf4.png")} style={styles.leaf4} resizeMode="contain" />
-        <Animated.Image source={require("../assets/images/leaf2.png")} style={styles.leaf2} resizeMode="contain" />
-        <Animated.Image source={require("../assets/images/leaf3.png")} style={styles.leaf3} resizeMode="contain" />
-        <Animated.Image source={require("../assets/images/flower.png")} style={styles.flower1} resizeMode="contain" />
-        <Animated.Image source={require("../assets/images/flower.png")} style={styles.flower2} resizeMode="contain" />
-        <Animated.Image source={require("../assets/images/umbrella_greeni_big.png")} style={styles.greeni} resizeMode="contain" />
+        <Animated.Image
+          source={require("../assets/images/pond.png")}
+          style={styles.pond}
+          resizeMode="contain"
+        />
+        <Animated.Image
+          source={require("../assets/images/leaf1.png")}
+          style={styles.leaf1}
+          resizeMode="contain"
+        />
+        <Animated.Image
+          source={require("../assets/images/leaf4.png")}
+          style={styles.leaf4}
+          resizeMode="contain"
+        />
+        <Animated.Image
+          source={require("../assets/images/leaf2.png")}
+          style={styles.leaf2}
+          resizeMode="contain"
+        />
+        <Animated.Image
+          source={require("../assets/images/leaf3.png")}
+          style={styles.leaf3}
+          resizeMode="contain"
+        />
+        <Animated.Image
+          source={require("../assets/images/flower.png")}
+          style={styles.flower1}
+          resizeMode="contain"
+        />
+        <Animated.Image
+          source={require("../assets/images/flower.png")}
+          style={styles.flower2}
+          resizeMode="contain"
+        />
+        <Animated.Image
+          source={require("../assets/images/umbrella_greeni_big.png")}
+          style={styles.greeni}
+          resizeMode="contain"
+        />
       </View>
 
       {/* 비 */}
       <Animated.Image
         source={require("../assets/images/rain.png")}
-        style={[
-          styles.rain,
-          { opacity: rainOpacity, transform: [{ translateY: rainDropY }] },
-        ]}
+        style={[styles.rain, { opacity: rainOpacity, transform: [{ translateY: rainDropY }] }]}
         resizeMode="contain"
       />
 
@@ -147,7 +191,10 @@ export default function SplashScreen({ onDone }) {
         source={require("../assets/images/sun.png")}
         style={[
           styles.sun,
-          { opacity: sunOpacity, transform: [{ translateX: sunX }, { translateY: sunY }, { scale: sunScale }] },
+          {
+            opacity: sunOpacity,
+            transform: [{ translateX: sunX }, { translateY: sunY }, { scale: sunScale }],
+          },
         ]}
         resizeMode="contain"
       />
@@ -198,8 +245,8 @@ const styles = StyleSheet.create({
   sun: {
     position: "absolute",
     zIndex: 5,
-    top: H * 0.09,   
-    left: W * 0.25, 
+    top: H * 0.09,
+    left: W * 0.25,
     width: W * 1,
     aspectRatio: AR.sun,
   },
@@ -232,9 +279,9 @@ const styles = StyleSheet.create({
   pondWrap: {
     position: "absolute",
     zIndex: 2,
-    bottom: -H * 0.08,  
+    bottom: -H * 0.08,
     alignSelf: "center",
-    width: W * 1.22,    
+    width: W * 1.22,
     aspectRatio: AR.pond,
   },
   pond: {

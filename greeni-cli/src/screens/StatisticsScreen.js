@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useContext, useCallback } from "react";
-import { 
-  View, 
-  Text, 
-  Image, 
-  StyleSheet, 
-  Dimensions, 
+import {
+  View,
+  Text,
+  Image,
+  StyleSheet,
+  Dimensions,
   TouchableOpacity,
   ScrollView,
   BackHandler,
@@ -33,149 +33,162 @@ const emotionSourceMap = {
   anxiety: require("../assets/images/anxiety.png"),
 };
 
-
-
 // 예시 데이터 (하루하루 쌓이면 배열에 push)
-const monthEmotions = ["happy", "happy", "sad", "sad", "sad", "angry", "angry", "angry", "angry", "angry", "surprised", "surprised", "surprised", "surprised", "anxiety", "anxiety", "anxiety"];
+const monthEmotions = [
+  "happy",
+  "happy",
+  "sad",
+  "sad",
+  "sad",
+  "angry",
+  "angry",
+  "angry",
+  "angry",
+  "angry",
+  "surprised",
+  "surprised",
+  "surprised",
+  "surprised",
+  "anxiety",
+  "anxiety",
+  "anxiety",
+];
 
-export default function StatisticsScreen({route, navigation}) {
+export default function StatisticsScreen({ route, navigation }) {
+  const [tab, setTab] = useState(2);
+  const { selectedProfile } = useContext(ProfileContext);
+  const { setStep } = useContext(AuthContext);
 
-    const [tab, setTab] = useState(2);
-    const { selectedProfile } = useContext(ProfileContext);
-    const { setStep } = useContext(AuthContext);
+  const [countData, setCountData] = useState({ attendance: 0, diaryCount: 0, name: "" });
+  const [keyword, setKeyword] = useState("");
+  const [emotionStats, setEmotionStats] = useState([]);
 
-    const [countData, setCountData] = useState({ attendance: 0, diaryCount: 0, name: "" });
-    const [keyword, setKeyword] = useState("");
-    const [emotionStats, setEmotionStats] = useState([]);
+  const [todayActivities, setTodayActivities] = useState([]);
 
-    const [todayActivities, setTodayActivities] = useState([]);
+  const profileName = selectedProfile?.name ?? "";
 
-    const profileName = selectedProfile?.name ?? "";
+  useEffect(() => {
+    const loadStatistics = async () => {
+      if (!selectedProfile?.profileId) return;
 
-    useEffect(() => {
-      const loadStatistics = async () => {
-        if (!selectedProfile?.profileId) return;
+      try {
+        const profileId = selectedProfile.profileId;
 
-        try {
-          const profileId = selectedProfile.profileId;
+        const [countRes, keywordRes, emotionRes] = await Promise.all([
+          getProfileCount(profileId),
+          getTodayKeyword(profileId).catch(e => {
+            if (e?.code === "DIARY4041")
+              return { result: { keyword: "오늘 작성된 일기가 없어요." } };
+            throw e;
+          }),
+          getMonthlyEmotionStats(profileId),
+        ]);
 
-          const [countRes, keywordRes, emotionRes] = await Promise.all([
-            getProfileCount(profileId),
-            getTodayKeyword(profileId).catch((e) => {
-              if (e?.code === "DIARY4041") return { result: { keyword: "오늘 작성된 일기가 없어요." } };
-              throw e;
-            }),
-            getMonthlyEmotionStats(profileId),
-          ]);
+        setCountData({
+          attendance: countRes?.result?.attendance ?? 0,
+          diaryCount: countRes?.result?.diaryCount ?? 0,
+          name: countRes?.result?.name ?? selectedProfile?.name ?? "",
+        });
 
-          setCountData({
-            attendance: countRes?.result?.attendance ?? 0,
-            diaryCount: countRes?.result?.diaryCount ?? 0,
-            name: countRes?.result?.name ?? selectedProfile?.name ?? "",
-          });
-
-          setKeyword(keywordRes?.result?.keyword ?? "");
-          setEmotionStats(emotionRes?.result?.stats ?? []);
-        } catch (e) {
-          if (e?.code === "PROFILE4031" || e?.code === "PROFILE4041") {
-            setStep("profile");
-            return;
-          }
-          console.log("LOAD STATISTICS FAIL:", e);
+        setKeyword(keywordRes?.result?.keyword ?? "");
+        setEmotionStats(emotionRes?.result?.stats ?? []);
+      } catch (e) {
+        if (e?.code === "PROFILE4031" || e?.code === "PROFILE4041") {
+          setStep("profile");
+          return;
         }
-      };
-
-      loadStatistics();
-    }, [selectedProfile?.profileId, selectedProfile?.name, navigation, setStep]);
-
-    useEffect(() => {
-      const loadTodayActivities = async () => {
-        if (!selectedProfile?.profileId) return;
-
-        try {
-          const res = await getDailyActivities(selectedProfile.profileId);
-          setTodayActivities(res?.result?.activityList ?? []);
-        } catch (e) {
-          if (e?.code === "PROFILE4031" || e?.code === "PROFILE4041") {
-            setStep("profile");
-            return;
-          }
-          console.log("LOAD TODAY ACTIVITIES FAIL:", e);
-          setTodayActivities([]);
-        }
-      };
-
-      loadTodayActivities();
-    }, [selectedProfile?.profileId, navigation, setStep]);
-
-
-    const emotionMap = {
-      HAPPY: "happy",
-      SAD: "sad",
-      ANGRY: "angry",
-      SURPRISED: "surprised",
-      ANXIETY: "anxiety",
+        console.log("LOAD STATISTICS FAIL:", e);
+      }
     };
 
-    const monthEmotions = emotionStats.flatMap((s) =>
-      Array(s.count ?? 0).fill(emotionMap[s.emotion] ?? "happy")
-    );
+    loadStatistics();
+  }, [selectedProfile?.profileId, selectedProfile?.name, navigation, setStep]);
 
-    const emotionCount = {
-      happy: monthEmotions.filter((e) => e === "happy").length,
-      sad: monthEmotions.filter((e) => e === "sad").length,
-      angry: monthEmotions.filter((e) => e === "angry").length,
-      surprised: monthEmotions.filter((e) => e === "surprised").length,
-      anxiety: monthEmotions.filter((e) => e === "anxiety").length,
+  useEffect(() => {
+    const loadTodayActivities = async () => {
+      if (!selectedProfile?.profileId) return;
+
+      try {
+        const res = await getDailyActivities(selectedProfile.profileId);
+        setTodayActivities(res?.result?.activityList ?? []);
+      } catch (e) {
+        if (e?.code === "PROFILE4031" || e?.code === "PROFILE4041") {
+          setStep("profile");
+          return;
+        }
+        console.log("LOAD TODAY ACTIVITIES FAIL:", e);
+        setTodayActivities([]);
+      }
     };
 
-    // 뒤로가기 누르면 Home으로
-    useFocusEffect(
-      useCallback(() => {
-        const onBackPress = () => {
-          navigation.navigate("Home");
-          return true;
-        };
+    loadTodayActivities();
+  }, [selectedProfile?.profileId, navigation, setStep]);
 
-        const sub = BackHandler.addEventListener("hardwareBackPress", onBackPress);
-        return () => sub.remove();
-      }, [navigation])
-    );
+  const emotionMap = {
+    HAPPY: "happy",
+    SAD: "sad",
+    ANGRY: "angry",
+    SURPRISED: "surprised",
+    ANXIETY: "anxiety",
+  };
 
-    return (
-        <View style={styles.root}>  
-            <View style={styles.topBackground}>
-                <View style={styles.titleWrap}>
-                    <Text style={styles.title}>통계</Text>
-                </View>
+  const monthEmotions = emotionStats.flatMap(s =>
+    Array(s.count ?? 0).fill(emotionMap[s.emotion] ?? "happy"),
+  );
+
+  const emotionCount = {
+    happy: monthEmotions.filter(e => e === "happy").length,
+    sad: monthEmotions.filter(e => e === "sad").length,
+    angry: monthEmotions.filter(e => e === "angry").length,
+    surprised: monthEmotions.filter(e => e === "surprised").length,
+    anxiety: monthEmotions.filter(e => e === "anxiety").length,
+  };
+
+  // 뒤로가기 누르면 Home으로
+  useFocusEffect(
+    useCallback(() => {
+      const onBackPress = () => {
+        navigation.navigate("Home");
+        return true;
+      };
+
+      const sub = BackHandler.addEventListener("hardwareBackPress", onBackPress);
+      return () => sub.remove();
+    }, [navigation]),
+  );
+
+  return (
+    <View style={styles.root}>
+      <View style={styles.topBackground}>
+        <View style={styles.titleWrap}>
+          <Text style={styles.title}>통계</Text>
+        </View>
+      </View>
+
+      <View style={{ flex: 1, width: W }}>
+        <ScrollView
+          style={styles.statisticsScrollWrap}
+          contentContainerStyle={{ alignItems: "center", paddingBottom: 20 }}
+          showsVerticalScrollIndicator={false}
+        >
+          {/* 출석 */}
+          <View style={styles.attendanceWrap}>
+            <Image style={styles.greeniFace} source={require("../assets/images/greeni_face.png")} />
+            <View style={styles.attendanceTextWrap}>
+              <Text style={styles.attendanceText}>
+                {profileName}이(는){" "}
+                <Text style={styles.attendanceNumber}>{countData.attendance}</Text>일 출석했고
+              </Text>
+
+              <Text style={styles.attendanceText}>
+                함께 <Text style={styles.attendanceNumber}>{countData.diaryCount}</Text>
+                일의 일기를 작성했어!
+              </Text>
             </View>
+          </View>
 
-            <View style={{ flex: 1, width: W }}>
-                <ScrollView
-                    style={styles.statisticsScrollWrap}
-                    contentContainerStyle={{ alignItems: 'center', paddingBottom: 20 }}
-                    showsVerticalScrollIndicator={false}
-                >
-                    {/* 출석 */}
-                    <View style={styles.attendanceWrap}>
-                        <Image style={styles.greeniFace} source={require("../assets/images/greeni_face.png")}/>
-                        <View style={styles.attendanceTextWrap}>
-                          <Text style={styles.attendanceText}>
-                            {profileName}이(는){" "}
-                            <Text style={styles.attendanceNumber}>{countData.attendance}</Text>
-                            일 출석했고
-                          </Text>
-
-                          <Text style={styles.attendanceText}>
-                            함께{" "}
-                            <Text style={styles.attendanceNumber}>{countData.diaryCount}</Text>
-                            일의 일기를 작성했어!
-                          </Text>
-                        </View>
-                    </View>
-
-                    {/* 감정1 */}
-                    {/* <View style={styles.emotionWrap}>
+          {/* 감정1 */}
+          {/* <View style={styles.emotionWrap}>
                         <View style={styles.emotionTitleWrap}>
                             <Text style={{fontFamily: "Maplestory_Bold", fontSize: 18, color:colors.brown,}}>이번달 감정</Text>
                         </View>
@@ -198,69 +211,93 @@ export default function StatisticsScreen({route, navigation}) {
                         </View>
                     </View> */}
 
-                    {/* 감정2 */}
-                    <View style={styles.emotionWrap}>
-                        <View style={styles.emotionTitleWrap}>
-                            <Text style={{fontFamily: "Maplestory_Bold", fontSize: 18, color:colors.brown,}}>이번달 감정</Text>
-                        </View>
-                        <View style={styles.emotionDetailsWrap}>
-                            <View style={styles.emotionVander}>
-                              <EmotionVander2 
-                                emotions={monthEmotions}
-                                sourceMap={emotionSourceMap}
-                                seed={202512}
-                                padding={0}
-                                gap={0}
-                                maxCount={31}
-                                // 차이 더 크게 보이고 싶으면:
-                                curvePow={1.35}
-                                maxSizeRatio={0.95}
-                              />
-                            </View>
-                            <View style={styles.emotionCountWrap}>
-                                <Text style={{fontFamily: "gangwongyoyuksaeeum", fontSize: 24, color: colors.brown}}>기쁨 {emotionCount.happy}</Text>
-                                <Text style={{fontFamily: "gangwongyoyuksaeeum", fontSize: 24, color: colors.brown}}>슬픔 {emotionCount.sad}</Text>
-                                <Text style={{fontFamily: "gangwongyoyuksaeeum", fontSize: 24, color: colors.brown}}>화남 {emotionCount.angry}</Text>
-                                <Text style={{fontFamily: "gangwongyoyuksaeeum", fontSize: 24, color: colors.brown}}>놀람 {emotionCount.surprised}</Text>
-                                <Text style={{fontFamily: "gangwongyoyuksaeeum", fontSize: 24, color: colors.brown}}>불안 {emotionCount.anxiety}</Text>
-                            </View>
-                        </View>
-                    </View>
+          {/* 감정2 */}
+          <View style={styles.emotionWrap}>
+            <View style={styles.emotionTitleWrap}>
+              <Text style={{ fontFamily: "Maplestory_Bold", fontSize: 18, color: colors.brown }}>
+                이번달 감정
+              </Text>
+            </View>
+            <View style={styles.emotionDetailsWrap}>
+              <View style={styles.emotionVander}>
+                <EmotionVander2
+                  emotions={monthEmotions}
+                  sourceMap={emotionSourceMap}
+                  seed={202512}
+                  padding={0}
+                  gap={0}
+                  maxCount={31}
+                  // 차이 더 크게 보이고 싶으면:
+                  curvePow={1.35}
+                  maxSizeRatio={0.95}
+                />
+              </View>
+              <View style={styles.emotionCountWrap}>
+                <Text
+                  style={{ fontFamily: "gangwongyoyuksaeeum", fontSize: 24, color: colors.brown }}
+                >
+                  기쁨 {emotionCount.happy}
+                </Text>
+                <Text
+                  style={{ fontFamily: "gangwongyoyuksaeeum", fontSize: 24, color: colors.brown }}
+                >
+                  슬픔 {emotionCount.sad}
+                </Text>
+                <Text
+                  style={{ fontFamily: "gangwongyoyuksaeeum", fontSize: 24, color: colors.brown }}
+                >
+                  화남 {emotionCount.angry}
+                </Text>
+                <Text
+                  style={{ fontFamily: "gangwongyoyuksaeeum", fontSize: 24, color: colors.brown }}
+                >
+                  놀람 {emotionCount.surprised}
+                </Text>
+                <Text
+                  style={{ fontFamily: "gangwongyoyuksaeeum", fontSize: 24, color: colors.brown }}
+                >
+                  불안 {emotionCount.anxiety}
+                </Text>
+              </View>
+            </View>
+          </View>
 
-                    {/* 키워드 */}
-                    <View style={styles.keywordWrap}>
-                        <View style={styles.keywordTitle}>
-                            <Text style={{fontFamily: "Maplestory_Bold", fontSize: 18, color:colors.brown,}}>일기 오늘의 키워드</Text>
-                        </View>
-                        <View style={styles.keywordContent}>
-                            <Text style={{fontFamily: "Maplestory_Light", fontSize: 34, color: colors.brown}}>{keyword}</Text>
-                        </View>
-                    </View>
+          {/* 키워드 */}
+          <View style={styles.keywordWrap}>
+            <View style={styles.keywordTitle}>
+              <Text style={{ fontFamily: "Maplestory_Bold", fontSize: 18, color: colors.brown }}>
+                일기 오늘의 키워드
+              </Text>
+            </View>
+            <View style={styles.keywordContent}>
+              <Text style={{ fontFamily: "Maplestory_Light", fontSize: 34, color: colors.brown }}>
+                {keyword}
+              </Text>
+            </View>
+          </View>
 
-                    {/* 활동요약 */}
-                    <TouchableOpacity 
-                      style={styles.summaryWrap}
-                      onPress={() => navigation.navigate("Summary")}>
-                        <View style={styles.summaryHeader}>
-                          <Text style={styles.summaryTitle}>활동 요약</Text>
-                            <Image
-                              source={require("../assets/images/next_arrow.png")}
-                              style={styles.nextArrow}
-                            />
-                        </View>
-                        <View style={styles.summaryContent}>
-                          {todayActivities.length === 0 ? (
-                            <Text style={styles.bubbleText}>오늘 활동 요약이 없어요.</Text>
-                          ) : (
-                            todayActivities.map((text, idx) => (
-                              <View key={`${text}-${idx}`} style={styles.chatLeft}>
-                                <View style={styles.bubble}>
-                                  <Text style={styles.bubbleText}>{text}</Text>
-                                </View>
-                              </View>
-                            ))
-                          )}
-                          {/* <View style={styles.chatLeft}>
+          {/* 활동요약 */}
+          <TouchableOpacity
+            style={styles.summaryWrap}
+            onPress={() => navigation.navigate("Summary")}
+          >
+            <View style={styles.summaryHeader}>
+              <Text style={styles.summaryTitle}>활동 요약</Text>
+              <Image source={require("../assets/images/next_arrow.png")} style={styles.nextArrow} />
+            </View>
+            <View style={styles.summaryContent}>
+              {todayActivities.length === 0 ? (
+                <Text style={styles.bubbleText}>오늘 활동 요약이 없어요.</Text>
+              ) : (
+                todayActivities.map((text, idx) => (
+                  <View key={`${text}-${idx}`} style={styles.chatLeft}>
+                    <View style={styles.bubble}>
+                      <Text style={styles.bubbleText}>{text}</Text>
+                    </View>
+                  </View>
+                ))
+              )}
+              {/* <View style={styles.chatLeft}>
                             <Image 
                               source={require("../assets/images/mustache_greeni_big.png")}
                               style={styles.greeni}
@@ -292,24 +329,23 @@ export default function StatisticsScreen({route, navigation}) {
                               <Text style={[styles.bubbleText, { paddingTop: 10, paddingBottom: 10, textAlign: 'center' }]}>동물퀴즈 10문제를 모두 맞혔어요.</Text>
                             </View>
                           </View> */}
-                        </View>
-                    </TouchableOpacity>
-                </ScrollView>
             </View>
-          {/* 하단 네비게이션 바 */}
-          <NavigationBar
-            state={tab}
-            onTabPress={(i) => {
-              setTab(i);
-              if (i === 0) navigation.navigate("Home");
-              if (i === 1) navigation.navigate("Calendar");
-              if (i === 2) navigation.navigate("Statistics");
-              if (i === 3) navigation.navigate("MyPage");
-            }}
-          />
-        </View>
-    )
-
+          </TouchableOpacity>
+        </ScrollView>
+      </View>
+      {/* 하단 네비게이션 바 */}
+      <NavigationBar
+        state={tab}
+        onTabPress={i => {
+          setTab(i);
+          if (i === 0) navigation.navigate("Home");
+          if (i === 1) navigation.navigate("Calendar");
+          if (i === 2) navigation.navigate("Statistics");
+          if (i === 3) navigation.navigate("MyPage");
+        }}
+      />
+    </View>
+  );
 }
 
 const styles = StyleSheet.create({
@@ -319,7 +355,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   topBackground: {
-    position: 'absolute',
+    position: "absolute",
     width: W,
     height: H * 0.14,
     backgroundColor: colors.pink,
@@ -328,7 +364,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "flex-start",
     paddingTop: H * 0.08,
-    zIndex: 1
+    zIndex: 1,
   },
 
   titleWrap: {
@@ -336,7 +372,7 @@ const styles = StyleSheet.create({
     marginBottom: 45,
     height: 35,
     width: W,
-    zIndex: 2
+    zIndex: 2,
   },
   title: {
     fontSize: 28,
@@ -350,11 +386,11 @@ const styles = StyleSheet.create({
   },
   attendanceWrap: {
     height: 153,
-    width: '90%',
-    flexDirection: 'column',
+    width: "90%",
+    flexDirection: "column",
     marginBottom: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     backgroundColor: colors.white,
     borderRadius: 10,
     fontSize: 18,
@@ -363,20 +399,20 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: colors.green,
     marginTop: 30 + H * 0.14,
-    position: 'relative',
-    overflow: 'visible',
-    paddingBottom: 10
+    position: "relative",
+    overflow: "visible",
+    paddingBottom: 10,
   },
   greeniFace: {
-    position: 'absolute',
+    position: "absolute",
     left: -10,
     top: -20,
     width: 76,
     height: 66.34,
-    resizeMode: 'contain'
+    resizeMode: "contain",
   },
   attendanceTextWrap: {
-    alignItems: 'center',
+    alignItems: "center",
     fontSize: 18,
     fontFamily: "gangwongyoyuksaeeum",
     color: colors.brown,
@@ -385,91 +421,91 @@ const styles = StyleSheet.create({
     fontFamily: "gangwongyoyuksaeeum",
     fontSize: 28,
     textAlign: "center",
-    color: colors.brown
+    color: colors.brown,
   },
 
   attendanceNumber: {
     fontFamily: "gangwongyoyuksaeeum",
     fontSize: 40,
-    color: "#7BA845"
+    color: "#7BA845",
   },
   emotionWrap: {
     borderWidth: 2,
     borderColor: colors.pinkDark,
     height: 267,
-    width: '90%',
-    flexDirection: 'column',
+    width: "90%",
+    flexDirection: "column",
     marginBottom: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     backgroundColor: colors.white,
     borderRadius: 10,
   },
   emotionTitleWrap: {
-    width: '77%',
-    alignItems: 'flex-start',
+    width: "77%",
+    alignItems: "flex-start",
     fontFamily: "Maplestory_Bold", // 시안은 굵게
     fontSize: 18,
     color: colors.brown,
     marginLeft: -40,
-    marginBottom: 5
+    marginBottom: 5,
   },
   emotionDetailsWrap: {
-    width: '100%',
-    height: '75%',
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
+    width: "100%",
+    height: "75%",
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
   },
   emotionVander: {
     borderWidth: 2,
     borderColor: colors.pinkDark,
-    width: '70%',
-    height: '90%',
+    width: "70%",
+    height: "90%",
     marginRight: 20,
     borderRadius: 10,
-    backgroundColor: colors.ivory
+    backgroundColor: colors.ivory,
   },
   emotionCountWrap: {
-    width: '15%',
-    height: '90%',
-    justifyContent: 'center',
-    alignItems: 'center',
+    width: "15%",
+    height: "90%",
+    justifyContent: "center",
+    alignItems: "center",
     right: 4,
   },
   keywordWrap: {
     borderWidth: 2,
     borderColor: colors.green,
     height: 167,
-    width: '90%',
-    flexDirection: 'column',
+    width: "90%",
+    flexDirection: "column",
     marginBottom: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     backgroundColor: colors.white,
     borderRadius: 10,
-    paddingVertical: 16
+    paddingVertical: 16,
   },
   keywordTitle: {
-    alignSelf: 'flex-start',
+    alignSelf: "flex-start",
     marginLeft: 15,
-    marginBottom: 0
+    marginBottom: 0,
   },
   keywordContent: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     fontSize: 34,
   },
   summaryWrap: {
     borderWidth: 2,
     borderColor: colors.pinkDark,
     height: 300,
-    width: '90%',
-    flexDirection: 'column',
+    width: "90%",
+    flexDirection: "column",
     marginBottom: 120,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     backgroundColor: colors.white,
     borderRadius: 10,
   },
@@ -477,7 +513,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "flex-start",
     alignItems: "center",
-    width: '100%',
+    width: "100%",
     paddingTop: 20,
     marginLeft: 30,
   },
@@ -490,50 +526,50 @@ const styles = StyleSheet.create({
   nextArrow: {
     width: 8,
     height: 15,
-    aspectRatio: 7/12,
-    resizeMode: 'contain',
+    aspectRatio: 7 / 12,
+    resizeMode: "contain",
   },
   summaryContent: {
-    flex : 1,
-    width: '100%',
-    height: '80%',
-    justifyContent: 'center',
-    alignItems: 'center',
+    flex: 1,
+    width: "100%",
+    height: "80%",
+    justifyContent: "center",
+    alignItems: "center",
     paddingTop: 44,
     paddingBottom: 28,
   },
   chatLeft: {
-    width: '100%',
-    height: '30%',
-    flexDirection: 'row',
+    width: "100%",
+    height: "30%",
+    flexDirection: "row",
     justifyContent: "flex-start",
-    alignItems: 'center',
+    alignItems: "center",
     marginBottom: 20,
   },
   chatRight: {
-    width: '100%',
-    height: '30%',
-    flexDirection: 'row',
+    width: "100%",
+    height: "30%",
+    flexDirection: "row",
     justifyContent: "flex-end",
-    alignItems: 'center',
+    alignItems: "center",
     marginBottom: 20,
   },
   greeni: {
-    width: '20%',
-    height: '120%',
-    marginLeft : 15,
-    marginRight : 15,
+    width: "20%",
+    height: "120%",
+    marginLeft: 15,
+    marginRight: 15,
     // borderWidth: 2,
     // borderColor: 'red'
   },
   bubble: {
     backgroundColor: colors.pink,
     borderRadius: 5,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     paddingVertical: 5,
     paddingHorizontal: 6,
-    maxWidth: '70%',
+    maxWidth: "70%",
     flexShrink: 1,
   },
   bubbleText: {
@@ -541,5 +577,5 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontFamily: "gangwongyoyuksaeeum",
     color: colors.brown,
-  }
-})
+  },
+});

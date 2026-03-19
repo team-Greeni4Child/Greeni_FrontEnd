@@ -1,6 +1,6 @@
 import React, { useState, useContext } from "react";
 import colors from "../theme/colors";
-import { AuthContext } from "../App"; 
+import { AuthContext } from "../App";
 import Button from "../components/Button";
 import { login } from "../api/auth";
 import { saveAuth } from "../utils/tokenStorage";
@@ -19,7 +19,7 @@ const { width: W, height: H } = Dimensions.get("window");
 
 // 원본 비율(레이아웃 안정화)
 const AR = {
-  greeni: 509 / 852
+  greeni: 509 / 852,
 };
 
 // 이메일 형식 검증 (기본)
@@ -159,30 +159,24 @@ export default function LoginScreen({ navigation }) {
         {/* 이메일, 비밀번호 입력 */}
         <View style={styles.inputsWrap}>
           <TextInput
-            style={[
-              styles.input,
-              emailError ? { borderBottomColor: "#f36945" } : {},
-            ]}
+            style={[styles.input, emailError ? { borderBottomColor: "#f36945" } : {}]}
             fontFamily="Maplestory_Light"
             placeholder={emailError ? emailError : "이메일"}
             placeholderTextColor={emailError ? "#f36945" : colors.brown}
             value={email}
-            onChangeText={(text) => {
+            onChangeText={text => {
               setEmail(text);
               if (emailError) setEmailError("");
             }}
             autoCapitalize="none"
           />
           <TextInput
-            style={[
-              styles.input,
-              passwordError ? { borderBottomColor: "#f36945" } : {},
-            ]}
+            style={[styles.input, passwordError ? { borderBottomColor: "#f36945" } : {}]}
             fontFamily="Maplestory_Light"
             placeholder={passwordError ? passwordError : "비밀번호"}
             placeholderTextColor={passwordError ? "#f36945" : colors.brown}
             value={password}
-            onChangeText={(text) => {
+            onChangeText={text => {
               setPassword(text);
               if (passwordError) setPasswordError("");
             }}
@@ -200,30 +194,27 @@ export default function LoginScreen({ navigation }) {
           fontSize={14}
           onPress={handleLogin}
         />
-      </View>   
+      </View>
 
       <View style={styles.bottomWrap}>
         {/* 그리니 */}
-        <Image 
-          source={require("../assets/images/greeni_shy.png")} 
+        <Image
+          source={require("../assets/images/greeni_shy.png")}
           style={styles.greeni}
           resizeMode="contain"
         />
 
         {/* 비밀번호 찾기, 회원가입 하기 */}
         <View style={styles.linkWrap}>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.linkButton}
             onPress={() => navigation.navigate("FindPassword")}
           >
-            <Text style={styles.linkText}>비밀번호 찾기   {'>'}</Text>
+            <Text style={styles.linkText}>비밀번호 찾기 {">"}</Text>
           </TouchableOpacity>
-          
-          <TouchableOpacity 
-            style={styles.linkButton}
-            onPress={() => navigation.navigate("Signup")}
-          >
-            <Text style={styles.linkText}>회원가입 하기   {'>'}</Text>
+
+          <TouchableOpacity style={styles.linkButton} onPress={() => navigation.navigate("Signup")}>
+            <Text style={styles.linkText}>회원가입 하기 {">"}</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -251,7 +242,7 @@ export default function LoginScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.ivory, 
+    backgroundColor: colors.ivory,
     alignItems: "center",
   },
   topBackground: {
@@ -260,7 +251,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: H * 0.6,
-    backgroundColor: colors.pink, 
+    backgroundColor: colors.pink,
     borderBottomLeftRadius: 30,
     borderBottomRightRadius: 30,
   },
@@ -282,7 +273,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   inputsWrap: {
-    alignItems: "stretch",        
+    alignItems: "stretch",
   },
   input: {
     width: "100%",
@@ -296,16 +287,16 @@ const styles = StyleSheet.create({
   },
   bottomWrap: {
     marginTop: H * 0.08,
-    flexDirection: "row",    
+    flexDirection: "row",
     alignItems: "center",
   },
   greeni: {
-    width: W * 0.35,         
-    aspectRatio: AR.greeni,          
+    width: W * 0.35,
+    aspectRatio: AR.greeni,
     marginRight: W * 0.04,
   },
   linkWrap: {
-    flexDirection: "column", 
+    flexDirection: "column",
     justifyContent: "flex-end",
     height: H * 0.2,
   },

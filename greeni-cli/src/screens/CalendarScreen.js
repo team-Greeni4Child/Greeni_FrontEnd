@@ -19,8 +19,8 @@ import { ProfileContext } from "../context/ProfileContext";
 const { width: W, height: H } = Dimensions.get("window");
 
 // -------- Utils --------
-const pad2 = (n) => String(n).padStart(2, "0");
-const ymd = (d) => `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+const pad2 = n => String(n).padStart(2, "0");
+const ymd = d => `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
 
 const emotionToSticker = {
   HAPPY: require("../assets/images/happy.png"),
@@ -80,7 +80,7 @@ export default function CalendarScreen({ navigation }) {
 
       const sub = BackHandler.addEventListener("hardwareBackPress", onBackPress);
       return () => sub.remove();
-    }, [navigation])
+    }, [navigation]),
   );
 
   // 월별 일기 목록 조회 (year/month/profileId 바뀔 때마다)
@@ -155,23 +155,23 @@ export default function CalendarScreen({ navigation }) {
 
   const matrix = useMemo(() => buildMonthMatrix(year, month), [year, month]);
 
-  const hasDiary = useCallback((d) => (d ? diaryDates.has(ymd(d)) : false), [diaryDates]);
+  const hasDiary = useCallback(d => (d ? diaryDates.has(ymd(d)) : false), [diaryDates]);
 
   // 날짜별 스티커 얻기
   const getStickerSource = useCallback(
-    (d) => {
+    d => {
       if (!d) return null;
       const key = ymd(d);
       return stickerMap[key] || null;
     },
-    [stickerMap]
+    [stickerMap],
   );
 
   const goPrev = () => {
     if (month === 0) {
-      setYear((y) => y - 1);
+      setYear(y => y - 1);
       setMonth(11);
-    } else setMonth((m) => m - 1);
+    } else setMonth(m => m - 1);
   };
 
   const goNext = () => {
@@ -188,7 +188,7 @@ export default function CalendarScreen({ navigation }) {
     setMonth(nextM);
   };
 
-  const openDiary = (d) => {
+  const openDiary = d => {
     if (!hasDiary(d)) return; // 스티커 없으면 아무 것도 안 함
     const dateKey = ymd(d);
     // '일기 보기' 화면으로 이동
@@ -208,7 +208,7 @@ export default function CalendarScreen({ navigation }) {
       {/* 네비게이션 바 */}
       <NavigationBar
         state={tab}
-        onTabPress={(i) => {
+        onTabPress={i => {
           setTab(i);
           if (i === 0) navigation.navigate("Home");
           if (i === 1) navigation.navigate("Calendar");
@@ -216,7 +216,7 @@ export default function CalendarScreen({ navigation }) {
           if (i === 3) navigation.navigate("MyPage");
         }}
       />
-      
+
       <Text style={styles.title}>일기 보기</Text>
 
       {/* 상단 타이틀/말풍선/그리니 영역 */}
@@ -250,7 +250,10 @@ export default function CalendarScreen({ navigation }) {
       {/* 요일 헤더 */}
       <View style={styles.weekHeader}>
         {weekdayLabels.map((w, i) => (
-          <Text key={i} style={[styles.weekLabel, i === 0 ? styles.sun : i === 6 ? styles.sat : null]}>
+          <Text
+            key={i}
+            style={[styles.weekLabel, i === 0 ? styles.sun : i === 6 ? styles.sat : null]}
+          >
             {w}
           </Text>
         ))}
@@ -321,7 +324,7 @@ const styles = StyleSheet.create({
   root: {
     flex: 1,
     alignItems: "center",
-    justifyContent: "flex-start", 
+    justifyContent: "flex-start",
     backgroundColor: colors.ivory,
     paddingTop: 120,
   },
@@ -341,7 +344,7 @@ const styles = StyleSheet.create({
     //backgroundColor:"red",
   },
   bubble: {
-    maxWidth: W * 0.75, 
+    maxWidth: W * 0.75,
     paddingHorizontal: 10,
     paddingVertical: 25,
     alignItems: "center",
@@ -371,18 +374,18 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     gap: 18,
-    left:80,
+    left: 80,
     // top: -90,
     top: -25,
   },
-  arrowBtn: { 
-    paddingHorizontal: 12, 
-    paddingVertical: 4 
+  arrowBtn: {
+    paddingHorizontal: 12,
+    paddingVertical: 4,
   },
-  arrowText: { 
-    fontSize: 24, 
-    color: colors.brown, 
-    fontFamily: "Maplestory_Bold" 
+  arrowText: {
+    fontSize: 24,
+    color: colors.brown,
+    fontFamily: "Maplestory_Bold",
   },
   monthText: {
     fontSize: 18,

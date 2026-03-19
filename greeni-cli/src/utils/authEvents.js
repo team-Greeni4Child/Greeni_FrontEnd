@@ -6,5 +6,5 @@ export function addLogoutListener(fn) {
 }
 
 export function emitLogout() {
-  listeners.forEach((fn) => fn());
+  listeners.forEach(fn => fn());
 }

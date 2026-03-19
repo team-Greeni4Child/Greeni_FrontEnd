@@ -40,10 +40,10 @@ export default function SettingsScreen({ route, navigation }) {
     "[SettingsScreen] render#",
     renderCount.current,
     "selectedProfile:",
-    !!selectedProfile
+    !!selectedProfile,
   );
 
-  const formatBirth = (s) => (typeof s === "string" ? s.replaceAll("-", ".") : "");
+  const formatBirth = s => (typeof s === "string" ? s.replaceAll("-", ".") : "");
 
   // 훅은 무조건 실행
   const [draftName, setDraftName] = useState("");
@@ -61,7 +61,7 @@ export default function SettingsScreen({ route, navigation }) {
 
   const [activeSheet, setActiveSheet] = useState(null);
 
-  const openErrorModal = (message) => {
+  const openErrorModal = message => {
     setErrorModalMessage(message);
     setShowErrorModal(true);
   };
@@ -100,10 +100,10 @@ export default function SettingsScreen({ route, navigation }) {
   const profileImageSource = safeProfile.image;
 
   const toggleEditEnabled = () => {
-    setEditEnabled((prev) => !prev);
+    setEditEnabled(prev => !prev);
   };
 
-  const startEditField = (field) => {
+  const startEditField = field => {
     if (!editEnabled) return;
 
     if (field === "name") {
@@ -123,8 +123,7 @@ export default function SettingsScreen({ route, navigation }) {
     const finalName = nextName.length ? nextName : selectedProfile.name;
     const finalBirth = nextBirth.length ? nextBirth : selectedProfile.birth;
 
-    const changed =
-      finalName !== selectedProfile.name || finalBirth !== selectedProfile.birth;
+    const changed = finalName !== selectedProfile.name || finalBirth !== selectedProfile.birth;
 
     try {
       if (changed) {
@@ -137,12 +136,12 @@ export default function SettingsScreen({ route, navigation }) {
         const updated = { ...selectedProfile, name: finalName, birth: finalBirth };
         setSelectedProfile(updated);
 
-        setProfiles((prev) =>
-          prev.map((p) =>
+        setProfiles(prev =>
+          prev.map(p =>
             p.profileId === selectedProfile.profileId
               ? { ...p, name: finalName, birth: finalBirth }
-              : p
-          )
+              : p,
+          ),
         );
       }
     } catch (e) {
@@ -166,12 +165,12 @@ export default function SettingsScreen({ route, navigation }) {
     setProfiles,
   ]);
 
-  const handleDateConfirm = async (date) => {
+  const handleDateConfirm = async date => {
     if (!selectedProfile) return;
 
     const formatted = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(
       2,
-      "0"
+      "0",
     )}-${String(date.getDate()).padStart(2, "0")}`;
 
     setDraftBirth(formatted);
@@ -186,10 +185,8 @@ export default function SettingsScreen({ route, navigation }) {
       const updated = { ...selectedProfile, birth: formatted };
       setSelectedProfile(updated);
 
-      setProfiles((prev) =>
-        prev.map((p) =>
-          p.profileId === selectedProfile.profileId ? { ...p, birth: formatted } : p
-        )
+      setProfiles(prev =>
+        prev.map(p => (p.profileId === selectedProfile.profileId ? { ...p, birth: formatted } : p)),
       );
     } catch (e) {
       console.log("Modify Birth Fail:", e);
@@ -221,7 +218,7 @@ export default function SettingsScreen({ route, navigation }) {
       // 3) 목록 갱신
       const listRes = await searchProfileList();
       const list = listRes?.result?.profileLists ?? [];
-      const mapped = list.map((p) => ({
+      const mapped = list.map(p => ({
         profileId: p.profileId,
         name: p.name,
         birth: p.birth,
@@ -237,8 +234,8 @@ export default function SettingsScreen({ route, navigation }) {
 
   const handleLogout = async () => {
     try {
-      {/* 로그아웃 api 수정 완료되면 주석 풀기 */}
-      // await logout(); 
+      /* 로그아웃 api 수정 완료되면 주석 풀기 */
+      // await logout();
     } catch (e) {
       console.log("Logout Fail:", e);
     } finally {
@@ -260,7 +257,7 @@ export default function SettingsScreen({ route, navigation }) {
     await clearAuth();
     setDeleteAccountModalVisible(false);
     setStep("auth");
-  }
+  };
 
   if (!selectedProfile) {
     return <View style={styles.root} />;
@@ -324,12 +321,12 @@ export default function SettingsScreen({ route, navigation }) {
                           };
                           setSelectedProfile(updated);
 
-                          setProfiles((prev) =>
-                            prev.map((p) =>
+                          setProfiles(prev =>
+                            prev.map(p =>
                               p.profileId === selectedProfile.profileId
                                 ? { ...p, profileImage, image: toImageSource(profileImage) }
-                                : p
-                            )
+                                : p,
+                            ),
                           );
                         } catch (e) {
                           console.log("Modify Profile Image Fail:", e);
@@ -520,9 +517,7 @@ export default function SettingsScreen({ route, navigation }) {
                     style={[styles.modalButton, styles.rightButton]}
                     onPress={() => setDeleteModalVisible(false)}
                   >
-                    <Text style={[styles.modalButtonText, { color: colors.brown }]}>
-                      아니오
-                    </Text>
+                    <Text style={[styles.modalButtonText, { color: colors.brown }]}>아니오</Text>
                   </TouchableOpacity>
                 </View>
               </View>
@@ -554,9 +549,7 @@ export default function SettingsScreen({ route, navigation }) {
                     style={[styles.modalButton, styles.rightButton]}
                     onPress={() => setLogoutModalVisible(false)}
                   >
-                    <Text style={[styles.modalButtonText, { color: colors.brown }]}>
-                      아니오
-                    </Text>
+                    <Text style={[styles.modalButtonText, { color: colors.brown }]}>아니오</Text>
                   </TouchableOpacity>
                 </View>
               </View>
@@ -590,9 +583,7 @@ export default function SettingsScreen({ route, navigation }) {
                     style={[styles.modalButton, styles.rightButton]}
                     onPress={() => setDeleteAccountModalVisible(false)}
                   >
-                    <Text style={[styles.modalButtonText, { color: colors.brown }]}>
-                      아니오
-                    </Text>
+                    <Text style={[styles.modalButtonText, { color: colors.brown }]}>아니오</Text>
                   </TouchableOpacity>
                 </View>
               </View>
@@ -608,7 +599,6 @@ export default function SettingsScreen({ route, navigation }) {
         >
           <View style={styles.sheetScreen}>
             <View style={styles.sheetHeader}>
-
               <Text style={styles.sheetTitle}>
                 {activeSheet === "privacy" && "개인정보 처리방침"}
                 {activeSheet === "terms" && "이용약관"}
@@ -622,7 +612,7 @@ export default function SettingsScreen({ route, navigation }) {
               <View style={{ width: 40 }} />
             </View>
 
-            <ScrollView 
+            <ScrollView
               style={styles.sheetBody}
               contentContainerStyle={styles.sheetBodyContent}
               showsVerticalScrollIndicator={true}
@@ -869,24 +859,24 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontFamily: "Maplestory_Light",
   },
-  
+
   footer: {
     position: "absolute",
     bottom: 24,
     flexDirection: "row",
-    alignItems: 'center',
-    justifyContent: 'center'
+    alignItems: "center",
+    justifyContent: "center",
   },
   footerText: {
     fontSize: 14,
-    fontFamily: 'MapleStory_Light',
-    color: colors.lightGrayPh
+    fontFamily: "MapleStory_Light",
+    color: colors.lightGrayPh,
   },
   footerDivider: {
     marginHorizontal: 6,
     fontSize: 14,
-    fontFamily: 'MapleStory_Light',
-    color: colors.lightGrayPh
+    fontFamily: "MapleStory_Light",
+    color: colors.lightGrayPh,
   },
 
   sheetScreen: {
@@ -943,4 +933,3 @@ const styles = StyleSheet.create({
     color: colors.brown,
   },
 });
-

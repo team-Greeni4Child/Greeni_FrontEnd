@@ -4,7 +4,7 @@ import colors from "../../theme/colors";
 import ColorPicker, { Panel1, HueSlider } from "reanimated-color-picker";
 
 export default function ColorPickerModal({ visible, initialColor = "#FF0000", onClose, onApply }) {
-  const [temp, setTemp] = useState(initialColor);      // 확정값(손 뗐을 때 확정)
+  const [temp, setTemp] = useState(initialColor); // 확정값(손 뗐을 때 확정)
   const [preview, setPreview] = useState(initialColor); // 미리보기(드래그 중)
   const [pickerKey, setPickerKey] = useState(0);
 
@@ -13,7 +13,7 @@ export default function ColorPickerModal({ visible, initialColor = "#FF0000", on
     if (visible) {
       setTemp(initialColor);
       setPreview(initialColor);
-      setPickerKey((prev) => prev + 1);
+      setPickerKey(prev => prev + 1);
     }
   }, [visible, initialColor]);
 
@@ -30,10 +30,10 @@ export default function ColorPickerModal({ visible, initialColor = "#FF0000", on
             <ColorPicker
               key={pickerKey}
               value={initialColor}
-              onChangeJS={(result) => {
+              onChangeJS={result => {
                 if (result?.hex) setPreview(result.hex);
               }}
-              onCompleteJS={(result) => {
+              onCompleteJS={result => {
                 if (result?.hex) {
                   setTemp(result.hex);
                   setPreview(result.hex);
@@ -122,10 +122,10 @@ const styles = StyleSheet.create({
     color: colors.brown,
     fontSize: 12,
   },
-  btnRow: { 
-    flexDirection: "row", 
-    gap: 10, 
-    marginTop: 12 
+  btnRow: {
+    flexDirection: "row",
+    gap: 10,
+    marginTop: 12,
   },
   btn: {
     flex: 1,
@@ -135,19 +135,19 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  btnText: { 
-    fontFamily: "Maplestory_Bold", 
-    color: colors.brown, 
-    fontSize: 14 
+  btnText: {
+    fontFamily: "Maplestory_Bold",
+    color: colors.brown,
+    fontSize: 14,
   },
-  ghost: { 
-    backgroundColor: colors.white, 
-    borderWidth: 2, 
-    borderColor: colors.greenDark 
+  ghost: {
+    backgroundColor: colors.white,
+    borderWidth: 2,
+    borderColor: colors.greenDark,
   },
-  ghostText: { 
-    fontFamily: "Maplestory_Bold", 
-    color: colors.brown, 
-    fontSize: 14 
+  ghostText: {
+    fontFamily: "Maplestory_Bold",
+    color: colors.brown,
+    fontSize: 14,
   },
 });

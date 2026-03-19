@@ -8,10 +8,7 @@ import {
   Platform,
   Alert,
 } from "react-native";
-import Sound, {
-  AudioEncoderAndroidType,
-  AudioSourceAndroidType,
-} from "react-native-nitro-sound";
+import Sound, { AudioEncoderAndroidType, AudioSourceAndroidType } from "react-native-nitro-sound";
 import colors from "../theme/colors";
 
 const { width: W, height: H } = Dimensions.get("window");
@@ -36,16 +33,15 @@ export default function MicButton({ onRecordComplete }) {
   const recordPathRef = useRef("");
 
   useEffect(() => {
-
     let interval;
     if (active) {
       interval = setInterval(() => {
-        setFrame((prev) => (prev + 1) % micIcons.length);
+        setFrame(prev => (prev + 1) % micIcons.length);
       }, 200);
     } else {
       if (frame > 0) {
         interval = setInterval(() => {
-          setFrame((prev) => (prev > 0 ? prev - 1 : 0));
+          setFrame(prev => (prev > 0 ? prev - 1 : 0));
         }, 200);
       }
     }
@@ -82,7 +78,7 @@ export default function MicButton({ onRecordComplete }) {
           message: "음성 녹음을 위해 마이크 권한이 필요합니다.",
           buttonPositive: "확인",
           buttonNegative: "취소",
-        }
+        },
       );
 
       return granted === PermissionsAndroid.RESULTS.GRANTED;
@@ -116,9 +112,8 @@ export default function MicButton({ onRecordComplete }) {
         AudioChannels: 1,
       };
 
-      Sound.addRecordBackListener((e) => {
-        const meter =
-          typeof e.currentMetering === "number" ? e.currentMetering : null;
+      Sound.addRecordBackListener(e => {
+        const meter = typeof e.currentMetering === "number" ? e.currentMetering : null;
         const now = Date.now();
 
         if (meter === null) return;
@@ -151,7 +146,7 @@ export default function MicButton({ onRecordComplete }) {
     }
   };
 
-  const playRecordedFile = async (filePath) => {
+  const playRecordedFile = async filePath => {
     if (!filePath) return;
 
     try {
@@ -161,7 +156,7 @@ export default function MicButton({ onRecordComplete }) {
 
       await Sound.startPlayer(filePath);
 
-      Sound.addPlayBackListener((e) => {
+      Sound.addPlayBackListener(e => {
         if (e.currentPosition >= e.duration && e.duration > 0) {
           stopPlaying();
         }
@@ -234,22 +229,21 @@ export default function MicButton({ onRecordComplete }) {
   };
 
   return (
-    <TouchableOpacity onPress={toggleMic} style={styles.button} >
+    <TouchableOpacity onPress={toggleMic} style={styles.button}>
       <Image source={micIcons[frame]} style={styles.icon} />
     </TouchableOpacity>
   );
 }
 
-
 const styles = StyleSheet.create({
   button: {
-    position: 'absolute',
-    alignItems: 'center',
+    position: "absolute",
+    alignItems: "center",
     bottom: H * 0.06,
   },
   icon: {
     //backgroundColor: "green",
-    width: W * 0.42, 
+    width: W * 0.42,
     height: W * 0.42,
   },
 });

@@ -28,7 +28,7 @@ export default function MyPageScreen({ navigation }) {
 
   const { selectedProfile } = useContext(ProfileContext);
   const { setStep } = useContext(AuthContext);
-  const formatBirth = (s) => (typeof s === "string" ? s.replaceAll("-", ".") : "");
+  const formatBirth = s => (typeof s === "string" ? s.replaceAll("-", ".") : "");
 
   const [badges, setBadges] = useState([]);
 
@@ -42,7 +42,7 @@ export default function MyPageScreen({ navigation }) {
 
       const sub = BackHandler.addEventListener("hardwareBackPress", onBackPress);
       return () => sub.remove();
-    }, [navigation])
+    }, [navigation]),
   );
 
   // 선택된 profile 없으면 바로 프로필 선택 화면으로
@@ -53,35 +53,35 @@ export default function MyPageScreen({ navigation }) {
   }, [selectedProfile, setStep]);
 
   useEffect(() => {
-  const loadBadges = async () => {
-    if (!selectedProfile?.profileId) {
-      console.log("[BADGE] no profileId");
-      setBadges([]);
-      return;
-    }
+    const loadBadges = async () => {
+      if (!selectedProfile?.profileId) {
+        console.log("[BADGE] no profileId");
+        setBadges([]);
+        return;
+      }
 
-    try {
-      console.log("[BADGE] profileId:", selectedProfile.profileId);
-      const res = await searchBadgeList(selectedProfile.profileId);
-      console.log("[BADGE] raw response:", res);
-      const list = res?.result?.badgeLists ?? [];
-      console.log("[BADGE] list length:", list.length);
-      console.log("[BADGE] first item:", list[0]);
-      setBadges(list);
-    } catch (e) {
-      console.log("LOAD BADGE LIST FAIL:", e);
-      console.log("[BADGE][ERR] status:", e?.status);
-      console.log("[BADGE][ERR] code:", e?.code);
-      console.log("[BADGE][ERR] message:", e?.message);
-      console.log("[BADGE][ERR] result:", e?.result);
-      setBadges([]);
-    }
-  };
+      try {
+        console.log("[BADGE] profileId:", selectedProfile.profileId);
+        const res = await searchBadgeList(selectedProfile.profileId);
+        console.log("[BADGE] raw response:", res);
+        const list = res?.result?.badgeLists ?? [];
+        console.log("[BADGE] list length:", list.length);
+        console.log("[BADGE] first item:", list[0]);
+        setBadges(list);
+      } catch (e) {
+        console.log("LOAD BADGE LIST FAIL:", e);
+        console.log("[BADGE][ERR] status:", e?.status);
+        console.log("[BADGE][ERR] code:", e?.code);
+        console.log("[BADGE][ERR] message:", e?.message);
+        console.log("[BADGE][ERR] result:", e?.result);
+        setBadges([]);
+      }
+    };
 
-  loadBadges();
-}, [selectedProfile?.profileId]);
+    loadBadges();
+  }, [selectedProfile?.profileId]);
 
-// 뒤로가기 → 앱 종료
+  // 뒤로가기 → 앱 종료
   useEffect(() => {
     const onBackPress = () => {
       if (Platform.OS === "android") {
@@ -107,7 +107,7 @@ export default function MyPageScreen({ navigation }) {
       {/* 하단 네비게이션바 */}
       <NavigationBar
         state={tab}
-        onTabPress={(i) => {
+        onTabPress={i => {
           setTab(i);
           if (i === 0) navigation.navigate("Home");
           if (i === 1) navigation.navigate("Calendar");
@@ -136,11 +136,7 @@ export default function MyPageScreen({ navigation }) {
 
       {/* 프로필 카드 */}
       <View style={styles.profileCol}>
-        <Image
-          source={profileImageSource}
-          style={styles.avatar}
-          resizeMode="contain"
-        />
+        <Image source={profileImageSource} style={styles.avatar} resizeMode="contain" />
         <View style={styles.profileCard}>
           <View style={styles.statRow}>
             <Text style={styles.statLabel}>이름</Text>
@@ -157,18 +153,15 @@ export default function MyPageScreen({ navigation }) {
       <Text style={styles.sectionTitle}>활동 배지</Text> */}
 
       <ScrollView
-        style={[
-          styles.scrollWrap,
-          { backgroundColor: colors.ivory },
-        ]}
+        style={[styles.scrollWrap, { backgroundColor: colors.ivory }]}
         contentContainerStyle={{
           alignItems: "center",
-          paddingTop: 0,          
-          paddingBottom: NAV_H+20 
+          paddingTop: 0,
+          paddingBottom: NAV_H + 20,
         }}
         showsVerticalScrollIndicator={false}
-        bounces={false}                 
-        overScrollMode="never"         
+        bounces={false}
+        overScrollMode="never"
       >
         {/* 섹션 타이틀 */}
         <Text style={styles.sectionTitle}>활동 배지</Text>
@@ -193,7 +186,7 @@ export default function MyPageScreen({ navigation }) {
               />
             </View>
           ))} */}
-          {badges.map((item) => {
+          {badges.map(item => {
             const uri = toBadgeImageUrl(item.imageUrl);
             console.log("[BADGE] imageUrl(raw):", item.imageUrl);
             console.log("[BADGE] imageUrl(final):", uri);
@@ -208,7 +201,6 @@ export default function MyPageScreen({ navigation }) {
               </View>
             );
           })}
-
         </View>
       </ScrollView>
 
@@ -350,7 +342,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     flexWrap: "wrap",
     justifyContent: "flex-start",
-//    backgroundColor: "#baf8baff"
+    //    backgroundColor: "#baf8baff"
   },
   badgeWrap: {
     width: W * 0.15,
@@ -370,7 +362,6 @@ const styles = StyleSheet.create({
     position: "absolute",
     left: 0,
     right: 0,
-    height: 60,   // 흐려지는 범위
+    height: 60, // 흐려지는 범위
   },
 });
-

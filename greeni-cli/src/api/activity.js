@@ -26,7 +26,12 @@ export async function createFiveQuestionsActivity({ profileId, count }) {
 /** 일별 활동요약 조회(최대 3개): GET /api/activities/day?profileId= */
 export async function getDailyActivities(profileId) {
   const accessToken = await getAccessToken();
-  console.log("[ACTIVITY] getDailyActivities token exists:", !!accessToken, "len:", accessToken?.length);
+  console.log(
+    "[ACTIVITY] getDailyActivities token exists:",
+    !!accessToken,
+    "len:",
+    accessToken?.length,
+  );
 
   return request(`/api/activites/day?profileId=${encodeURIComponent(profileId)}`, {
     method: "GET",
@@ -35,12 +40,7 @@ export async function getDailyActivities(profileId) {
 }
 
 /** 활동요약 목록 조회(커서): GET /api/activities/day/list */
-export async function getDailyActivityList({
-  profileId,
-  cursorCreatedAt,
-  cursorId,
-  size = 8,
-}) {
+export async function getDailyActivityList({ profileId, cursorCreatedAt, cursorId, size = 8 }) {
   const accessToken = await getAccessToken();
 
   const params = new URLSearchParams();

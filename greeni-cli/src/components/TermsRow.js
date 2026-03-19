@@ -1,11 +1,5 @@
 import React from "react";
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  Image,
-} from "react-native";
+import { View, Text, TouchableOpacity, StyleSheet, Image } from "react-native";
 import colors from "../theme/colors";
 
 const checkedIcon = require("../assets/images/checked.png");
@@ -20,11 +14,7 @@ export default function TermsRow({
 }) {
   return (
     <View style={styles.row}>
-      <TouchableOpacity
-        style={styles.leftArea}
-        activeOpacity={0.8}
-        onPress={onToggle}
-      >
+      <TouchableOpacity style={styles.leftArea} activeOpacity={0.8} onPress={onToggle}>
         <Image
           source={checked ? checkedIcon : uncheckedIcon}
           style={styles.checkIcon}
@@ -32,18 +22,12 @@ export default function TermsRow({
         />
 
         <Text style={styles.label} numberOfLines={1}>
-          <Text style={styles.requiredText}>
-            {required ? "[ 필수 ]  " : "[ 선택 ]  "}
-          </Text>
+          <Text style={styles.requiredText}>{required ? "[ 필수 ]  " : "[ 선택 ]  "}</Text>
           <Text style={styles.titleText}>{title}</Text>
         </Text>
       </TouchableOpacity>
 
-      <TouchableOpacity
-        style={styles.detailButton}
-        activeOpacity={0.8}
-        onPress={onPressDetail}
-      >
+      <TouchableOpacity style={styles.detailButton} activeOpacity={0.8} onPress={onPressDetail}>
         <Text style={styles.arrow}>{">"}</Text>
       </TouchableOpacity>
     </View>

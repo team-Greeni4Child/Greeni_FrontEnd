@@ -67,24 +67,24 @@ function ProfileStack() {
 /* 3. 메인 앱 스택 */
 function MainStack() {
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false, animation: "none"}}>
+    <Stack.Navigator screenOptions={{ headerShown: false, animation: "none" }}>
       <Stack.Screen name="Home" component={HomeScreen} />
       <Stack.Screen name="Diary" component={DiaryScreen} />
       <Stack.Screen name="DiaryDraw" component={DiaryDrawScreen} />
       <Stack.Screen name="FiveQuestions" component={FiveQuestionsScreen} />
       <Stack.Screen name="AnimalQuiz" component={AnimalQuizScreen} />
       <Stack.Screen name="RolePlaying" component={RolePlayingScreen} />
-      <Stack.Screen name="Calendar" component={CalendarScreen}/>
-      <Stack.Screen name="DiaryRecord" component={DiaryRecordScreen}/>
-      <Stack.Screen name="MyPage" component={MyPageScreen}/>
-      <Stack.Screen name="SettingsPassword" component={SettingsPasswordScreen}/>
+      <Stack.Screen name="Calendar" component={CalendarScreen} />
+      <Stack.Screen name="DiaryRecord" component={DiaryRecordScreen} />
+      <Stack.Screen name="MyPage" component={MyPageScreen} />
+      <Stack.Screen name="SettingsPassword" component={SettingsPasswordScreen} />
       <Stack.Screen name="FindPassword" component={FindPasswordScreen} />
       <Stack.Screen name="ResetPassword" component={ResetPasswordScreen} />
-      <Stack.Screen name="Settings" component={SettingsScreen}/>
-      <Stack.Screen name="ParentsPage" component={ParentsPageScreen}/>
-      <Stack.Screen name="Summary" component={SummaryScreen}/>
-      <Stack.Screen name="Statistics" component={StatisticsScreen}/>
-      <Stack.Screen name="ProfileImageSelect" component={ProfileImageSelectScreen}/>
+      <Stack.Screen name="Settings" component={SettingsScreen} />
+      <Stack.Screen name="ParentsPage" component={ParentsPageScreen} />
+      <Stack.Screen name="Summary" component={SummaryScreen} />
+      <Stack.Screen name="Statistics" component={StatisticsScreen} />
+      <Stack.Screen name="ProfileImageSelect" component={ProfileImageSelectScreen} />
       {/* 나중에 다른 페이지 추가 */}
     </Stack.Navigator>
   );
@@ -92,7 +92,7 @@ function MainStack() {
 
 export default function App() {
   const [isBootstrapping, setIsBootstrapping] = useState(true);
-  const [step, setStep] = useState("auth"); 
+  const [step, setStep] = useState("auth");
 
   const navigationRef = useRef(null);
 
@@ -142,7 +142,7 @@ export default function App() {
       return false;
     };
 
-    const sub = BackHandler.addEventListener( "hardwareBackPress", onHardwareBackPress );
+    const sub = BackHandler.addEventListener("hardwareBackPress", onHardwareBackPress);
 
     return () => sub.remove();
   }, []);
@@ -155,11 +155,11 @@ export default function App() {
             {isBootstrapping ? (
               <Stack.Navigator screenOptions={{ headerShown: false }}>
                 <Stack.Screen name="Splash">
-                  {(props) => <SplashScreen {...props} onDone={bootstrap} />}
+                  {props => <SplashScreen {...props} onDone={bootstrap} />}
                 </Stack.Screen>
               </Stack.Navigator>
             ) : step === "auth" ? (
-              <AuthStack  />
+              <AuthStack />
             ) : step === "profile" ? (
               <ProfileStack />
             ) : (

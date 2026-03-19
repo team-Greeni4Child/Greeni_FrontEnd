@@ -100,13 +100,13 @@ export default function SignUpScreen({ navigation }) {
     }, RESEND_COOLDOWN_SECONDS * 1000);
   };
 
-  const startTimer = (sec) => {
+  const startTimer = sec => {
     clearTimer();
     setIsExpired(false);
     setSecondsLeft(sec);
 
     timerRef.current = setInterval(() => {
-      setSecondsLeft((prev) => {
+      setSecondsLeft(prev => {
         if (prev === null) return null;
 
         if (prev <= 1) {
@@ -131,7 +131,7 @@ export default function SignUpScreen({ navigation }) {
     };
   }, []);
 
-  const formatMMSS = (sec) => {
+  const formatMMSS = sec => {
     const m = String(Math.floor(sec / 60)).padStart(1, "0");
     const s = String(sec % 60).padStart(2, "0");
     return `${m}:${s}`;
@@ -175,7 +175,7 @@ export default function SignUpScreen({ navigation }) {
     setIsSigningUp(false);
   };
 
-  const openErrorModal = (err) => {
+  const openErrorModal = err => {
     console.log(err?.message);
     setShowErrorModal(true);
   };
@@ -189,14 +189,14 @@ export default function SignUpScreen({ navigation }) {
     resetSignUpForm();
   };
 
-  const handleToggleTerm = (key) => {
-    setTerms((prev) => ({
+  const handleToggleTerm = key => {
+    setTerms(prev => ({
       ...prev,
       [key]: !prev[key],
     }));
   };
 
-  const handlePressTermDetail = (key) => {
+  const handlePressTermDetail = key => {
     // TODO: 약관 상세보기
     console.log("TERM DETAIL:", key);
   };
@@ -241,14 +241,13 @@ export default function SignUpScreen({ navigation }) {
     } catch (e) {
       console.log("EMAIL REQUEST FAIL:", e);
 
-      
       // 인증 코드 전송 실패
       if (e?.code === "MEMBER4006") {
         setCode("");
         setCodeError("인증코드 전송에 실패했습니다.");
         return;
-      } 
-      
+      }
+
       // 그 외(네트워크/서버 오류 등) => 모달
       openErrorModal(e);
     } finally {
@@ -313,7 +312,7 @@ export default function SignUpScreen({ navigation }) {
       // 비밀번호 규칙 위반 → 이 경우에는 규칙 경고만 보여주기
       setPassword("");
       setCheckPassword("");
-      setRuleError(true);        // 안내문만 빨간색 + Bold
+      setRuleError(true); // 안내문만 빨간색 + Bold
       hasError = true;
       shouldValidateCheckPw = false; // 비밀번호 확인 관련 에러는 막기
     }
@@ -430,19 +429,14 @@ export default function SignUpScreen({ navigation }) {
         <Text style={styles.title}>회원가입</Text>
 
         {/* 이메일 + 인증 버튼 */}
-        <View
-          style={[
-            styles.emailWrap,
-            emailError ? { borderBottomColor: "#f36945" } : {},
-          ]}
-        >
+        <View style={[styles.emailWrap, emailError ? { borderBottomColor: "#f36945" } : {}]}>
           <TextInput
             style={styles.email}
             fontFamily="Maplestory_Light"
             placeholder={emailError ? emailError : "이메일"}
             placeholderTextColor={emailError ? "#f36945" : colors.brown}
             value={email}
-            onChangeText={(text) => {
+            onChangeText={text => {
               setEmail(text);
               if (emailError) setEmailError("");
             }}
@@ -452,8 +446,7 @@ export default function SignUpScreen({ navigation }) {
           <TouchableOpacity
             style={[
               styles.verificationButton,
-              (isVerifyDisabled || isRequestingEmail) &&
-                styles.verificationButtonDisabled,
+              (isVerifyDisabled || isRequestingEmail) && styles.verificationButtonDisabled,
             ]}
             onPress={handleVerifyEmail}
             activeOpacity={0.6}
@@ -464,19 +457,14 @@ export default function SignUpScreen({ navigation }) {
         </View>
 
         {/* 인증코드 입력칸 + 오른쪽 유효시간 */}
-        <View
-          style={[
-            styles.codeWrap,
-            codeError ? { borderBottomColor: "#f36945" } : {},
-          ]}
-        >
+        <View style={[styles.codeWrap, codeError ? { borderBottomColor: "#f36945" } : {}]}>
           <TextInput
             style={styles.codeInput}
             fontFamily="Maplestory_Light"
             placeholder={codeError ? codeError : "인증코드"}
             placeholderTextColor={codeError ? "#f36945" : colors.brown}
             value={code}
-            onChangeText={(text) => {
+            onChangeText={text => {
               setCode(text);
               if (codeError) setCodeError("");
             }}
@@ -495,16 +483,13 @@ export default function SignUpScreen({ navigation }) {
 
         {/* 비밀번호 */}
         <TextInput
-          style={[
-            styles.input,
-            passwordError ? { borderBottomColor: "#f36945" } : {},
-          ]}
+          style={[styles.input, passwordError ? { borderBottomColor: "#f36945" } : {}]}
           fontFamily="Maplestory_Light"
           placeholder={passwordError ? passwordError : "비밀번호"}
           placeholderTextColor={passwordError ? "#f36945" : colors.brown}
           secureTextEntry
           value={password}
-          onChangeText={(text) => {
+          onChangeText={text => {
             setPassword(text);
             if (passwordError) setPasswordError("");
             if (ruleError) setRuleError(false);
@@ -514,16 +499,13 @@ export default function SignUpScreen({ navigation }) {
 
         {/* 비밀번호 확인 */}
         <TextInput
-          style={[
-            styles.input,
-            checkPasswordError ? { borderBottomColor: "#f36945" } : {},
-          ]}
+          style={[styles.input, checkPasswordError ? { borderBottomColor: "#f36945" } : {}]}
           fontFamily="Maplestory_Light"
           placeholder={checkPasswordError ? checkPasswordError : "비밀번호 확인"}
           placeholderTextColor={checkPasswordError ? "#f36945" : colors.brown}
           secureTextEntry
           value={CheckPassword}
-          onChangeText={(text) => {
+          onChangeText={text => {
             setCheckPassword(text);
             if (checkPasswordError) setCheckPasswordError("");
           }}
@@ -578,10 +560,7 @@ export default function SignUpScreen({ navigation }) {
             <Text style={styles.modalText}>회원가입이 완료되었습니다.</Text>
 
             <View style={styles.modalButtonWrap}>
-              <TouchableOpacity
-                style={[styles.modalButton]}
-                onPress={handleCompleteOk}  
-              >
+              <TouchableOpacity style={[styles.modalButton]} onPress={handleCompleteOk}>
                 <Text style={styles.modalButtonText}>확인</Text>
               </TouchableOpacity>
             </View>
@@ -596,10 +575,7 @@ export default function SignUpScreen({ navigation }) {
             <Text style={styles.modalText}>이미 가입된 이메일입니다.</Text>
 
             <View style={styles.modalButtonWrap}>
-              <TouchableOpacity
-                style={[styles.modalButton]}
-                onPress={handleDuplicateEmailOk}
-              >
+              <TouchableOpacity style={[styles.modalButton]} onPress={handleDuplicateEmailOk}>
                 <Text style={styles.modalButtonText}>확인</Text>
               </TouchableOpacity>
             </View>
@@ -611,20 +587,18 @@ export default function SignUpScreen({ navigation }) {
       <Modal transparent visible={showErrorModal}>
         <View style={styles.modalBackground}>
           <View style={styles.modalWrap}>
-            <Text style={styles.modalText}>{"오류가 발생했습니다.\n잠시 후 다시 시도해주세요."}</Text>
+            <Text style={styles.modalText}>
+              {"오류가 발생했습니다.\n잠시 후 다시 시도해주세요."}
+            </Text>
 
             <View style={styles.modalButtonWrap}>
-              <TouchableOpacity
-                style={[styles.modalButton]}
-                onPress={handleErrorOk}
-              >
+              <TouchableOpacity style={[styles.modalButton]} onPress={handleErrorOk}>
                 <Text style={styles.modalButtonText}>확인</Text>
               </TouchableOpacity>
             </View>
           </View>
         </View>
       </Modal>
-
     </View>
   );
 }
@@ -682,7 +656,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.pink,
     borderRadius: 5,
     height: 30,
-    width: 60, 
+    width: 60,
     alignItems: "center",
     justifyContent: "center",
   },
