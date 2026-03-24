@@ -7,7 +7,7 @@ import colors from "../theme/colors";
 import MicButton from "../components/MicButton";
 import { createRolePlayingActivity } from "../api/activity";
 import { requestRolePlaying, closeRolePlaying } from "../api/ai";
-import { playBase64Mp3 } from "../utils/audio";
+import { playBase64Mp3, stopAiAudio } from "../utils/audio";
 import { ProfileContext } from "../context/ProfileContext";
 
 // 현재 기기의 화면 너비 W, 화면 높이 H
@@ -42,6 +42,7 @@ export default function RolePlayingScreen({ navigation }) {
   const [bubbleText, setBubbleText] = useState(getInitialBubbleText(null));
   const [sessionId, setSessionId] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isAiSpeaking, setIsAiSpeaking] = useState(false);
 
   const handleSituation = key => {
     setSelectedSituation(key);
@@ -72,13 +73,19 @@ export default function RolePlayingScreen({ navigation }) {
         setBubbleText(result.text);
       }
 
+      setIsLoading(false);
+
       if (result?.base64Voice) {
-        await playBase64Mp3(result.base64Voice);
+        try {
+          setIsAiSpeaking(true);
+          await playBase64Mp3(result.base64Voice);
+        } finally {
+          setIsAiSpeaking(false);
+        }
       }
     } catch (e) {
       console.log("REQUEST ROLE PLAYING FAIL:", e);
       setBubbleText("앗, 잘 못 들었어.\n한 번만 다시 말해줄래?");
-    } finally {
       setIsLoading(false);
     }
   };
@@ -88,6 +95,9 @@ export default function RolePlayingScreen({ navigation }) {
     isSubmittingRef.current = true;
 
     try {
+      await stopAiAudio();
+      setIsAiSpeaking(false);
+
       if (sessionId) {
         try {
           await closeRolePlaying(sessionId);
@@ -193,7 +203,7 @@ export default function RolePlayingScreen({ navigation }) {
 
       <MicButton
         onRecordComplete={handleRecordComplete}
-        disabled={!selectedSituation || isLoading}
+        disabled={!selectedSituation || isLoading || isAiSpeaking}
       />
     </View>
   );
