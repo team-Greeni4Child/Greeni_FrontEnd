@@ -5,7 +5,7 @@ import { getAccessToken } from "../utils/tokenStorage";
 export async function createRolePlayingActivity({ profileId, roleName }) {
   const accessToken = await getAccessToken();
 
-  return request("/api/activites/role-playing", {
+  return request("/api/activities/role-playing", {
     method: "POST",
     headers: { Authorization: `Bearer ${accessToken || ""}` },
     body: JSON.stringify({ profileId, roleName }),
@@ -16,7 +16,7 @@ export async function createRolePlayingActivity({ profileId, roleName }) {
 export async function createFiveQuestionsActivity({ profileId, count }) {
   const accessToken = await getAccessToken();
 
-  return request("/api/activites/five-questions", {
+  return request("/api/activities/five-questions", {
     method: "POST",
     headers: { Authorization: `Bearer ${accessToken || ""}` },
     body: JSON.stringify({ profileId, count }),
@@ -33,7 +33,7 @@ export async function getDailyActivities(profileId) {
     accessToken?.length,
   );
 
-  return request(`/api/activites/day?profileId=${encodeURIComponent(profileId)}`, {
+  return request(`/api/activities/day?profileId=${encodeURIComponent(profileId)}`, {
     method: "GET",
     headers: { Authorization: `Bearer ${accessToken || ""}` },
   });
@@ -49,7 +49,7 @@ export async function getDailyActivityList({ profileId, cursorCreatedAt, cursorI
   if (typeof cursorId === "number") params.append("cursorId", String(cursorId));
   if (typeof size === "number") params.append("size", String(size));
 
-  return request(`/api/activites/day/list?${params.toString()}`, {
+  return request(`/api/activities/day/list?${params.toString()}`, {
     method: "GET",
     headers: { Authorization: `Bearer ${accessToken || ""}` },
   });
