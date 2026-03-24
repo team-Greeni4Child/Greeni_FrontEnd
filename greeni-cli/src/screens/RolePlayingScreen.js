@@ -6,7 +6,7 @@ import BackButton from "../components/BackButton";
 import colors from "../theme/colors";
 import MicButton from "../components/MicButton";
 import { createRolePlayingActivity } from "../api/activity";
-import { requestRolePlaying, closeRolePlaying } from "../api/ai";
+import { requestRolePlaying, closeRolePlaying } from "../api/rolePlaying";
 import { playBase64Mp3, stopAiAudio } from "../utils/audio";
 import { ProfileContext } from "../context/ProfileContext";
 
