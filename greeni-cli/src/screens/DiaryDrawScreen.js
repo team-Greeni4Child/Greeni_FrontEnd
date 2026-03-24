@@ -212,15 +212,6 @@ export default function DiaryDrawScreen({ navigation }) {
             />
           </TouchableOpacity>
 
-          {/* 사진 */}
-          <TouchableOpacity onPress={handlePressPhoto} activeOpacity={0.85}>
-            <Image
-              source={require("../assets/images/icon_photo.png")}
-              style={[styles.icon, activeTool === "photo" && styles.iconActive]}
-              resizeMode="contain"
-            />
-          </TouchableOpacity>
-
           {/* redo, undo */}
           <View style={styles.historyTools}>
             <TouchableOpacity
@@ -247,6 +238,15 @@ export default function DiaryDrawScreen({ navigation }) {
               />
             </TouchableOpacity>
           </View>
+
+          {/* 사진 */}
+          <TouchableOpacity onPress={handlePressPhoto} activeOpacity={0.85}>
+            <Image
+              source={require("../assets/images/icon_photo.png")}
+              style={[styles.icon, activeTool === "photo" && styles.iconActive]}
+              resizeMode="contain"
+            />
+          </TouchableOpacity>
         </View>
       </View>
 
@@ -414,7 +414,7 @@ const styles = StyleSheet.create({
   tools: {
     flexDirection: "row",
     marginTop: 20,
-    gap: W * 0.12,
+    gap: W * 0.11,
   },
   icon: {
     width: 30,
