@@ -462,7 +462,7 @@ const styles = StyleSheet.create({
   photoActionWrap: {
     position: "absolute",
     top: 10,
-    right: W * 0.3,
+    right: W * 0.06,
   },
   photoActionPanel: {
     flexDirection: "row",
