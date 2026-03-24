@@ -5,6 +5,7 @@ import React, {
   useState,
   forwardRef,
   useImperativeHandle,
+  useEffect,
 } from "react";
 import { View, StyleSheet, PanResponder } from "react-native";
 import {
@@ -27,10 +28,12 @@ const SkiaDrawCanvas = forwardRef(function SkiaDrawCanvas(
     eraserWidth = 18,
     enabled = true,
     backgroundUri = null,
+    onHistoryChange,
   },
   ref,
 ) {
   const [strokes, setStrokes] = useState([]);
+  const [redoStrokes, setRedoStrokes] = useState([]);
 
   const canvasRef = useCanvasRef();
   const bgImage = useImage(backgroundUri || "");
@@ -49,6 +52,13 @@ const SkiaDrawCanvas = forwardRef(function SkiaDrawCanvas(
   const wrapRef = useRef(null);
   const originRef = useRef({ x: 0, y: 0 });
   const sizeRef = useRef({ width: 0, height: 0 });
+
+  useEffect(() => {
+    onHistoryChange?.({
+      canUndo: strokes.length > 0,
+      canRedo: redoStrokes.length > 0,
+    });
+  }, [strokes, redoStrokes, onHistoryChange]);
 
   const updateBounds = useCallback(() => {
     requestAnimationFrame(() => {
@@ -124,9 +134,58 @@ const SkiaDrawCanvas = forwardRef(function SkiaDrawCanvas(
       },
     ]);
 
+    setRedoStrokes([]);
+
     currentPathRef.current = Skia.Path.Make();
     setTick(t => t + 1);
   }, []);
+
+  const undo = useCallback(() => {
+    if (isDrawingRef.current) return;
+
+    setStrokes(prev => {
+      if (prev.length === 0) return prev;
+
+      const next = [...prev];
+      const last = next.pop();
+
+      setRedoStrokes(redoPrev => [...redoPrev, last]);
+      return next;
+    });
+
+    setTick(t => t + 1);
+  }, []);
+
+  const redo = useCallback(() => {
+    if (isDrawingRef.current) return;
+
+    setRedoStrokes(prev => {
+      if (prev.length === 0) return prev;
+
+      const next = [...prev];
+      const last = next.pop();
+
+      setStrokes(strokePrev => [...strokePrev, last]);
+      return next;
+    });
+
+    setTick(t => t + 1);
+  }, []);
+
+  useImperativeHandle(ref, () => ({
+    exportBase64: () => {
+      const image = canvasRef.current?.makeImageSnapshot();
+
+      if (!image) {
+        return "";
+      }
+
+      const base64 = image.encodeToBase64(ImageFormat.JPEG, 100);
+      return base64 || "";
+    },
+    undo,
+    redo,
+  }));
 
   const panResponder = useMemo(() => {
     const canDraw = enabled && (tool === "pen" || tool === "eraser");
@@ -196,19 +255,6 @@ const SkiaDrawCanvas = forwardRef(function SkiaDrawCanvas(
     extendStroke,
     endStroke,
   ]);
-
-  useImperativeHandle(ref, () => ({
-    exportBase64: () => {
-      const image = canvasRef.current?.makeImageSnapshot();
-
-      if (!image) {
-        return "";
-      }
-
-      const base64 = image.encodeToBase64(ImageFormat.JPEG, 100);
-      return base64 || "";
-    },
-  }));
 
   const live = currentStyleRef.current;
   const canvasWidth = sizeRef.current.width;

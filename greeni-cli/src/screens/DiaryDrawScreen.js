@@ -53,6 +53,9 @@ export default function DiaryDrawScreen({ navigation }) {
   // 배경 사진
   const [backgroundUri, setBackgroundUri] = useState(null);
 
+  const [canUndo, setCanUndo] = useState(false);
+  const [canRedo, setCanRedo] = useState(false);
+
   const closeAllPanels = () => {
     setShowPenPanel(false);
     setShowEraserPanel(false);
@@ -114,6 +117,14 @@ export default function DiaryDrawScreen({ navigation }) {
     setBackgroundUri(null);
     setShowPhotoActionPanel(false);
     setActiveTool("pen");
+  };
+
+  const handleUndo = () => {
+    canvasRef.current?.undo?.();
+  };
+
+  const handleRedo = () => {
+    canvasRef.current?.redo?.();
   };
 
   const handlePressSave = () => {
@@ -209,6 +220,33 @@ export default function DiaryDrawScreen({ navigation }) {
               resizeMode="contain"
             />
           </TouchableOpacity>
+
+          {/* redo, undo */}
+          <View style={styles.historyTools}>
+            <TouchableOpacity
+              onPress={handleUndo}
+              activeOpacity={canUndo ? 0.85 : 1}
+              disabled={!canUndo}
+            >
+              <Image
+                source={require("../assets/images/icon_undo.png")}
+                style={[styles.smallIcon, { opacity: canUndo ? 1 : 0.3 }]}
+                resizeMode="contain"
+              />
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              onPress={handleRedo}
+              activeOpacity={canRedo ? 0.85 : 1}
+              disabled={!canRedo}
+            >
+              <Image
+                source={require("../assets/images/icon_redo.png")}
+                style={[styles.smallIcon, { opacity: canRedo ? 1 : 0.3 }]}
+                resizeMode="contain"
+              />
+            </TouchableOpacity>
+          </View>
         </View>
       </View>
 
@@ -225,6 +263,10 @@ export default function DiaryDrawScreen({ navigation }) {
             eraserWidth={eraserWidth}
             enabled={activeTool === "pen" || activeTool === "eraser"}
             backgroundUri={backgroundUri}
+            onHistoryChange={({ canUndo, canRedo }) => {
+              setCanUndo(canUndo);
+              setCanRedo(canRedo);
+            }}
           />
         </View>
 
@@ -373,15 +415,24 @@ const styles = StyleSheet.create({
   tools: {
     flexDirection: "row",
     marginTop: 20,
-    gap: W * 0.2,
+    gap: W * 0.12,
   },
   icon: {
     width: 30,
     height: 30,
-    opacity: 0.65,
+    opacity: 0.5,
   },
   iconActive: {
     opacity: 1,
+  },
+  historyTools: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 15,
+  },
+  smallIcon: {
+    width: 28,
+    height: 28,
   },
 
   drawArea: {
@@ -412,7 +463,7 @@ const styles = StyleSheet.create({
   photoActionWrap: {
     position: "absolute",
     top: 10,
-    right: W * 0.12,
+    right: W * 0.3,
   },
   photoActionPanel: {
     flexDirection: "row",
