@@ -26,6 +26,7 @@ export default function TwentyQuestionsScreen({ navigation }) {
   const [isCheckingAnswer, setIsCheckingAnswer] = useState(false);
   const [isAiSpeaking, setIsAiSpeaking] = useState(false);
   const [canAnswerCurrentQuestion, setCanAnswerCurrentQuestion] = useState(false);
+  const [showAnswerText, setShowAnswerText] = useState(false);
 
   const initialScoreRef = useRef(null);
   const isSubmittingRef = useRef(false);
@@ -97,7 +98,7 @@ export default function TwentyQuestionsScreen({ navigation }) {
       }
 
       loadNewQuestionRef.current();
-    }, 1200);
+    }, 2000);
   }, []);
 
   const loadNewQuestionRef = useRef(() => {});
@@ -113,6 +114,7 @@ export default function TwentyQuestionsScreen({ navigation }) {
       setSessionId("");
       setBubbleText("힌트를 준비하고 있어!");
       setCanAnswerCurrentQuestion(false);
+      setShowAnswerText(false);
       isMovingNextRef.current = false;
 
       await stopAiAudio();
@@ -221,8 +223,13 @@ export default function TwentyQuestionsScreen({ navigation }) {
 
         if (isCorrect) {
           setCorrectCount(prev => prev + 1);
-          setBubbleText(`맞았어!`);
-          goToNextQuestion();
+          setShowAnswerText(true);
+          setBubbleText("맞았어!");
+          goToNextQuestion(() => {
+            if (isScreenActiveRef.current) {
+              setShowAnswerText(false);
+            }
+          });
           return;
         }
 
@@ -236,8 +243,13 @@ export default function TwentyQuestionsScreen({ navigation }) {
         }
 
         setWrongCount(prev => prev + 1);
-        setBubbleText(`틀렸어!`);
-        goToNextQuestion();
+        setShowAnswerText(true);
+        setBubbleText("틀렸어!");
+        goToNextQuestion(() => {
+          if (isScreenActiveRef.current) {
+            setShowAnswerText(false);
+          }
+        });
       } catch (e) {
         console.log("CHECK FIVE QUESTIONS ANSWER FAIL:", e);
 
@@ -255,7 +267,6 @@ export default function TwentyQuestionsScreen({ navigation }) {
       sessionId,
       isCheckingAnswer,
       isLoadingQuestion,
-      isAiSpeaking,
       canAnswerCurrentQuestion,
       showNextHint,
       goToNextQuestion,
@@ -335,7 +346,11 @@ export default function TwentyQuestionsScreen({ navigation }) {
 
       {/* 문제 */}
       <View style={styles.questionsWrap}>
-        <Text style={styles.questionText}>{currentQuestion?.initial || "   ...   "}</Text>
+        <Text style={styles.questionText}>
+          {showAnswerText
+            ? currentQuestion?.answer || "   ...   "
+            : currentQuestion?.initial || "   ...   "}
+        </Text>
       </View>
 
       {/* greeni  + 힌트*/}
