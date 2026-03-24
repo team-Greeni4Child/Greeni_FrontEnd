@@ -1,18 +1,13 @@
 import React, { useState, useEffect, useCallback, useContext, useRef } from "react";
-import {
-  View,
-  Text,
-  Image,
-  StyleSheet,
-  Dimensions,
-  TouchableOpacity,
-  ImageBackground,
-} from "react-native";
+import { View, Text, Image, StyleSheet, Dimensions, ImageBackground } from "react-native";
 import BackButton from "../components/BackButton";
 import colors from "../theme/colors";
 import MicButton from "../components/MicButton";
 import { createFiveQuestionsActivity } from "../api/activity";
+import { createFiveQuestionsHint, checkFiveQuestionsAnswer } from "../api/fiveQuestions";
+import { playBase64Mp3, stopAiAudio } from "../utils/audio";
 import { ProfileContext } from "../context/ProfileContext";
+import { getRandomFiveQuestionsAnswer } from "../utils/fiveQuestionsAnswers";
 
 // 현재 기기의 화면 너비 W, 화면 높이 H
 const { width: W, height: H } = Dimensions.get("window");
@@ -20,37 +15,268 @@ const { width: W, height: H } = Dimensions.get("window");
 export default function TwentyQuestionsScreen({ navigation }) {
   const { selectedProfile } = useContext(ProfileContext);
 
-  const hints = [
-    "나는 세상에서 가장 긴 코를 갖고있어!",
-    "나는 귀가 커!",
-    "내 코는 길어!",
-    "나는 물을 좋아해!",
-    "나는 큰 몸을 가지고 있어!",
-  ];
-
+  const [currentQuestion, setCurrentQuestion] = useState(null);
+  const [hints, setHints] = useState([]);
   const [currentHint, setCurrentHint] = useState(0);
-  const [correctCount] = useState(2);
-  const [wrongCount] = useState(3);
+  const [sessionId, setSessionId] = useState("");
+  const [correctCount, setCorrectCount] = useState(0);
+  const [wrongCount, setWrongCount] = useState(0);
+  const [bubbleText, setBubbleText] = useState("힌트를 준비하고 있어!");
+  const [isLoadingQuestion, setIsLoadingQuestion] = useState(true);
+  const [isCheckingAnswer, setIsCheckingAnswer] = useState(false);
+  const [isAiSpeaking, setIsAiSpeaking] = useState(false);
+  const [canAnswerCurrentQuestion, setCanAnswerCurrentQuestion] = useState(false);
+
   const initialScoreRef = useRef(null);
   const isSubmittingRef = useRef(false);
+  const isMovingNextRef = useRef(false);
+  const isScreenActiveRef = useRef(true);
+  const nextQuestionTimerRef = useRef(null);
 
   useEffect(() => {
     if (!initialScoreRef.current) {
-      initialScoreRef.current = { correctCount, wrongCount };
+      initialScoreRef.current = { correctCount: 0, wrongCount: 0 };
     }
-  }, [correctCount, wrongCount]);
 
-  const handleNextHint = () => {
-    if (currentHint < hints.length - 1) {
-      setCurrentHint(currentHint + 1);
-    }
+    isScreenActiveRef.current = true;
+
+    return () => {
+      isScreenActiveRef.current = false;
+
+      if (nextQuestionTimerRef.current) {
+        clearTimeout(nextQuestionTimerRef.current);
+        nextQuestionTimerRef.current = null;
+      }
+
+      stopAiAudio();
+    };
+  }, []);
+
+  const getHintListFromResponse = res => {
+    const result = res?.result || res || {};
+    return Array.isArray(result?.hints) ? result.hints : [];
   };
+
+  const getSessionIdFromResponse = res => {
+    const result = res?.result || res || {};
+    return result?.sessionId || result?.session_id || "";
+  };
+
+  const playHintVoice = useCallback(async audioBase64 => {
+    if (!audioBase64) return;
+    if (!isScreenActiveRef.current) return;
+
+    try {
+      setIsAiSpeaking(true);
+      await playBase64Mp3(audioBase64);
+    } catch (e) {
+      console.log("PLAY FIVE QUESTIONS HINT FAIL:", e);
+    } finally {
+      if (isScreenActiveRef.current) {
+        setIsAiSpeaking(false);
+      }
+    }
+  }, []);
+
+  const goToNextQuestion = useCallback(callback => {
+    if (isMovingNextRef.current) return;
+    isMovingNextRef.current = true;
+    setCanAnswerCurrentQuestion(false);
+
+    if (nextQuestionTimerRef.current) {
+      clearTimeout(nextQuestionTimerRef.current);
+    }
+
+    nextQuestionTimerRef.current = setTimeout(() => {
+      nextQuestionTimerRef.current = null;
+
+      if (!isScreenActiveRef.current) return;
+
+      if (typeof callback === "function") {
+        callback();
+      }
+
+      loadNewQuestionRef.current();
+    }, 1200);
+  }, []);
+
+  const loadNewQuestionRef = useRef(() => {});
+
+  const loadNewQuestion = useCallback(async () => {
+    try {
+      if (!isScreenActiveRef.current) return;
+
+      setIsLoadingQuestion(true);
+      setIsCheckingAnswer(false);
+      setHints([]);
+      setCurrentHint(0);
+      setSessionId("");
+      setBubbleText("힌트를 준비하고 있어!");
+      setCanAnswerCurrentQuestion(false);
+      isMovingNextRef.current = false;
+
+      await stopAiAudio();
+
+      if (!isScreenActiveRef.current) return;
+
+      setIsAiSpeaking(false);
+
+      const nextQuestion = getRandomFiveQuestionsAnswer();
+      setCurrentQuestion(nextQuestion);
+
+      const res = await createFiveQuestionsHint(nextQuestion.answer);
+
+      if (!isScreenActiveRef.current) return;
+
+      console.log("HINT RAW RES:", res);
+      console.log("HINT RESULT:", res?.result);
+      console.log("HINTS:", res?.result?.hints);
+      console.log("FIRST HINT:", res?.result?.hints?.[0]);
+      console.log("FIRST AUDIO BASE64 LENGTH:", res?.result?.hints?.[0]?.audioBase64?.length);
+
+      const nextHints = getHintListFromResponse(res);
+      const nextSessionId = getSessionIdFromResponse(res);
+
+      if (!Array.isArray(nextHints) || nextHints.length === 0) {
+        throw new Error("힌트를 받아오지 못했어요.");
+      }
+
+      setHints(nextHints);
+      setSessionId(nextSessionId);
+      setCurrentHint(0);
+      setBubbleText(nextHints[0]?.text || "첫 번째 힌트를 줄게!");
+      setCanAnswerCurrentQuestion(true);
+      setIsLoadingQuestion(false);
+
+      if (nextHints[0]?.audioBase64 && isScreenActiveRef.current) {
+        await playHintVoice(nextHints[0].audioBase64);
+      }
+    } catch (e) {
+      console.log("CREATE FIVE QUESTIONS HINT FAIL:", e);
+
+      if (isScreenActiveRef.current) {
+        setCanAnswerCurrentQuestion(false);
+        goToNextQuestion();
+      }
+    } finally {
+      if (isScreenActiveRef.current && canAnswerCurrentQuestion === false) {
+        setIsLoadingQuestion(false);
+      }
+    }
+  }, [playHintVoice, goToNextQuestion]);
+
+  useEffect(() => {
+    loadNewQuestionRef.current = loadNewQuestion;
+  }, [loadNewQuestion]);
+
+  useEffect(() => {
+    loadNewQuestion();
+  }, [loadNewQuestion]);
+
+  const showNextHint = useCallback(async () => {
+    if (!isScreenActiveRef.current) return false;
+
+    if (currentHint < hints.length - 1) {
+      const nextIndex = currentHint + 1;
+      const nextHint = hints[nextIndex];
+
+      if (!isScreenActiveRef.current) return false;
+
+      setCurrentHint(nextIndex);
+      setBubbleText(nextHint?.text || "다음 힌트를 줄게!");
+
+      if (nextHint?.audioBase64 && isScreenActiveRef.current) {
+        playHintVoice(nextHint.audioBase64);
+      }
+
+      return true;
+    }
+
+    return false;
+  }, [currentHint, hints, playHintVoice]);
+
+  const handleRecordComplete = useCallback(
+    async recordPath => {
+      if (!recordPath || !currentQuestion?.answer) return;
+      if (isCheckingAnswer || isLoadingQuestion) return;
+      if (!isScreenActiveRef.current) return;
+      if (!canAnswerCurrentQuestion) return;
+
+      try {
+        setIsCheckingAnswer(true);
+        setBubbleText("   ...   ");
+
+        const res = await checkFiveQuestionsAnswer({
+          recordPath,
+          answer: currentQuestion.answer,
+          sessionId,
+        });
+
+        if (!isScreenActiveRef.current) return;
+
+        console.log("CHECK RES:", res);
+
+        const result = res?.result || res || {};
+        const isCorrect = !!result.correct;
+
+        if (isCorrect) {
+          setCorrectCount(prev => prev + 1);
+          setBubbleText(`맞았어!`);
+          goToNextQuestion();
+          return;
+        }
+
+        const hasNextHint = await showNextHint();
+
+        if (!isScreenActiveRef.current) return;
+
+        if (hasNextHint) {
+          setIsCheckingAnswer(false);
+          return;
+        }
+
+        setWrongCount(prev => prev + 1);
+        setBubbleText(`틀렸어!`);
+        goToNextQuestion();
+      } catch (e) {
+        console.log("CHECK FIVE QUESTIONS ANSWER FAIL:", e);
+
+        if (isScreenActiveRef.current) {
+          setBubbleText("다시 한 번 말해줄래?");
+        }
+      } finally {
+        if (isScreenActiveRef.current) {
+          setIsCheckingAnswer(false);
+        }
+      }
+    },
+    [
+      currentQuestion?.answer,
+      sessionId,
+      isCheckingAnswer,
+      isLoadingQuestion,
+      isAiSpeaking,
+      canAnswerCurrentQuestion,
+      showNextHint,
+      goToNextQuestion,
+    ],
+  );
 
   const handleBackPress = useCallback(async () => {
     if (isSubmittingRef.current) return;
     isSubmittingRef.current = true;
 
+    isScreenActiveRef.current = false;
+
+    if (nextQuestionTimerRef.current) {
+      clearTimeout(nextQuestionTimerRef.current);
+      nextQuestionTimerRef.current = null;
+    }
+
     try {
+      await stopAiAudio();
+      setIsAiSpeaking(false);
+
       const initialScore = initialScoreRef.current ?? { correctCount, wrongCount };
       const hasScoreChanged =
         initialScore.correctCount !== correctCount || initialScore.wrongCount !== wrongCount;
@@ -69,7 +295,8 @@ export default function TwentyQuestionsScreen({ navigation }) {
     }
   }, [correctCount, wrongCount, navigation, selectedProfile?.profileId]);
 
-  const progress = (currentHint + 1) / hints.length;
+  const progress = hints.length > 0 ? (currentHint + 1) / hints.length : 0;
+  const isMicDisabled = isLoadingQuestion || isCheckingAnswer;
 
   return (
     <View style={styles.root}>
@@ -94,7 +321,7 @@ export default function TwentyQuestionsScreen({ navigation }) {
         <View style={styles.hintProgressTextWrap}>
           <Text style={styles.hintProgressLabel}>힌트 진행도</Text>
           <Text style={styles.hintProgressValue}>
-            {currentHint + 1}/{hints.length}
+            {hints.length > 0 ? currentHint + 1 : 0}/{hints.length}
           </Text>
         </View>
 
@@ -107,9 +334,9 @@ export default function TwentyQuestionsScreen({ navigation }) {
       </View>
 
       {/* 문제 */}
-      <TouchableOpacity style={styles.questionsWrap} onPress={handleNextHint}>
-        <Text style={styles.questionText}>ㅋㄲㄹ</Text>
-      </TouchableOpacity>
+      <View style={styles.questionsWrap}>
+        <Text style={styles.questionText}>{currentQuestion?.initial || "   ...   "}</Text>
+      </View>
 
       {/* greeni  + 힌트*/}
       <View style={styles.greeniWrap}>
@@ -120,11 +347,11 @@ export default function TwentyQuestionsScreen({ navigation }) {
           style={styles.hintBubble}
           resizeMode="stretch"
         >
-          <Text style={styles.hintText}>{hints[currentHint]}</Text>
+          <Text style={styles.hintText}>{bubbleText}</Text>
         </ImageBackground>
       </View>
 
-      <MicButton />
+      <MicButton onRecordComplete={handleRecordComplete} disabled={isMicDisabled} />
     </View>
   );
 }
@@ -213,7 +440,7 @@ const styles = StyleSheet.create({
     top: -H * 0.02,
   },
   scoreItem: {
-    fontsize: 14,
+    fontSize: 14,
     color: colors.brown,
     fontFamily: "Maplestory_Light",
   },
@@ -255,7 +482,7 @@ const styles = StyleSheet.create({
     color: colors.brown,
     fontFamily: "gangwongyoyuksaeeum",
     textAlign: "center",
-    lineHeight: 26,
+    lineHeight: 34,
   },
 
   // 그리니
