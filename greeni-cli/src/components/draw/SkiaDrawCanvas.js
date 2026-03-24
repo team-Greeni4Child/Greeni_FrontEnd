@@ -263,7 +263,7 @@ const SkiaDrawCanvas = forwardRef(function SkiaDrawCanvas(
   return (
     <View ref={wrapRef} style={styles.wrap} onLayout={updateBounds} {...panResponder.panHandlers}>
       <Canvas ref={canvasRef} style={styles.canvas}>
-        {bgImage && canvasWidth > 0 && canvasHeight > 0 ? (
+        {!!backgroundUri && bgImage && canvasWidth > 0 && canvasHeight > 0 ? (
           <SkiaImage
             image={bgImage}
             x={0}

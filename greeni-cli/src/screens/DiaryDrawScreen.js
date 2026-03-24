@@ -255,7 +255,6 @@ export default function DiaryDrawScreen({ navigation }) {
         <View style={styles.captureArea}>
           {/* 캔버스 */}
           <SkiaDrawCanvas
-            key={backgroundUri || "no-background"}
             ref={canvasRef}
             tool={activeTool}
             penColor={penColor}
