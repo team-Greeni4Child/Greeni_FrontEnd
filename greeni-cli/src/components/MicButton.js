@@ -23,13 +23,12 @@ const micIcons = [
 const SILENCE_MS = 3000;
 const SILENCE_DB = -45;
 
-export default function MicButton({ onRecordComplete }) {
+export default function MicButton({ onRecordComplete, disabled = false }) {
   const [active, setActive] = useState(false);
   const [frame, setFrame] = useState(0);
 
   const silenceStartedAtRef = useRef(null);
   const isStoppingRef = useRef(false);
-  const isPlayingRef = useRef(false);
   const recordPathRef = useRef("");
 
   useEffect(() => {
@@ -58,12 +57,6 @@ export default function MicButton({ onRecordComplete }) {
       } catch (e) {
         console.log("REMOVE RECORD LISTENER FAIL:", e);
       }
-
-      try {
-        Sound.removePlayBackListener();
-      } catch (e) {
-        console.log("REMOVE PLAYBACK LISTENER FAIL:", e);
-      }
     };
   }, []);
 
@@ -88,8 +81,35 @@ export default function MicButton({ onRecordComplete }) {
     }
   };
 
+  const stopRecording = async () => {
+    if (isStoppingRef.current) return;
+
+    try {
+      isStoppingRef.current = true;
+
+      const resultPath = await Sound.stopRecorder();
+      Sound.removeRecordBackListener();
+
+      setActive(false);
+      silenceStartedAtRef.current = null;
+
+      const finalPath = resultPath || recordPathRef.current || "";
+
+      console.log("RECORD COMPLETE:", finalPath);
+
+      if (typeof onRecordComplete === "function" && finalPath) {
+        await onRecordComplete(finalPath);
+      }
+    } catch (e) {
+      console.log("STOP RECORD FAIL:", e);
+      Alert.alert("오류", "녹음을 종료하지 못했어요.");
+    } finally {
+      isStoppingRef.current = false;
+    }
+  };
+
   const startRecording = async () => {
-    if (active || isPlayingRef.current) return;
+    if (active || disabled) return;
 
     const granted = await requestMicPermission();
     if (!granted) {
@@ -146,82 +166,11 @@ export default function MicButton({ onRecordComplete }) {
     }
   };
 
-  const playRecordedFile = async filePath => {
-    if (!filePath) return;
-
-    try {
-      isPlayingRef.current = true;
-
-      console.log("PLAY START:", filePath);
-
-      await Sound.startPlayer(filePath);
-
-      Sound.addPlayBackListener(e => {
-        if (e.currentPosition >= e.duration && e.duration > 0) {
-          stopPlaying();
-        }
-      });
-    } catch (e) {
-      console.log("START PLAY FAIL:", e);
-      isPlayingRef.current = false;
-      Alert.alert("오류", "녹음 파일 재생에 실패했어요.");
-    }
-  };
-
-  const stopPlaying = async () => {
-    try {
-      await Sound.stopPlayer();
-    } catch (e) {
-      console.log("STOP PLAY FAIL:", e);
-    }
-
-    try {
-      Sound.removePlayBackListener();
-    } catch (e) {
-      console.log("REMOVE PLAYBACK LISTENER FAIL:", e);
-    }
-
-    isPlayingRef.current = false;
-    console.log("PLAY END");
-  };
-
-  const stopRecording = async () => {
-    if (isStoppingRef.current) return;
-
-    try {
-      isStoppingRef.current = true;
-
-      const resultPath = await Sound.stopRecorder();
-      Sound.removeRecordBackListener();
-
-      setActive(false);
-      silenceStartedAtRef.current = null;
-
-      const finalPath = resultPath || recordPathRef.current || "";
-
-      console.log("RECORD COMPLETE:", finalPath);
-
-      if (typeof onRecordComplete === "function") {
-        onRecordComplete(finalPath);
-      }
-
-      await playRecordedFile(finalPath);
-    } catch (e) {
-      console.log("STOP RECORD FAIL:", e);
-      Alert.alert("오류", "녹음을 종료하지 못했어요.");
-    } finally {
-      isStoppingRef.current = false;
-    }
-  };
-
   const toggleMic = async () => {
+    if (disabled) return;
+
     if (active) {
       await stopRecording();
-      return;
-    }
-
-    if (isPlayingRef.current) {
-      await stopPlaying();
       return;
     }
 
@@ -229,8 +178,8 @@ export default function MicButton({ onRecordComplete }) {
   };
 
   return (
-    <TouchableOpacity onPress={toggleMic} style={styles.button}>
-      <Image source={micIcons[frame]} style={styles.icon} />
+    <TouchableOpacity onPress={toggleMic} style={styles.button} disabled={disabled}>
+      <Image source={micIcons[frame]} style={[styles.icon, disabled && styles.iconDisabled]} />
     </TouchableOpacity>
   );
 }
@@ -245,5 +194,8 @@ const styles = StyleSheet.create({
     //backgroundColor: "green",
     width: W * 0.42,
     height: W * 0.42,
+  },
+  iconDisabled: {
+    opacity: 0.45,
   },
 });

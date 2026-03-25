@@ -32,6 +32,7 @@ export default function DiaryDrawScreen({ navigation }) {
   // 패널 on/off
   const [showPenPanel, setShowPenPanel] = useState(false);
   const [showEraserPanel, setShowEraserPanel] = useState(false);
+  const [showPhotoActionPanel, setShowPhotoActionPanel] = useState(false);
 
   // 펜 옵션
   const [penWidth, setPenWidth] = useState(15);
@@ -52,12 +53,16 @@ export default function DiaryDrawScreen({ navigation }) {
   // 배경 사진
   const [backgroundUri, setBackgroundUri] = useState(null);
 
+  const [canUndo, setCanUndo] = useState(false);
+  const [canRedo, setCanRedo] = useState(false);
+
   const closeAllPanels = () => {
     setShowPenPanel(false);
     setShowEraserPanel(false);
+    setShowPhotoActionPanel(false);
   };
 
-  const isAnyPanelOpen = showPenPanel || showEraserPanel;
+  const isAnyPanelOpen = showPenPanel || showEraserPanel || showPhotoActionPanel;
 
   // 사진 선택
   const pickBackgroundImage = async () => {
@@ -71,21 +76,55 @@ export default function DiaryDrawScreen({ navigation }) {
       if (res.didCancel) return;
 
       if (res.errorCode) {
-        Alert.alert("오류", `사진을 불러오지 못했어요. (${res.errorCode})`);
+        console.log("PHOTO PICK FAIL:", res.errorCode);
         return;
       }
 
       const uri = res.assets?.[0]?.uri;
       if (!uri) {
-        Alert.alert("오류", "사진 URI를 가져오지 못했어요.");
+        console.log("PHOTO PICK FAIL: no uri");
         return;
       }
 
       setBackgroundUri(uri);
     } catch (e) {
-      console.log(e);
-      Alert.alert("오류", "사진을 불러오지 못했어요.");
+      console.log("PHOTO PICK FAIL:", e);
     }
+  };
+
+  const handlePressPhoto = async () => {
+    setActiveTool("photo");
+    setShowPenPanel(false);
+    setShowEraserPanel(false);
+
+    if (!backgroundUri) {
+      setShowPhotoActionPanel(false);
+      await pickBackgroundImage();
+      setActiveTool("pen");
+      return;
+    }
+
+    setShowPhotoActionPanel(v => !v);
+  };
+
+  const handleChangePhoto = async () => {
+    setShowPhotoActionPanel(false);
+    await pickBackgroundImage();
+    setActiveTool("pen");
+  };
+
+  const handleDeletePhoto = () => {
+    setBackgroundUri(null);
+    setShowPhotoActionPanel(false);
+    setActiveTool("pen");
+  };
+
+  const handleUndo = () => {
+    canvasRef.current?.undo?.();
+  };
+
+  const handleRedo = () => {
+    canvasRef.current?.redo?.();
   };
 
   const handlePressSave = () => {
@@ -144,6 +183,7 @@ export default function DiaryDrawScreen({ navigation }) {
             onPress={() => {
               setActiveTool("pen");
               setShowEraserPanel(false);
+              setShowPhotoActionPanel(false);
               setShowPenPanel(v => !v);
             }}
             activeOpacity={0.85}
@@ -160,6 +200,7 @@ export default function DiaryDrawScreen({ navigation }) {
             onPress={() => {
               setActiveTool("eraser");
               setShowPenPanel(false);
+              setShowPhotoActionPanel(false);
               setShowEraserPanel(v => !v);
             }}
             activeOpacity={0.85}
@@ -171,16 +212,35 @@ export default function DiaryDrawScreen({ navigation }) {
             />
           </TouchableOpacity>
 
+          {/* redo, undo */}
+          <View style={styles.historyTools}>
+            <TouchableOpacity
+              onPress={handleUndo}
+              activeOpacity={canUndo ? 0.85 : 1}
+              disabled={!canUndo}
+            >
+              <Image
+                source={require("../assets/images/icon_undo.png")}
+                style={[styles.smallIcon, { opacity: canUndo ? 1 : 0.3 }]}
+                resizeMode="contain"
+              />
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              onPress={handleRedo}
+              activeOpacity={canRedo ? 0.85 : 1}
+              disabled={!canRedo}
+            >
+              <Image
+                source={require("../assets/images/icon_redo.png")}
+                style={[styles.smallIcon, { opacity: canRedo ? 1 : 0.3 }]}
+                resizeMode="contain"
+              />
+            </TouchableOpacity>
+          </View>
+
           {/* 사진 */}
-          <TouchableOpacity
-            onPress={async () => {
-              setActiveTool("photo");
-              closeAllPanels();
-              await pickBackgroundImage();
-              setActiveTool("pen");
-            }}
-            activeOpacity={0.85}
-          >
+          <TouchableOpacity onPress={handlePressPhoto} activeOpacity={0.85}>
             <Image
               source={require("../assets/images/icon_photo.png")}
               style={[styles.icon, activeTool === "photo" && styles.iconActive]}
@@ -202,13 +262,25 @@ export default function DiaryDrawScreen({ navigation }) {
             eraserWidth={eraserWidth}
             enabled={activeTool === "pen" || activeTool === "eraser"}
             backgroundUri={backgroundUri}
+            onHistoryChange={({ canUndo, canRedo }) => {
+              setCanUndo(canUndo);
+              setCanRedo(canRedo);
+            }}
           />
         </View>
 
-        {/* 바깥 터치 → 열려있는 패널 닫기 */}
-        {isAnyPanelOpen && <Pressable style={styles.backdrop} onPress={closeAllPanels} />}
+        {isAnyPanelOpen && (
+          <Pressable
+            style={styles.backdrop}
+            onPress={() => {
+              closeAllPanels();
+              if (activeTool === "photo") {
+                setActiveTool("pen");
+              }
+            }}
+          />
+        )}
 
-        {/* 펜 옵션 패널 */}
         {activeTool === "pen" && showPenPanel && (
           <View style={styles.panelOverlay} pointerEvents="box-none">
             <PenOptionsPanel
@@ -231,6 +303,38 @@ export default function DiaryDrawScreen({ navigation }) {
         {activeTool === "eraser" && showEraserPanel && (
           <View style={styles.panelOverlay} pointerEvents="box-none">
             <EraserOptionsPanel eraserWidth={eraserWidth} setEraserWidth={setEraserWidth} />
+          </View>
+        )}
+
+        {activeTool === "photo" && showPhotoActionPanel && (
+          <View style={styles.photoActionWrap} pointerEvents="box-none">
+            <View style={styles.photoActionPanel}>
+              <TouchableOpacity
+                style={styles.photoActionButton}
+                onPress={handleChangePhoto}
+                activeOpacity={0.85}
+              >
+                <Image
+                  source={require("../assets/images/icon_photo_change.png")}
+                  style={styles.photoActionIcon}
+                  resizeMode="contain"
+                />
+              </TouchableOpacity>
+
+              <View style={styles.photoDivider} />
+
+              <TouchableOpacity
+                style={styles.photoActionButton}
+                onPress={handleDeletePhoto}
+                activeOpacity={0.85}
+              >
+                <Image
+                  source={require("../assets/images/icon_photo_delete.png")}
+                  style={styles.photoActionIcon}
+                  resizeMode="contain"
+                />
+              </TouchableOpacity>
+            </View>
           </View>
         )}
       </View>
@@ -310,15 +414,24 @@ const styles = StyleSheet.create({
   tools: {
     flexDirection: "row",
     marginTop: 20,
-    gap: W * 0.2,
+    gap: W * 0.11,
   },
   icon: {
-    width: W * 0.07,
-    height: W * 0.07,
-    opacity: 0.65,
+    width: 30,
+    height: 30,
+    opacity: 0.5,
   },
   iconActive: {
     opacity: 1,
+  },
+  historyTools: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 15,
+  },
+  smallIcon: {
+    width: 28,
+    height: 28,
   },
 
   drawArea: {
@@ -344,6 +457,40 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     alignItems: "center",
+  },
+
+  photoActionWrap: {
+    position: "absolute",
+    top: 10,
+    right: W * 0.06,
+  },
+  photoActionPanel: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: colors.white,
+    borderRadius: 12,
+    borderWidth: 3,
+    borderColor: colors.green,
+    paddingHorizontal: 8,
+    paddingVertical: 8,
+    elevation: 4,
+  },
+  photoActionButton: {
+    width: 44,
+    height: 32,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  photoActionIcon: {
+    width: 30,
+    height: 30,
+  },
+  photoDivider: {
+    width: 1,
+    height: 28,
+    backgroundColor: colors.lightGray,
+    marginHorizontal: 2,
   },
 
   bottomWrap: {

@@ -1,40 +1,93 @@
-import React, { useState, useMemo, useCallback, useContext, useRef } from "react";
-import {
-  View,
-  Text,
-  Image,
-  StyleSheet,
-  Dimensions,
-  TouchableOpacity,
-  ImageBackground,
-} from "react-native";
+import React, { useState, useCallback, useContext, useRef } from "react";
+import { View, Text, Image, StyleSheet, Dimensions, ImageBackground } from "react-native";
 import { StatusBar } from "react-native";
 import Button from "../components/Button";
 import BackButton from "../components/BackButton";
 import colors from "../theme/colors";
 import MicButton from "../components/MicButton";
 import { createRolePlayingActivity } from "../api/activity";
+import { requestRolePlaying, closeRolePlaying } from "../api/rolePlaying";
+import { playBase64Mp3, stopAiAudio } from "../utils/audio";
 import { ProfileContext } from "../context/ProfileContext";
 
 // 현재 기기의 화면 너비 W, 화면 높이 H
 const { width: W, height: H } = Dimensions.get("window");
+
+function makeSessionId() {
+  return `role_${Date.now()}_${Math.floor(Math.random() * 100000)}`;
+}
+
+function getInitialBubbleText(role) {
+  if (!role) {
+    return `밑에 있는 세가지 상황 중에\n하나를 골라줘`;
+  }
+  if (role === "shop") return "어서 오세요.\n신선 과일가게입니다!";
+  if (role === "teacher") return "안녕!\n오늘은 선생님과 이야기해보자.";
+  if (role === "friend") return "만나서 반가워!\n나랑 같이 놀자~";
+  return "";
+}
+
+function toActivityRole(role) {
+  if (role === "shop") return "SHOP";
+  if (role === "teacher") return "TEACHER";
+  if (role === "friend") return "FRIEND";
+  return null;
+}
 
 export default function RolePlayingScreen({ navigation }) {
   const { selectedProfile } = useContext(ProfileContext);
   const isSubmittingRef = useRef(false);
 
   const [selectedSituation, setSelectedSituation] = useState(null);
-  const bubbleText = useMemo(() => {
-    if (!selectedSituation) {
-      return `밑에 있는 세가지 상황 중에\n하나를 골라줘`;
-    }
-    if (selectedSituation === "shop") return "어서 오세요.\n신선 과일가게입니다!";
-    if (selectedSituation === "teacher") return "안녕!\n오늘은 선생님과 이야기해보자.";
-    if (selectedSituation === "friend") return "만나서 반가워!\n나랑 같이 놀자~";
-  }, [selectedSituation]);
+  const [bubbleText, setBubbleText] = useState(getInitialBubbleText(null));
+  const [sessionId, setSessionId] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [isAiSpeaking, setIsAiSpeaking] = useState(false);
 
   const handleSituation = key => {
     setSelectedSituation(key);
+    setBubbleText(getInitialBubbleText(key));
+    setSessionId("");
+  };
+
+  const handleRecordComplete = async voicePath => {
+    if (!selectedSituation) return;
+    if (isLoading) return;
+    if (!voicePath) return;
+
+    try {
+      setIsLoading(true);
+
+      const currentSessionId = sessionId || makeSessionId();
+
+      const result = await requestRolePlaying({
+        sessionId: currentSessionId,
+        role: selectedSituation,
+        voicePath,
+      });
+
+      const nextSessionId = result?.sessionId || currentSessionId;
+      setSessionId(nextSessionId);
+
+      if (result?.text) {
+        setBubbleText(result.text);
+      }
+
+      setIsLoading(false);
+
+      if (result?.base64Voice) {
+        try {
+          setIsAiSpeaking(true);
+          await playBase64Mp3(result.base64Voice);
+        } finally {
+          setIsAiSpeaking(false);
+        }
+      }
+    } catch (e) {
+      console.log("REQUEST ROLE PLAYING FAIL:", e);
+      setBubbleText("앗, 잘 못 들었어.\n한 번만 다시 말해줄래?");
+      setIsLoading(false);
+    }
   };
 
   const handleBackPress = useCallback(async () => {
@@ -42,13 +95,23 @@ export default function RolePlayingScreen({ navigation }) {
     isSubmittingRef.current = true;
 
     try {
-      const roleName = selectedSituation ? "FRIEND" : null;
+      await stopAiAudio();
+      setIsAiSpeaking(false);
+
+      if (sessionId) {
+        try {
+          await closeRolePlaying(sessionId);
+        } catch (e) {
+          console.log("CLOSE ROLE PLAYING FAIL:", e);
+        }
+      }
+
       const profileId = Number(selectedProfile?.profileId);
 
-      if (roleName && Number.isFinite(profileId)) {
+      if (selectedSituation && Number.isFinite(profileId)) {
         await createRolePlayingActivity({
           profileId,
-          roleName,
+          roleName: toActivityRole(selectedSituation),
         });
       }
     } catch (e) {
@@ -57,7 +120,7 @@ export default function RolePlayingScreen({ navigation }) {
       isSubmittingRef.current = false;
       navigation.goBack();
     }
-  }, [navigation, selectedProfile?.profileId, selectedSituation]);
+  }, [navigation, selectedProfile?.profileId, selectedSituation, sessionId]);
 
   return (
     <View style={styles.root}>
@@ -91,7 +154,7 @@ export default function RolePlayingScreen({ navigation }) {
               selectedSituation ? styles.bubbleTextSelected : styles.bubbleText,
             ]}
           >
-            {bubbleText}
+            {isLoading ? "    ...    " : bubbleText}
           </Text>
         </ImageBackground>
         <Image
@@ -138,7 +201,10 @@ export default function RolePlayingScreen({ navigation }) {
         </View>
       )}
 
-      <MicButton />
+      <MicButton
+        onRecordComplete={handleRecordComplete}
+        disabled={!selectedSituation || isLoading || isAiSpeaking}
+      />
     </View>
   );
 }

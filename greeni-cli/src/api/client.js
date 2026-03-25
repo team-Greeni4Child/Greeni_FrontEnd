@@ -78,14 +78,22 @@ async function parseResponse(res) {
 // 순수하게 요청 + 응답 파싱만 담당
 async function requestOnce(path, options = {}) {
   const url = `${API_BASE_URL}${path}`;
+  const isFormData = options.isFormData === true;
+
+  const headers = {
+    ...(options.headers || {}),
+  };
+
+  if (!isFormData && !headers["Content-Type"]) {
+    headers["Content-Type"] = "application/json";
+  }
 
   const fetchOptions = {
     ...options,
-    headers: {
-      "Content-Type": "application/json",
-      ...(options.headers || {}),
-    },
+    headers,
   };
+
+  delete fetchOptions.isFormData;
 
   let res;
   try {
