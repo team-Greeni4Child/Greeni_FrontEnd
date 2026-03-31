@@ -1,4 +1,4 @@
-import React, { useCallback, useContext, useEffect, useState } from "react";
+import React, { useCallback, useContext, useState } from "react";
 import {
   View,
   Text,
@@ -13,15 +13,17 @@ import {
 } from "react-native";
 import colors from "../theme/colors";
 import NavigationBar from "../components/NavigationBar";
-import { useFocusEffect, useRoute } from "@react-navigation/native";
+import { useFocusEffect } from "@react-navigation/native";
 import { AuthContext } from "../App";
+import { ProfileContext } from "../context/ProfileContext";
 import { getAccessToken, clearAuth } from "../utils/tokenStorage";
+import { getDiaryByDay } from "../api/diary";
 
 const { width: W, height: H } = Dimensions.get("window");
 
 export default function HomeScreen({ navigation }) {
   const { setStep } = useContext(AuthContext);
-  const route = useRoute();
+  const { selectedProfile } = useContext(ProfileContext);
 
   const [tab, setTab] = useState(0);
 
@@ -33,6 +35,9 @@ export default function HomeScreen({ navigation }) {
 
   // 종료 확인 모달 on/off
   const [showExitModal, setShowExitModal] = useState(false);
+
+  // 일기 존재 여부 확인 중복 클릭 방지
+  const [isCheckingDiary, setIsCheckingDiary] = useState(false);
 
   // 인증 상태 확인
   const checkAuth = async () => {
@@ -50,33 +55,70 @@ export default function HomeScreen({ navigation }) {
     }
   };
 
-  // 화면 들어올 때 인증 체크
+  const isEmptyDiaryResult = result => {
+    if (result == null) return true;
+    if (Array.isArray(result)) return result.length === 0;
+    if (typeof result === "object") return Object.keys(result).length === 0;
+    return false;
+  };
+
+  const fetchTodayDiaryStatus = useCallback(async () => {
+    try {
+      const profileId = selectedProfile?.profileId;
+      if (!profileId) {
+        setHasWrittenTodayDiary(false);
+        return false;
+      }
+
+      const today = new Date();
+      const year = today.getFullYear();
+      const month = today.getMonth() + 1;
+      const day = today.getDate();
+
+      const res = await getDiaryByDay({
+        year,
+        month,
+        day,
+        profileId,
+      });
+
+      const exists = !isEmptyDiaryResult(res?.result);
+      setHasWrittenTodayDiary(exists);
+      return exists;
+    } catch (e) {
+      console.log("GET TODAY DIARY FAIL:", e);
+      setHasWrittenTodayDiary(false);
+      return false;
+    }
+  }, [selectedProfile?.profileId]);
+
+  // 화면 들어올 때 인증 체크 + 오늘 일기 여부 갱신
   useFocusEffect(
     useCallback(() => {
       checkAuth();
-    }, []),
+      fetchTodayDiaryStatus();
+    }, [fetchTodayDiaryStatus]),
   );
 
-  // DiaryScreen에서 서버 에러로 돌아온 경우 모달 표시
-  useEffect(() => {
-    if (route.params?.diaryAlreadyExists) {
-      setShowDiaryModal(true);
-
-      // 한 번 사용 후 params 정리
-      navigation.setParams({
-        diaryAlreadyExists: false,
-      });
-    }
-  }, [route.params?.diaryAlreadyExists, navigation]);
-
   // 일기 버튼 클릭 처리
-  const handlePressDiary = () => {
-    if (hasWrittenTodayDiary) {
-      setShowDiaryModal(true);
-      return;
-    }
+  const handlePressDiary = async () => {
+    if (isCheckingDiary) return;
 
-    navigation.navigate("Diary");
+    try {
+      setIsCheckingDiary(true);
+
+      // 버튼 누르는 시점에 한 번 더 최신 상태 확인
+      const alreadyWritten = await fetchTodayDiaryStatus();
+
+      if (alreadyWritten) {
+        setShowDiaryModal(true);
+        return;
+      }
+
+      navigation.navigate("Diary");
+    } finally {
+      setIsCheckingDiary(false);
+    }
   };
 
   // 종료 모달 띄우기
@@ -117,7 +159,7 @@ export default function HomeScreen({ navigation }) {
       <Modal transparent visible={showDiaryModal}>
         <View style={styles.modalBackground}>
           <View style={styles.modalWrap}>
-            <Text style={styles.modalText}>오늘의 일기는{"\n"}이미 작성 완료 됐습니다.</Text>
+            <Text style={styles.modalText}>오늘의 일기 작성 완료!{"\n"}달력에서 확인해주세요!</Text>
 
             <View style={styles.modalButtonWrap}>
               <TouchableOpacity
@@ -202,6 +244,7 @@ export default function HomeScreen({ navigation }) {
         <TouchableOpacity
           style={[styles.diaryButton, { backgroundColor: colors.pink }]}
           onPress={handlePressDiary}
+          disabled={isCheckingDiary}
         >
           <Image source={require("../assets/images/icon_diary.png")} style={styles.icon} />
           <Text style={styles.buttonText}>일기</Text>
