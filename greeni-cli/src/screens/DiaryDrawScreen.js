@@ -1,4 +1,4 @@
-import React, { useContext, useRef, useState } from "react";
+import React, { useCallback, useContext, useRef, useState } from "react";
 import {
   View,
   Text,
@@ -9,8 +9,11 @@ import {
   Pressable,
   Alert,
   Modal,
+  BackHandler,
+  Platform,
 } from "react-native";
 import { launchImageLibrary } from "react-native-image-picker";
+import { useFocusEffect } from "@react-navigation/native";
 
 import colors from "../theme/colors";
 import BackButton from "../components/BackButton";
@@ -21,7 +24,7 @@ import EraserOptionsPanel from "../components/draw/EraserOptionsPanel";
 import ColorPickerModal from "../components/draw/ColorPickerModal";
 import SkiaDrawCanvas from "../components/draw/SkiaDrawCanvas";
 import { uploadDiaryJpeg } from "../api/s3";
-import { summarizeDiaryAi } from "../api/diaryAi";
+import { summarizeDiaryAi, closeDiaryAi } from "../api/diaryAi";
 import { ProfileContext } from "../context/ProfileContext";
 
 const { width: W, height: H } = Dimensions.get("window");
@@ -50,9 +53,11 @@ export default function DiaryDrawScreen({ navigation, route }) {
 
   // 저장 확인 모달
   const [showSaveModal, setShowSaveModal] = useState(false);
+  const [showExitModal, setShowExitModal] = useState(false);
 
   // 저장 중 중복 클릭 방지
   const [isSaving, setIsSaving] = useState(false);
+  const [isExiting, setIsExiting] = useState(false);
 
   // 배경 사진
   const [backgroundUri, setBackgroundUri] = useState(null);
@@ -67,6 +72,40 @@ export default function DiaryDrawScreen({ navigation, route }) {
   };
 
   const isAnyPanelOpen = showPenPanel || showEraserPanel || showPhotoActionPanel;
+
+  useFocusEffect(
+    useCallback(() => {
+      const onBackPress = () => {
+        if (Platform.OS !== "android") return false;
+
+        if (showColorModal) {
+          setShowColorModal(false);
+          return true;
+        }
+
+        if (showSaveModal) {
+          setShowSaveModal(false);
+          return true;
+        }
+
+        if (showExitModal) {
+          setShowExitModal(false);
+          return true;
+        }
+
+        if (isSaving || isExiting) {
+          return true;
+        }
+
+        closeAllPanels();
+        setShowExitModal(true);
+        return true;
+      };
+
+      const sub = BackHandler.addEventListener("hardwareBackPress", onBackPress);
+      return () => sub.remove();
+    }, [showColorModal, showSaveModal, showExitModal, isSaving, isExiting]),
+  );
 
   // 사진 선택
   const pickBackgroundImage = async () => {
@@ -132,12 +171,48 @@ export default function DiaryDrawScreen({ navigation, route }) {
   };
 
   const handlePressSave = () => {
-    if (isSaving) return;
+    if (isSaving || isExiting) return;
+    closeAllPanels();
     setShowSaveModal(true);
   };
 
   const handleCancelSave = () => {
     setShowSaveModal(false);
+  };
+
+  const handleOpenExitModal = () => {
+    if (isSaving || isExiting) return;
+    closeAllPanels();
+    setShowExitModal(true);
+  };
+
+  const handleCancelExit = () => {
+    setShowExitModal(false);
+  };
+
+  const handleConfirmExit = async () => {
+    if (isExiting) return;
+
+    try {
+      setIsExiting(true);
+      setShowExitModal(false);
+
+      if (selectedProfile?.profileId && sessionId) {
+        await closeDiaryAi({
+          profileId: selectedProfile.profileId,
+          sessionId,
+        });
+      }
+
+      navigation.reset({
+        index: 0,
+        routes: [{ name: "Home" }],
+      });
+    } catch (e) {
+      console.log("CLOSE DIARY SESSION FAIL:", e);
+    } finally {
+      setIsExiting(false);
+    }
   };
 
   const handleConfirmSave = async () => {
@@ -165,12 +240,6 @@ export default function DiaryDrawScreen({ navigation, route }) {
 
       const uploaded = await uploadDiaryJpeg(base64);
 
-      console.log("[DRAW] summarize params:", {
-        profileId: selectedProfile.profileId,
-        sessionId,
-        imageUrl: uploaded.fileUrl,
-      });
-
       await summarizeDiaryAi({
         profileId: selectedProfile.profileId,
         sessionId,
@@ -192,7 +261,7 @@ export default function DiaryDrawScreen({ navigation, route }) {
   return (
     <View style={styles.root}>
       <View style={styles.topBar}>
-        <BackButton navigation={navigation} top={H * 0.08} />
+        <BackButton navigation={{ ...navigation, goBack: handleOpenExitModal }} top={H * 0.08} />
 
         {/* 제목 */}
         <Text style={styles.title}>일기쓰기</Text>
@@ -367,7 +436,7 @@ export default function DiaryDrawScreen({ navigation, route }) {
           width={130}
           backgroundColor={colors.greenLight}
           onPress={handlePressSave}
-          disabled={isSaving}
+          disabled={isSaving || isExiting}
         />
       </View>
 
@@ -383,24 +452,53 @@ export default function DiaryDrawScreen({ navigation, route }) {
       />
 
       {/* 저장 확인 모달 */}
-      <Modal transparent visible={showSaveModal} animationType="fade">
+      <Modal transparent visible={showSaveModal}>
         <View style={styles.modalBackground}>
           <View style={styles.modalWrap}>
-            <Text style={styles.modalText}>오늘의 일기 작성을{"\n"}마무리할까요?</Text>
+            <Text style={styles.modalText}>오늘의 일기쓰기를{"\n"}저장할까요?</Text>
 
             <View style={styles.modalButtonWrap}>
               <TouchableOpacity
-                style={[styles.modalButton, styles.modalCancelButton]}
+                style={[styles.modalButton, { width: "50%", backgroundColor: colors.ivory }]}
                 onPress={handleCancelSave}
-                activeOpacity={0.8}
+                activeOpacity={1}
               >
-                <Text style={[styles.modalButtonText, { color: colors.brown }]}>아니오</Text>
+                <Text style={styles.modalButtonText}>아니요</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
-                style={[styles.modalButton, styles.modalConfirmButton]}
+                style={[styles.modalButton, { width: "50%" }]}
                 onPress={handleConfirmSave}
-                activeOpacity={0.8}
+                activeOpacity={1}
+                disabled={isSaving}
+              >
+                <Text style={styles.modalButtonText}>예</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* 중단 확인 모달 */}
+      <Modal transparent visible={showExitModal}>
+        <View style={styles.modalBackground}>
+          <View style={styles.modalWrap}>
+            <Text style={styles.modalText}>일기쓰기를 그만할까요?</Text>
+
+            <View style={styles.modalButtonWrap}>
+              <TouchableOpacity
+                style={[styles.modalButton, { width: "50%", backgroundColor: colors.ivory }]}
+                onPress={handleCancelExit}
+                activeOpacity={1}
+              >
+                <Text style={styles.modalButtonText}>아니요</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.modalButton, { width: "50%" }]}
+                onPress={handleConfirmExit}
+                activeOpacity={1}
+                disabled={isExiting}
               >
                 <Text style={styles.modalButtonText}>예</Text>
               </TouchableOpacity>
@@ -524,55 +622,41 @@ const styles = StyleSheet.create({
 
   modalBackground: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.25)",
+    backgroundColor: colors.lightGray95,
     justifyContent: "center",
     alignItems: "center",
-    paddingHorizontal: 24,
   },
   modalWrap: {
-    width: W * 0.8,
+    width: W * 0.7,
     backgroundColor: colors.ivory,
     borderRadius: 20,
-    borderWidth: 2,
+    borderWidth: 3,
     borderColor: colors.greenDark,
-    paddingHorizontal: 20,
-    paddingTop: 28,
-    paddingBottom: 18,
+    padding: 0,
     alignItems: "center",
+    justifyContent: "flex-end",
+    overflow: "hidden",
   },
   modalText: {
-    fontFamily: "Maplestory_Light",
     fontSize: 16,
+    fontFamily: "Maplestory_Light",
     color: colors.brown,
     textAlign: "center",
-    lineHeight: 24,
+    margin: 30,
   },
   modalButtonWrap: {
     flexDirection: "row",
-    marginTop: 22,
-    gap: 12,
+    height: 45,
+    width: "100%",
   },
   modalButton: {
-    minWidth: 110,
-    height: 44,
-    borderRadius: 10,
     justifyContent: "center",
     alignItems: "center",
-    paddingHorizontal: 14,
-  },
-  modalCancelButton: {
-    backgroundColor: colors.white,
-    borderWidth: 2,
-    borderColor: colors.greenDark,
-  },
-  modalConfirmButton: {
-    backgroundColor: colors.greenLight,
-    borderWidth: 2,
-    borderColor: colors.greenDark,
+    backgroundColor: colors.green,
   },
   modalButtonText: {
-    fontFamily: "Maplestory_Bold",
-    fontSize: 14,
     color: colors.brown,
+    fontSize: 16,
+    fontFamily: "Maplestory_Light",
   },
 });

@@ -7,7 +7,7 @@ import Button from "../components/Button";
 import { ProfileContext } from "../context/ProfileContext";
 import { uploadDiaryVoice } from "../api/s3";
 import { sendDiaryVoice } from "../api/diary";
-import { requestDiaryAi } from "../api/diaryAi";
+import { requestDiaryAi, closeDiaryAi } from "../api/diaryAi";
 import { playBase64Mp3, stopAiAudio } from "../utils/audio";
 
 const { width: W, height: H } = Dimensions.get("window");
@@ -28,6 +28,7 @@ export default function DiaryScreen({ navigation }) {
   const turnRef = useRef(0);
   const isScreenActiveRef = useRef(true);
   const isEndingRef = useRef(false);
+  const isClosingRef = useRef(false);
 
   useEffect(() => {
     isScreenActiveRef.current = true;
@@ -53,8 +54,42 @@ export default function DiaryScreen({ navigation }) {
     }
   };
 
+  const handleCloseDiarySession = async () => {
+    if (isClosingRef.current || isEndingRef.current) return;
+
+    try {
+      isClosingRef.current = true;
+
+      await stopAiAudio();
+      if (isScreenActiveRef.current) {
+        setIsAiSpeaking(false);
+      }
+
+      if (selectedProfile?.profileId && sessionIdRef.current) {
+        await closeDiaryAi({
+          profileId: selectedProfile.profileId,
+          sessionId: sessionIdRef.current,
+        });
+      }
+
+      navigation.reset({
+        index: 0,
+        routes: [{ name: "Home" }],
+      });
+    } catch (e) {
+      console.log("[DIARY] 세션 종료 실패:", e);
+
+      navigation.reset({
+        index: 0,
+        routes: [{ name: "Home" }],
+      });
+    } finally {
+      isClosingRef.current = false;
+    }
+  };
+
   const handleEndDiary = async () => {
-    if (isEndingRef.current) return;
+    if (isEndingRef.current || isClosingRef.current) return;
 
     try {
       isEndingRef.current = true;
@@ -75,7 +110,7 @@ export default function DiaryScreen({ navigation }) {
   };
 
   const handleRecordComplete = async filePath => {
-    if (isSending || isAiSpeaking || isEndingRef.current) return;
+    if (isSending || isAiSpeaking || isEndingRef.current || isClosingRef.current) return;
 
     try {
       setIsSending(true);
@@ -166,13 +201,13 @@ export default function DiaryScreen({ navigation }) {
     }
   };
 
-  const isMicDisabled = isSending || isAiSpeaking || isEndingRef.current;
+  const isMicDisabled = isSending || isAiSpeaking || isEndingRef.current || isClosingRef.current;
 
   return (
     <View style={styles.root}>
       <View style={styles.topBackground} />
       {/* 상단 뒤로가기 + 제목 */}
-      <BackButton navigation={navigation} top={H * 0.08} />
+      <BackButton navigation={{ ...navigation, goBack: handleCloseDiarySession }} top={H * 0.08} />
       <Text style={styles.title}>일기쓰기</Text>
 
       {/* 말풍선 + 그리니 */}
@@ -196,7 +231,11 @@ export default function DiaryScreen({ navigation }) {
 
       {/* 일기 그리러 가는 버튼 */}
       <View style={styles.diaryButton}>
-        <Button title="그림일기" onPress={handleEndDiary} disabled={isEndingRef.current} />
+        <Button
+          title="그림일기"
+          onPress={handleEndDiary}
+          disabled={isEndingRef.current || isClosingRef.current}
+        />
       </View>
     </View>
   );
