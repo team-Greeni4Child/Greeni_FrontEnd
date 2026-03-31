@@ -62,3 +62,22 @@ export async function getDiaryVoiceByDay({ year, month, day, profileId }) {
     },
   });
 }
+
+/** 일기 음성 URL 전달: POST /api/diaries/voice */
+export async function sendDiaryVoice({ url, profileId, role = "user" }) {
+  const accessToken = await getAccessToken();
+  if (!accessToken) throw new Error("NO_ACCESS_TOKEN");
+
+  return request("/api/diaries/voice", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      url,
+      profileId,
+      role,
+    }),
+  });
+}

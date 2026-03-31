@@ -1,13 +1,64 @@
-import React from "react";
+import React, { useContext, useState } from "react";
 import { View, Text, Image, StyleSheet, Dimensions, ImageBackground } from "react-native";
 import colors from "../theme/colors";
 import BackButton from "../components/BackButton";
 import MicButton from "../components/MicButton";
 import Button from "../components/Button";
+import { ProfileContext } from "../context/ProfileContext";
+import { uploadDiaryVoice } from "../api/s3";
+import { sendDiaryVoice } from "../api/diary";
 
 const { width: W, height: H } = Dimensions.get("window");
 
 export default function DiaryScreen({ navigation }) {
+  const { selectedProfile } = useContext(ProfileContext);
+  const [isSending, setIsSending] = useState(false);
+
+  const handleRecordComplete = async filePath => {
+    if (isSending) return;
+
+    try {
+      setIsSending(true);
+
+      console.log("[DIARY] 녹음 파일 경로:", filePath);
+
+      if (!filePath) {
+        console.log("[DIARY] 파일 경로 없음");
+        return;
+      }
+
+      if (!selectedProfile?.profileId) {
+        console.log("[DIARY] profileId 없음");
+        return;
+      }
+
+      // 1) S3 업로드
+      const uploadRes = await uploadDiaryVoice(filePath);
+
+      console.log("[DIARY] 음성 업로드 성공:", uploadRes);
+
+      if (!uploadRes?.fileUrl) {
+        throw new Error("fileUrl 없음");
+      }
+
+      // 2) voice API 호출
+      const res = await sendDiaryVoice({
+        url: uploadRes.fileUrl,
+        profileId: selectedProfile.profileId,
+        role: "user",
+      });
+
+      console.log("[DIARY] /api/diaries/voice 성공:", res);
+
+      // 👉 다음 단계로 연결 (원하면 활성화)
+      // navigation.navigate("DiaryDraw");
+    } catch (e) {
+      console.log("[DIARY] 음성 전송 실패:", e);
+    } finally {
+      setIsSending(false);
+    }
+  };
+
   return (
     <View style={styles.root}>
       <View style={styles.topBackground} />
@@ -22,10 +73,7 @@ export default function DiaryScreen({ navigation }) {
           style={styles.bubble}
           resizeMode="stretch"
         >
-          <Text style={styles.bubbleText}>
-            안녕 ○○아,{"\n"}오늘의 일기쓰기를 시작해볼까?
-            {/*{"\n"}폰트 크기가 정해져 있으니 어쩔 수 없지. 은서는 작은 글씨를 쓸 수 밖에*/}
-          </Text>
+          <Text style={styles.bubbleText}>안녕 ○○아,{"\n"}오늘의 일기쓰기를 시작해볼까?</Text>
         </ImageBackground>
 
         <Image
@@ -35,12 +83,7 @@ export default function DiaryScreen({ navigation }) {
         />
       </View>
 
-      {/* 마이크 버튼 */}
-      <MicButton
-        onRecordComplete={filePath => {
-          console.log("녹음 파일 경로:", filePath);
-        }}
-      />
+      <MicButton onRecordComplete={handleRecordComplete} />
 
       {/* 일기 그리러 가는 임시 버튼 */}
       <View style={styles.diaryButton}>
