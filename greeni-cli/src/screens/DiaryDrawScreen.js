@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { useContext, useRef, useState } from "react";
 import {
   View,
   Text,
@@ -21,11 +21,15 @@ import EraserOptionsPanel from "../components/draw/EraserOptionsPanel";
 import ColorPickerModal from "../components/draw/ColorPickerModal";
 import SkiaDrawCanvas from "../components/draw/SkiaDrawCanvas";
 import { uploadDiaryJpeg } from "../api/s3";
+import { summarizeDiaryAi } from "../api/diaryAi";
+import { ProfileContext } from "../context/ProfileContext";
 
 const { width: W, height: H } = Dimensions.get("window");
 
-export default function DiaryDrawScreen({ navigation }) {
+export default function DiaryDrawScreen({ navigation, route }) {
   const canvasRef = useRef(null);
+  const { selectedProfile } = useContext(ProfileContext);
+  const { sessionId } = route.params || {};
 
   const [activeTool, setActiveTool] = useState("pen"); // pen | eraser | photo
 
@@ -144,6 +148,14 @@ export default function DiaryDrawScreen({ navigation }) {
       setShowSaveModal(false);
       closeAllPanels();
 
+      if (!selectedProfile?.profileId) {
+        throw new Error("profileId가 없습니다.");
+      }
+
+      if (!sessionId) {
+        throw new Error("sessionId가 없습니다.");
+      }
+
       const base64 = canvasRef.current?.exportBase64?.();
 
       if (!base64) {
@@ -153,15 +165,18 @@ export default function DiaryDrawScreen({ navigation }) {
 
       const uploaded = await uploadDiaryJpeg(base64);
 
-      console.log("[DIARY S3 KEY]:", uploaded.key);
-      console.log("[DIARY S3 FILE URL]:", uploaded.fileUrl);
+      await summarizeDiaryAi({
+        profileId: selectedProfile.profileId,
+        sessionId,
+        imageUrl: uploaded.fileUrl,
+      });
 
       navigation.reset({
         index: 0,
         routes: [{ name: "Home" }],
       });
     } catch (e) {
-      console.log("SAVE DIARY JPEG FAIL:", e);
+      console.log("SAVE DIARY FAIL:", e);
       Alert.alert("오류", e?.message || "그림일기를 저장하지 못했어요.");
     } finally {
       setIsSaving(false);

@@ -7,10 +7,11 @@ import Button from "../components/Button";
 import { ProfileContext } from "../context/ProfileContext";
 import { uploadDiaryVoice } from "../api/s3";
 import { sendDiaryVoice } from "../api/diary";
-import { requestDiaryAi } from "../api/diaryAi";
+import { requestDiaryAi, closeDiaryAi } from "../api/diaryAi";
 import { playBase64Mp3, stopAiAudio } from "../utils/audio";
 
 const { width: W, height: H } = Dimensions.get("window");
+const MAX_DIARY_TURNS = 10;
 
 function createSessionId() {
   return `diary_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
@@ -22,8 +23,11 @@ export default function DiaryScreen({ navigation }) {
   const [isSending, setIsSending] = useState(false);
   const [isAiSpeaking, setIsAiSpeaking] = useState(false);
   const [bubbleText, setBubbleText] = useState("오늘 어떤 일이 있었어?");
+
   const sessionIdRef = useRef(createSessionId());
+  const turnRef = useRef(0);
   const isScreenActiveRef = useRef(true);
+  const isEndingRef = useRef(false);
 
   useEffect(() => {
     isScreenActiveRef.current = true;
@@ -49,8 +53,35 @@ export default function DiaryScreen({ navigation }) {
     }
   };
 
+  const handleEndDiary = async () => {
+    if (isEndingRef.current) return;
+    if (!selectedProfile?.profileId) return;
+
+    try {
+      isEndingRef.current = true;
+
+      await stopAiAudio();
+      if (isScreenActiveRef.current) {
+        setIsAiSpeaking(false);
+      }
+
+      await closeDiaryAi({
+        profileId: selectedProfile.profileId,
+        sessionId: sessionIdRef.current,
+      });
+
+      navigation.replace("DiaryDraw", {
+        sessionId: sessionIdRef.current,
+      });
+    } catch (e) {
+      console.log("[DIARY] 종료 실패:", e);
+    } finally {
+      isEndingRef.current = false;
+    }
+  };
+
   const handleRecordComplete = async filePath => {
-    if (isSending || isAiSpeaking) return;
+    if (isSending || isAiSpeaking || isEndingRef.current) return;
 
     try {
       setIsSending(true);
@@ -100,11 +131,14 @@ export default function DiaryScreen({ navigation }) {
         sessionId: nextSessionId,
         hasText: !!aiText,
         hasVoice: !!aiVoiceBase64,
+        nextTurn: turnRef.current + 1,
       });
 
       if (nextSessionId) {
         sessionIdRef.current = nextSessionId;
       }
+
+      turnRef.current += 1;
 
       if (aiText) {
         setBubbleText(aiText);
@@ -114,6 +148,10 @@ export default function DiaryScreen({ navigation }) {
 
       if (aiVoiceBase64) {
         await playDiaryVoice(aiVoiceBase64);
+      }
+
+      if (turnRef.current >= MAX_DIARY_TURNS) {
+        await handleEndDiary();
       }
     } catch (e) {
       console.log("[DIARY] 음성 전송 실패:", e);
@@ -137,7 +175,7 @@ export default function DiaryScreen({ navigation }) {
     }
   };
 
-  const isMicDisabled = isSending || isAiSpeaking;
+  const isMicDisabled = isSending || isAiSpeaking || isEndingRef.current;
 
   return (
     <View style={styles.root}>
@@ -167,7 +205,7 @@ export default function DiaryScreen({ navigation }) {
 
       {/* 일기 그리러 가는 임시 버튼 */}
       <View style={styles.diaryButton}>
-        <Button title="그림일기" onPress={() => navigation.navigate("DiaryDraw")} />
+        <Button title="그림일기" onPress={handleEndDiary} disabled={isEndingRef.current} />
       </View>
     </View>
   );
