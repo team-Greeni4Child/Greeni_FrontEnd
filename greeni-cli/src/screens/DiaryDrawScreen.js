@@ -165,6 +165,12 @@ export default function DiaryDrawScreen({ navigation, route }) {
 
       const uploaded = await uploadDiaryJpeg(base64);
 
+      console.log("[DRAW] summarize params:", {
+        profileId: selectedProfile.profileId,
+        sessionId,
+        imageUrl: uploaded.fileUrl,
+      });
+
       await summarizeDiaryAi({
         profileId: selectedProfile.profileId,
         sessionId,
@@ -173,7 +179,7 @@ export default function DiaryDrawScreen({ navigation, route }) {
 
       navigation.reset({
         index: 0,
-        routes: [{ name: "Home" }],
+        routes: [{ name: "Home", params: { diaryAlreadyExists: true } }],
       });
     } catch (e) {
       console.log("SAVE DIARY FAIL:", e);

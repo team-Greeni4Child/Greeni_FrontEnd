@@ -7,7 +7,7 @@ import Button from "../components/Button";
 import { ProfileContext } from "../context/ProfileContext";
 import { uploadDiaryVoice } from "../api/s3";
 import { sendDiaryVoice } from "../api/diary";
-import { requestDiaryAi, closeDiaryAi } from "../api/diaryAi";
+import { requestDiaryAi } from "../api/diaryAi";
 import { playBase64Mp3, stopAiAudio } from "../utils/audio";
 
 const { width: W, height: H } = Dimensions.get("window");
@@ -55,7 +55,6 @@ export default function DiaryScreen({ navigation }) {
 
   const handleEndDiary = async () => {
     if (isEndingRef.current) return;
-    if (!selectedProfile?.profileId) return;
 
     try {
       isEndingRef.current = true;
@@ -64,11 +63,6 @@ export default function DiaryScreen({ navigation }) {
       if (isScreenActiveRef.current) {
         setIsAiSpeaking(false);
       }
-
-      await closeDiaryAi({
-        profileId: selectedProfile.profileId,
-        sessionId: sessionIdRef.current,
-      });
 
       navigation.replace("DiaryDraw", {
         sessionId: sessionIdRef.current,
