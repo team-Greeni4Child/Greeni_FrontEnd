@@ -1,4 +1,4 @@
-import React, { useContext, useRef, useState } from "react";
+import React, { useContext, useEffect, useRef, useState } from "react";
 import { View, Text, Image, StyleSheet, Dimensions, ImageBackground } from "react-native";
 import colors from "../theme/colors";
 import BackButton from "../components/BackButton";
@@ -8,6 +8,7 @@ import { ProfileContext } from "../context/ProfileContext";
 import { uploadDiaryVoice } from "../api/s3";
 import { sendDiaryVoice } from "../api/diary";
 import { requestDiaryAi } from "../api/diaryAi";
+import { playBase64Mp3, stopAiAudio } from "../utils/audio";
 
 const { width: W, height: H } = Dimensions.get("window");
 
@@ -19,32 +20,52 @@ export default function DiaryScreen({ navigation }) {
   const { selectedProfile } = useContext(ProfileContext);
 
   const [isSending, setIsSending] = useState(false);
+  const [isAiSpeaking, setIsAiSpeaking] = useState(false);
   const [bubbleText, setBubbleText] = useState("오늘 어떤 일이 있었어?");
   const sessionIdRef = useRef(createSessionId());
+  const isScreenActiveRef = useRef(true);
+
+  useEffect(() => {
+    isScreenActiveRef.current = true;
+
+    return () => {
+      isScreenActiveRef.current = false;
+      stopAiAudio();
+    };
+  }, []);
+
+  const playDiaryVoice = async audioBase64 => {
+    if (!audioBase64 || !isScreenActiveRef.current) return;
+
+    try {
+      setIsAiSpeaking(true);
+      await playBase64Mp3(audioBase64);
+    } catch (e) {
+      console.log("[DIARY] AI 음성 재생 실패:", e);
+    } finally {
+      if (isScreenActiveRef.current) {
+        setIsAiSpeaking(false);
+      }
+    }
+  };
 
   const handleRecordComplete = async filePath => {
-    if (isSending) return;
+    if (isSending || isAiSpeaking) return;
 
     try {
       setIsSending(true);
 
-      console.log("[DIARY] 녹음 파일 경로:", filePath);
-      console.log("[DIARY] sessionId:", sessionIdRef.current);
-
-      if (!filePath) {
-        console.log("[DIARY] 파일 경로 없음");
+      if (!filePath || !selectedProfile?.profileId) {
         return;
       }
 
-      if (!selectedProfile?.profileId) {
-        console.log("[DIARY] profileId 없음");
-        return;
+      await stopAiAudio();
+      if (isScreenActiveRef.current) {
+        setIsAiSpeaking(false);
       }
 
       // 1) S3 업로드
       const uploadRes = await uploadDiaryVoice(filePath);
-
-      console.log("[DIARY] 음성 업로드 성공:", uploadRes);
 
       if (!uploadRes?.fileUrl) {
         throw new Error("fileUrl 없음");
@@ -57,6 +78,8 @@ export default function DiaryScreen({ navigation }) {
         role: "user",
       });
 
+      if (!isScreenActiveRef.current) return;
+
       setBubbleText("...");
 
       const aiRes = await requestDiaryAi({
@@ -66,11 +89,18 @@ export default function DiaryScreen({ navigation }) {
         filePath,
       });
 
-      console.log("[DIARY] /api/ai/diaries JSON:", JSON.stringify(aiRes, null, 2));
+      if (!isScreenActiveRef.current) return;
 
       const result = aiRes?.result ?? aiRes ?? {};
       const nextSessionId = result?.sessionId || "";
       const aiText = result?.text || "";
+      const aiVoiceBase64 = result?.base64Voice || "";
+
+      console.log("[DIARY] AI 응답:", {
+        sessionId: nextSessionId,
+        hasText: !!aiText,
+        hasVoice: !!aiVoiceBase64,
+      });
 
       if (nextSessionId) {
         sessionIdRef.current = nextSessionId;
@@ -81,23 +111,33 @@ export default function DiaryScreen({ navigation }) {
       } else {
         setBubbleText("다시 한 번 말해줄래?");
       }
+
+      if (aiVoiceBase64) {
+        await playDiaryVoice(aiVoiceBase64);
+      }
     } catch (e) {
       console.log("[DIARY] 음성 전송 실패:", e);
 
       const code = e?.code || e?.response?.code;
 
       if (code === "DIARY_ALREADY_EXISTS") {
-        navigation.navigate("Home", {
+        navigation.replace("Home", {
           diaryAlreadyExists: true,
         });
         return;
       }
 
-      setBubbleText("다시 한 번 말해줄래?");
+      if (isScreenActiveRef.current) {
+        setBubbleText("다시 한 번 말해줄래?");
+      }
     } finally {
-      setIsSending(false);
+      if (isScreenActiveRef.current) {
+        setIsSending(false);
+      }
     }
   };
+
+  const isMicDisabled = isSending || isAiSpeaking;
 
   return (
     <View style={styles.root}>
@@ -123,7 +163,7 @@ export default function DiaryScreen({ navigation }) {
         />
       </View>
 
-      <MicButton onRecordComplete={handleRecordComplete} disabled={isSending} />
+      <MicButton onRecordComplete={handleRecordComplete} disabled={isMicDisabled} />
 
       {/* 일기 그리러 가는 임시 버튼 */}
       <View style={styles.diaryButton}>
