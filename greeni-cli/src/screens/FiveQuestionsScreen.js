@@ -27,6 +27,7 @@ export default function TwentyQuestionsScreen({ navigation }) {
   const [isAiSpeaking, setIsAiSpeaking] = useState(false);
   const [canAnswerCurrentQuestion, setCanAnswerCurrentQuestion] = useState(false);
   const [showAnswerText, setShowAnswerText] = useState(false);
+  const [isAnswerFeedbackShowing, setIsAnswerFeedbackShowing] = useState(false);
 
   const initialScoreRef = useRef(null);
   const isSubmittingRef = useRef(false);
@@ -83,6 +84,7 @@ export default function TwentyQuestionsScreen({ navigation }) {
     if (isMovingNextRef.current) return;
     isMovingNextRef.current = true;
     setCanAnswerCurrentQuestion(false);
+    setIsAnswerFeedbackShowing(true);
 
     if (nextQuestionTimerRef.current) {
       clearTimeout(nextQuestionTimerRef.current);
@@ -115,6 +117,7 @@ export default function TwentyQuestionsScreen({ navigation }) {
       setBubbleText("힌트를 준비하고 있어!");
       setCanAnswerCurrentQuestion(false);
       setShowAnswerText(false);
+      setIsAnswerFeedbackShowing(false);
       isMovingNextRef.current = false;
 
       await stopAiAudio();
@@ -161,7 +164,7 @@ export default function TwentyQuestionsScreen({ navigation }) {
         goToNextQuestion();
       }
     } finally {
-      if (isScreenActiveRef.current && canAnswerCurrentQuestion === false) {
+      if (isScreenActiveRef.current) {
         setIsLoadingQuestion(false);
       }
     }
@@ -188,7 +191,7 @@ export default function TwentyQuestionsScreen({ navigation }) {
       setBubbleText(nextHint?.text || "다음 힌트를 줄게!");
 
       if (nextHint?.audioBase64 && isScreenActiveRef.current) {
-        playHintVoice(nextHint.audioBase64);
+        await playHintVoice(nextHint.audioBase64);
       }
 
       return true;
@@ -203,6 +206,7 @@ export default function TwentyQuestionsScreen({ navigation }) {
       if (isCheckingAnswer || isLoadingQuestion) return;
       if (!isScreenActiveRef.current) return;
       if (!canAnswerCurrentQuestion) return;
+      if (isAnswerFeedbackShowing) return;
 
       try {
         setIsCheckingAnswer(true);
@@ -228,6 +232,7 @@ export default function TwentyQuestionsScreen({ navigation }) {
           goToNextQuestion(() => {
             if (isScreenActiveRef.current) {
               setShowAnswerText(false);
+              setIsAnswerFeedbackShowing(false);
             }
           });
           return;
@@ -248,6 +253,7 @@ export default function TwentyQuestionsScreen({ navigation }) {
         goToNextQuestion(() => {
           if (isScreenActiveRef.current) {
             setShowAnswerText(false);
+            setIsAnswerFeedbackShowing(false);
           }
         });
       } catch (e) {
@@ -268,6 +274,7 @@ export default function TwentyQuestionsScreen({ navigation }) {
       isCheckingAnswer,
       isLoadingQuestion,
       canAnswerCurrentQuestion,
+      isAnswerFeedbackShowing,
       showNextHint,
       goToNextQuestion,
     ],
@@ -307,7 +314,8 @@ export default function TwentyQuestionsScreen({ navigation }) {
   }, [correctCount, wrongCount, navigation, selectedProfile?.profileId]);
 
   const progress = hints.length > 0 ? (currentHint + 1) / hints.length : 0;
-  const isMicDisabled = isLoadingQuestion || isCheckingAnswer;
+  const isMicDisabled =
+    isLoadingQuestion || isCheckingAnswer || isAiSpeaking || isAnswerFeedbackShowing;
 
   return (
     <View style={styles.root}>
