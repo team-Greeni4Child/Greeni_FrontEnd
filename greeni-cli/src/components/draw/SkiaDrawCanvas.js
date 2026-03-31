@@ -180,7 +180,7 @@ const SkiaDrawCanvas = forwardRef(function SkiaDrawCanvas(
         return "";
       }
 
-      const base64 = image.encodeToBase64(ImageFormat.JPEG, 100);
+      const base64 = image.encodeToBase64(ImageFormat.PNG, 100);
       return base64 || "";
     },
     undo,
