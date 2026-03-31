@@ -81,18 +81,6 @@ export default function MyPageScreen({ navigation }) {
     loadBadges();
   }, [selectedProfile?.profileId]);
 
-  // 뒤로가기 → 앱 종료
-  useEffect(() => {
-    const onBackPress = () => {
-      if (Platform.OS === "android") {
-        BackHandler.exitApp();
-      }
-      return true;
-    };
-    const sub = BackHandler.addEventListener("hardwareBackPress", onBackPress);
-    return () => sub.remove();
-  }, []);
-
   if (!selectedProfile) return null;
 
   const profileName = selectedProfile.name;
