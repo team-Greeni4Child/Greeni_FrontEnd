@@ -194,7 +194,7 @@ export default function DiaryScreen({ navigation }) {
 
       <MicButton onRecordComplete={handleRecordComplete} disabled={isMicDisabled} />
 
-      {/* 일기 그리러 가는 임시 버튼 */}
+      {/* 일기 그리러 가는 버튼 */}
       <View style={styles.diaryButton}>
         <Button title="그림일기" onPress={handleEndDiary} disabled={isEndingRef.current} />
       </View>
@@ -252,10 +252,10 @@ const styles = StyleSheet.create({
     height: W * 0.5,
   },
 
-  // 일기 그리러 가는 임시 버튼
+  // 일기 그리러 가는 버튼
   diaryButton: {
     position: "absolute",
-    left: 20,
-    bottom: 50,
+    top: H * 0.07,
+    right: 15,
   },
 });
