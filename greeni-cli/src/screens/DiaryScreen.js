@@ -121,13 +121,6 @@ export default function DiaryScreen({ navigation }) {
       const aiText = result?.text || "";
       const aiVoiceBase64 = result?.base64Voice || "";
 
-      console.log("[DIARY] AI 응답:", {
-        sessionId: nextSessionId,
-        hasText: !!aiText,
-        hasVoice: !!aiVoiceBase64,
-        nextTurn: turnRef.current + 1,
-      });
-
       if (nextSessionId) {
         sessionIdRef.current = nextSessionId;
       }
@@ -140,11 +133,15 @@ export default function DiaryScreen({ navigation }) {
         setBubbleText("다시 한 번 말해줄래?");
       }
 
+      const isLastTurn = turnRef.current >= MAX_DIARY_TURNS;
+
       if (aiVoiceBase64) {
         await playDiaryVoice(aiVoiceBase64);
       }
 
-      if (turnRef.current >= MAX_DIARY_TURNS) {
+      if (!isScreenActiveRef.current) return;
+
+      if (isLastTurn) {
         await handleEndDiary();
       }
     } catch (e) {
