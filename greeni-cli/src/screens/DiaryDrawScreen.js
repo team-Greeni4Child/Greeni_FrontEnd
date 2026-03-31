@@ -7,7 +7,6 @@ import {
   Image,
   Dimensions,
   Pressable,
-  Alert,
   Modal,
   BackHandler,
   Platform,
@@ -54,10 +53,14 @@ export default function DiaryDrawScreen({ navigation, route }) {
   // 저장 확인 모달
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [showExitModal, setShowExitModal] = useState(false);
+  const [showErrorModal, setShowErrorModal] = useState(false);
 
   // 저장 중 중복 클릭 방지
   const [isSaving, setIsSaving] = useState(false);
   const [isExiting, setIsExiting] = useState(false);
+
+  // 에러 메세지
+  const [errorMessage, setErrorMessage] = useState("");
 
   // 배경 사진
   const [backgroundUri, setBackgroundUri] = useState(null);
@@ -93,6 +96,12 @@ export default function DiaryDrawScreen({ navigation, route }) {
           return true;
         }
 
+        if (showErrorModal) {
+          setShowErrorModal(false);
+          setErrorMessage("");
+          return true;
+        }
+
         if (isSaving || isExiting) {
           return true;
         }
@@ -104,7 +113,7 @@ export default function DiaryDrawScreen({ navigation, route }) {
 
       const sub = BackHandler.addEventListener("hardwareBackPress", onBackPress);
       return () => sub.remove();
-    }, [showColorModal, showSaveModal, showExitModal, isSaving, isExiting]),
+    }, [showColorModal, showSaveModal, showExitModal, showErrorModal, isSaving, isExiting]),
   );
 
   // 사진 선택
@@ -190,6 +199,11 @@ export default function DiaryDrawScreen({ navigation, route }) {
     setShowExitModal(false);
   };
 
+  const handleCloseErrorModal = () => {
+    setShowErrorModal(false);
+    setErrorMessage("");
+  };
+
   const handleConfirmExit = async () => {
     if (isExiting) return;
 
@@ -210,6 +224,8 @@ export default function DiaryDrawScreen({ navigation, route }) {
       });
     } catch (e) {
       console.log("CLOSE DIARY SESSION FAIL:", e);
+      setErrorMessage("오류가 발생했습니다.\n잠시후 다시 시도해 주세요.");
+      setShowErrorModal(true);
     } finally {
       setIsExiting(false);
     }
@@ -234,7 +250,8 @@ export default function DiaryDrawScreen({ navigation, route }) {
       const base64 = canvasRef.current?.exportBase64?.();
 
       if (!base64) {
-        Alert.alert("오류", "그림을 저장하지 못했어요.");
+        setErrorMessage("오류가 발생했습니다.\n잠시후 다시 시도해 주세요.");
+        setShowErrorModal(true);
         return;
       }
 
@@ -252,7 +269,8 @@ export default function DiaryDrawScreen({ navigation, route }) {
       });
     } catch (e) {
       console.log("SAVE DIARY FAIL:", e);
-      Alert.alert("오류", e?.message || "그림일기를 저장하지 못했어요.");
+      setErrorMessage("오류가 발생했습니다.\n잠시후 다시 시도해 주세요.");
+      setShowErrorModal(true);
     } finally {
       setIsSaving(false);
     }
@@ -506,6 +524,25 @@ export default function DiaryDrawScreen({ navigation, route }) {
           </View>
         </View>
       </Modal>
+
+      {/* 에러 안내 모달 */}
+      <Modal transparent visible={showErrorModal}>
+        <View style={styles.modalBackground}>
+          <View style={styles.modalWrap}>
+            <Text style={styles.modalText}>{errorMessage}</Text>
+
+            <View style={styles.modalButtonWrap}>
+              <TouchableOpacity
+                style={[styles.modalButton]}
+                onPress={handleCloseErrorModal}
+                activeOpacity={1}
+              >
+                <Text style={styles.modalButtonText}>확인</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -653,6 +690,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     backgroundColor: colors.green,
+    width: "100%",
   },
   modalButtonText: {
     color: colors.brown,
