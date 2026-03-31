@@ -1,4 +1,4 @@
-import React, { useContext, useState } from "react";
+import React, { useContext, useRef, useState } from "react";
 import { View, Text, Image, StyleSheet, Dimensions, ImageBackground } from "react-native";
 import colors from "../theme/colors";
 import BackButton from "../components/BackButton";
@@ -7,12 +7,20 @@ import Button from "../components/Button";
 import { ProfileContext } from "../context/ProfileContext";
 import { uploadDiaryVoice } from "../api/s3";
 import { sendDiaryVoice } from "../api/diary";
+import { requestDiaryAi } from "../api/diaryAi";
 
 const { width: W, height: H } = Dimensions.get("window");
 
+function createSessionId() {
+  return `diary_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+}
+
 export default function DiaryScreen({ navigation }) {
   const { selectedProfile } = useContext(ProfileContext);
+
   const [isSending, setIsSending] = useState(false);
+  const [bubbleText, setBubbleText] = useState("오늘 어떤 일이 있었어?");
+  const sessionIdRef = useRef(createSessionId());
 
   const handleRecordComplete = async filePath => {
     if (isSending) return;
@@ -21,6 +29,7 @@ export default function DiaryScreen({ navigation }) {
       setIsSending(true);
 
       console.log("[DIARY] 녹음 파일 경로:", filePath);
+      console.log("[DIARY] sessionId:", sessionIdRef.current);
 
       if (!filePath) {
         console.log("[DIARY] 파일 경로 없음");
@@ -42,18 +51,49 @@ export default function DiaryScreen({ navigation }) {
       }
 
       // 2) voice API 호출
-      const res = await sendDiaryVoice({
+      await sendDiaryVoice({
         url: uploadRes.fileUrl,
         profileId: selectedProfile.profileId,
         role: "user",
       });
 
-      console.log("[DIARY] /api/diaries/voice 성공:", res);
+      setBubbleText("...");
 
-      // 👉 다음 단계로 연결 (원하면 활성화)
-      // navigation.navigate("DiaryDraw");
+      const aiRes = await requestDiaryAi({
+        profileId: selectedProfile.profileId,
+        sessionId: sessionIdRef.current,
+        voiceUrl: uploadRes.fileUrl,
+        filePath,
+      });
+
+      console.log("[DIARY] /api/ai/diaries JSON:", JSON.stringify(aiRes, null, 2));
+
+      const result = aiRes?.result ?? aiRes ?? {};
+      const nextSessionId = result?.sessionId || "";
+      const aiText = result?.text || "";
+
+      if (nextSessionId) {
+        sessionIdRef.current = nextSessionId;
+      }
+
+      if (aiText) {
+        setBubbleText(aiText);
+      } else {
+        setBubbleText("다시 한 번 말해줄래?");
+      }
     } catch (e) {
       console.log("[DIARY] 음성 전송 실패:", e);
+
+      const code = e?.code || e?.response?.code;
+
+      if (code === "DIARY_ALREADY_EXISTS") {
+        navigation.navigate("Home", {
+          diaryAlreadyExists: true,
+        });
+        return;
+      }
+
+      setBubbleText("다시 한 번 말해줄래?");
     } finally {
       setIsSending(false);
     }
@@ -73,7 +113,7 @@ export default function DiaryScreen({ navigation }) {
           style={styles.bubble}
           resizeMode="stretch"
         >
-          <Text style={styles.bubbleText}>안녕 ○○아,{"\n"}오늘의 일기쓰기를 시작해볼까?</Text>
+          <Text style={styles.bubbleText}>{bubbleText}</Text>
         </ImageBackground>
 
         <Image
@@ -83,7 +123,7 @@ export default function DiaryScreen({ navigation }) {
         />
       </View>
 
-      <MicButton onRecordComplete={handleRecordComplete} />
+      <MicButton onRecordComplete={handleRecordComplete} disabled={isSending} />
 
       {/* 일기 그리러 가는 임시 버튼 */}
       <View style={styles.diaryButton}>

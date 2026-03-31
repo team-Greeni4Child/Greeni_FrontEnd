@@ -1,4 +1,4 @@
-import React, { useCallback, useContext } from "react";
+import React, { useCallback, useContext, useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -13,8 +13,7 @@ import {
 } from "react-native";
 import colors from "../theme/colors";
 import NavigationBar from "../components/NavigationBar";
-import { useState } from "react";
-import { useFocusEffect } from "@react-navigation/native";
+import { useFocusEffect, useRoute } from "@react-navigation/native";
 import { AuthContext } from "../App";
 import { getAccessToken, clearAuth } from "../utils/tokenStorage";
 
@@ -22,10 +21,11 @@ const { width: W, height: H } = Dimensions.get("window");
 
 export default function HomeScreen({ navigation }) {
   const { setStep } = useContext(AuthContext);
+  const route = useRoute();
 
   const [tab, setTab] = useState(0);
 
-  // "오늘 일기 작성 완료" 여부 (나중에 API/스토리지로 대체)
+  // "오늘 일기 작성 완료" 여부
   const [hasWrittenTodayDiary, setHasWrittenTodayDiary] = useState(false);
 
   // 안내 모달 on/off
@@ -57,12 +57,25 @@ export default function HomeScreen({ navigation }) {
     }, []),
   );
 
+  // DiaryScreen에서 서버 에러로 돌아온 경우 모달 표시
+  useEffect(() => {
+    if (route.params?.diaryAlreadyExists) {
+      setShowDiaryModal(true);
+
+      // 한 번 사용 후 params 정리
+      navigation.setParams({
+        diaryAlreadyExists: false,
+      });
+    }
+  }, [route.params?.diaryAlreadyExists, navigation]);
+
   // 일기 버튼 클릭 처리
   const handlePressDiary = () => {
     if (hasWrittenTodayDiary) {
       setShowDiaryModal(true);
       return;
     }
+
     navigation.navigate("Diary");
   };
 
@@ -78,6 +91,11 @@ export default function HomeScreen({ navigation }) {
           return true;
         }
 
+        if (showExitModal) {
+          setShowExitModal(false);
+          return true;
+        }
+
         // 종료 확인 모달 띄우기
         setShowExitModal(true);
         return true;
@@ -85,7 +103,7 @@ export default function HomeScreen({ navigation }) {
 
       const sub = BackHandler.addEventListener("hardwareBackPress", onBackPress);
       return () => sub.remove();
-    }, [showDiaryModal]),
+    }, [showDiaryModal, showExitModal]),
   );
 
   // 모달 확인 버튼 처리
@@ -168,7 +186,6 @@ export default function HomeScreen({ navigation }) {
       >
         <Text style={styles.bubbleText}>
           안녕 나는 그리니야!{"\n"}오늘은 또 어떤 하루를 보냈어?{" "}
-          {/*배고프면 밥을 먹고 움직이자. 내일을 또 살아가야 하니까 말이야...*/}
         </Text>
       </ImageBackground>
 
