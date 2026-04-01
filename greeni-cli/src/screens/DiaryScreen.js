@@ -1,18 +1,213 @@
-import React from "react";
+import React, { useContext, useEffect, useRef, useState } from "react";
 import { View, Text, Image, StyleSheet, Dimensions, ImageBackground } from "react-native";
 import colors from "../theme/colors";
 import BackButton from "../components/BackButton";
 import MicButton from "../components/MicButton";
 import Button from "../components/Button";
+import { ProfileContext } from "../context/ProfileContext";
+import { uploadDiaryVoice } from "../api/s3";
+import { sendDiaryVoice } from "../api/diary";
+import { requestDiaryAi, closeDiaryAi } from "../api/diaryAi";
+import { playBase64Mp3, stopAiAudio } from "../utils/audio";
 
 const { width: W, height: H } = Dimensions.get("window");
+const MAX_DIARY_TURNS = 10;
+
+function createSessionId() {
+  return `diary_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+}
 
 export default function DiaryScreen({ navigation }) {
+  const { selectedProfile } = useContext(ProfileContext);
+
+  const [isSending, setIsSending] = useState(false);
+  const [isAiSpeaking, setIsAiSpeaking] = useState(false);
+  const [bubbleText, setBubbleText] = useState("오늘 어떤 일이 있었어?");
+
+  const sessionIdRef = useRef(createSessionId());
+  const turnRef = useRef(0);
+  const isScreenActiveRef = useRef(true);
+  const isEndingRef = useRef(false);
+  const isClosingRef = useRef(false);
+
+  useEffect(() => {
+    isScreenActiveRef.current = true;
+
+    return () => {
+      isScreenActiveRef.current = false;
+      stopAiAudio();
+    };
+  }, []);
+
+  const playDiaryVoice = async audioBase64 => {
+    if (!audioBase64 || !isScreenActiveRef.current) return;
+
+    try {
+      setIsAiSpeaking(true);
+      await playBase64Mp3(audioBase64);
+    } catch (e) {
+      console.log("[DIARY] AI 음성 재생 실패:", e);
+    } finally {
+      if (isScreenActiveRef.current) {
+        setIsAiSpeaking(false);
+      }
+    }
+  };
+
+  const handleCloseDiarySession = async () => {
+    if (isClosingRef.current || isEndingRef.current) return;
+
+    try {
+      isClosingRef.current = true;
+
+      await stopAiAudio();
+      if (isScreenActiveRef.current) {
+        setIsAiSpeaking(false);
+      }
+
+      if (selectedProfile?.profileId && sessionIdRef.current) {
+        await closeDiaryAi({
+          profileId: selectedProfile.profileId,
+          sessionId: sessionIdRef.current,
+        });
+      }
+
+      navigation.reset({
+        index: 0,
+        routes: [{ name: "Home" }],
+      });
+    } catch (e) {
+      console.log("[DIARY] 세션 종료 실패:", e);
+
+      navigation.reset({
+        index: 0,
+        routes: [{ name: "Home" }],
+      });
+    } finally {
+      isClosingRef.current = false;
+    }
+  };
+
+  const handleEndDiary = async () => {
+    if (isEndingRef.current || isClosingRef.current) return;
+
+    try {
+      isEndingRef.current = true;
+
+      await stopAiAudio();
+      if (isScreenActiveRef.current) {
+        setIsAiSpeaking(false);
+      }
+
+      navigation.replace("DiaryDraw", {
+        sessionId: sessionIdRef.current,
+      });
+    } catch (e) {
+      console.log("[DIARY] 종료 실패:", e);
+    } finally {
+      isEndingRef.current = false;
+    }
+  };
+
+  const handleRecordComplete = async filePath => {
+    if (isSending || isAiSpeaking || isEndingRef.current || isClosingRef.current) return;
+
+    try {
+      setIsSending(true);
+
+      if (!filePath || !selectedProfile?.profileId) {
+        return;
+      }
+
+      await stopAiAudio();
+      if (isScreenActiveRef.current) {
+        setIsAiSpeaking(false);
+      }
+
+      // 1) S3 업로드
+      const uploadRes = await uploadDiaryVoice(filePath);
+
+      if (!uploadRes?.fileUrl) {
+        throw new Error("fileUrl 없음");
+      }
+
+      // 2) voice API 호출
+      await sendDiaryVoice({
+        url: uploadRes.fileUrl,
+        profileId: selectedProfile.profileId,
+        role: "user",
+      });
+
+      if (!isScreenActiveRef.current) return;
+
+      setBubbleText("...");
+
+      const aiRes = await requestDiaryAi({
+        profileId: selectedProfile.profileId,
+        sessionId: sessionIdRef.current,
+        voiceUrl: uploadRes.fileUrl,
+        filePath,
+      });
+
+      if (!isScreenActiveRef.current) return;
+
+      const result = aiRes?.result ?? aiRes ?? {};
+      const nextSessionId = result?.sessionId || "";
+      const aiText = result?.text || "";
+      const aiVoiceBase64 = result?.base64Voice || "";
+
+      if (nextSessionId) {
+        sessionIdRef.current = nextSessionId;
+      }
+
+      turnRef.current += 1;
+
+      if (aiText) {
+        setBubbleText(aiText);
+      } else {
+        setBubbleText("다시 한 번 말해줄래?");
+      }
+
+      const isLastTurn = turnRef.current >= MAX_DIARY_TURNS;
+
+      if (aiVoiceBase64) {
+        await playDiaryVoice(aiVoiceBase64);
+      }
+
+      if (!isScreenActiveRef.current) return;
+
+      if (isLastTurn) {
+        await handleEndDiary();
+      }
+    } catch (e) {
+      console.log("[DIARY] 음성 전송 실패:", e);
+
+      const code = e?.code || e?.response?.code;
+
+      if (code === "DIARY_ALREADY_EXISTS") {
+        navigation.replace("Home", {
+          diaryAlreadyExists: true,
+        });
+        return;
+      }
+
+      if (isScreenActiveRef.current) {
+        setBubbleText("다시 한 번 말해줄래?");
+      }
+    } finally {
+      if (isScreenActiveRef.current) {
+        setIsSending(false);
+      }
+    }
+  };
+
+  const isMicDisabled = isSending || isAiSpeaking || isEndingRef.current || isClosingRef.current;
+
   return (
     <View style={styles.root}>
       <View style={styles.topBackground} />
       {/* 상단 뒤로가기 + 제목 */}
-      <BackButton navigation={navigation} top={H * 0.08} />
+      <BackButton navigation={{ ...navigation, goBack: handleCloseDiarySession }} top={H * 0.08} />
       <Text style={styles.title}>일기쓰기</Text>
 
       {/* 말풍선 + 그리니 */}
@@ -22,10 +217,7 @@ export default function DiaryScreen({ navigation }) {
           style={styles.bubble}
           resizeMode="stretch"
         >
-          <Text style={styles.bubbleText}>
-            안녕 ○○아,{"\n"}오늘의 일기쓰기를 시작해볼까?
-            {/*{"\n"}폰트 크기가 정해져 있으니 어쩔 수 없지. 은서는 작은 글씨를 쓸 수 밖에*/}
-          </Text>
+          <Text style={styles.bubbleText}>{bubbleText}</Text>
         </ImageBackground>
 
         <Image
@@ -35,16 +227,15 @@ export default function DiaryScreen({ navigation }) {
         />
       </View>
 
-      {/* 마이크 버튼 */}
-      <MicButton
-        onRecordComplete={filePath => {
-          console.log("녹음 파일 경로:", filePath);
-        }}
-      />
+      <MicButton onRecordComplete={handleRecordComplete} disabled={isMicDisabled} />
 
-      {/* 일기 그리러 가는 임시 버튼 */}
+      {/* 일기 그리러 가는 버튼 */}
       <View style={styles.diaryButton}>
-        <Button title="그림일기" onPress={() => navigation.navigate("DiaryDraw")} />
+        <Button
+          title="그림일기"
+          onPress={handleEndDiary}
+          disabled={isEndingRef.current || isClosingRef.current}
+        />
       </View>
     </View>
   );
@@ -100,10 +291,10 @@ const styles = StyleSheet.create({
     height: W * 0.5,
   },
 
-  // 일기 그리러 가는 임시 버튼
+  // 일기 그리러 가는 버튼
   diaryButton: {
     position: "absolute",
-    left: 20,
-    bottom: 50,
+    top: H * 0.07,
+    right: 15,
   },
 });
