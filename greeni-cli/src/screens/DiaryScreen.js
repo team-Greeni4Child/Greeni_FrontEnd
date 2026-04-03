@@ -1,9 +1,16 @@
 import React, { useContext, useEffect, useRef, useState } from "react";
-import { View, Text, Image, StyleSheet, Dimensions, ImageBackground } from "react-native";
+import {
+  View,
+  Text,
+  Image,
+  StyleSheet,
+  Dimensions,
+  ImageBackground,
+  TouchableOpacity,
+} from "react-native";
 import colors from "../theme/colors";
 import BackButton from "../components/BackButton";
 import MicButton from "../components/MicButton";
-import Button from "../components/Button";
 import { ProfileContext } from "../context/ProfileContext";
 import { uploadDiaryVoice } from "../api/s3";
 import { sendDiaryVoice } from "../api/diary";
@@ -230,13 +237,13 @@ export default function DiaryScreen({ navigation }) {
       <MicButton onRecordComplete={handleRecordComplete} disabled={isMicDisabled} />
 
       {/* 일기 그리러 가는 버튼 */}
-      <View style={styles.diaryButton}>
-        <Button
-          title="그림일기"
-          onPress={handleEndDiary}
-          disabled={isEndingRef.current || isClosingRef.current}
+      <TouchableOpacity style={styles.diaryButton} onPress={handleEndDiary} activeOpacity={0.8}>
+        <Image
+          source={require("../assets/images/icon_draw_diary.png")}
+          style={styles.diaryButtonIcon}
+          resizeMode="contain"
         />
-      </View>
+      </TouchableOpacity>
     </View>
   );
 }
@@ -294,7 +301,11 @@ const styles = StyleSheet.create({
   // 일기 그리러 가는 버튼
   diaryButton: {
     position: "absolute",
-    top: H * 0.07,
+    top: H * 0.075,
     right: 15,
+  },
+  diaryButtonIcon: {
+    width: 50,
+    height: 50,
   },
 });
