@@ -31,6 +31,12 @@ const DEFAULT_EXPIRE_SECONDS = 3 * 60;
 // 재전송 쿨타임(10초)
 const RESEND_COOLDOWN_SECONDS = 10;
 
+const createInitialTerms = () => ({
+  parentConsent: false,
+  privacyConsent: false,
+  serviceConsent: false,
+});
+
 export default function SignUpScreen({ navigation }) {
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
@@ -54,11 +60,7 @@ export default function SignUpScreen({ navigation }) {
 
   // 약관 동의 모달
   const [showTermsModal, setShowTermsModal] = useState(false);
-  const [terms, setTerms] = useState({
-    parentConsent: false,
-    privacyConsent: false,
-    serviceConsent: false,
-  });
+  const [terms, setTerms] = useState(createInitialTerms);
 
   // 인증코드 유효시간 타이머
   const [secondsLeft, setSecondsLeft] = useState(null); // null이면 미표시
@@ -136,6 +138,11 @@ export default function SignUpScreen({ navigation }) {
     return `${m}:${s}`;
   };
 
+  const openTermsModal = () => {
+    setTerms(createInitialTerms());
+    setShowTermsModal(true);
+  };
+
   // 전부 리셋
   const resetSignUpForm = () => {
     // 입력값
@@ -153,11 +160,7 @@ export default function SignUpScreen({ navigation }) {
 
     // 약관
     setShowTermsModal(false);
-    setTerms({
-      parentConsent: false,
-      privacyConsent: false,
-      serviceConsent: false,
-    });
+    setTerms(createInitialTerms());
 
     // 타이머/쿨다운
     clearTimer();
@@ -330,8 +333,9 @@ export default function SignUpScreen({ navigation }) {
 
     // 에러 하나라도 있으면 회원가입 중단
     if (hasError) return;
-    // 이용약관 모달 띄움
-    setShowTermsModal(true);
+
+    // 이용약관 모달 열 때마다 초기화
+    openTermsModal();
   };
 
   const handleSubmitFinalSignUp = async () => {
