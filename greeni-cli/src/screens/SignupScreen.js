@@ -58,7 +58,6 @@ export default function SignUpScreen({ navigation }) {
     parentConsent: false,
     privacyConsent: false,
     serviceConsent: false,
-    marketingConsent: false,
   });
 
   // 인증코드 유효시간 타이머
@@ -158,7 +157,6 @@ export default function SignUpScreen({ navigation }) {
       parentConsent: false,
       privacyConsent: false,
       serviceConsent: false,
-      marketingConsent: false,
     });
 
     // 타이머/쿨다운
@@ -346,14 +344,17 @@ export default function SignUpScreen({ navigation }) {
     try {
       setIsSigningUp(true);
 
+      const requiredAgreement = [];
+
+      if (terms.parentConsent) requiredAgreement.push(1);
+      if (terms.privacyConsent) requiredAgreement.push(2);
+      if (terms.serviceConsent) requiredAgreement.push(3);
+
       const res = await signUp({
         email: trimmedEmail,
         password: trimmedPw,
         code: trimmedCode,
-        parentConsent: terms.parentConsent,
-        privacyConsent: terms.privacyConsent,
-        serviceConsent: terms.serviceConsent,
-        marketingConsent: terms.marketingConsent,
+        requiredAgreement,
       });
       console.log("SIGNUP OK:", res);
 

@@ -29,18 +29,13 @@ const TERMS_ITEMS = [
   },
   {
     key: "privacyConsent",
-    title: "개인정보 수집*이용 동의",
+    title: "개인정보 수집·이용 동의",
     required: true,
   },
   {
     key: "serviceConsent",
     title: "이용약관 동의",
     required: true,
-  },
-  {
-    key: "marketingConsent",
-    title: "광고성 정보 수신 동의",
-    required: false,
   },
 ];
 
