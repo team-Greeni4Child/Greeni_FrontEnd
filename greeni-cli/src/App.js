@@ -4,6 +4,7 @@ import { Text, TextInput, BackHandler } from "react-native";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { ProfileProvider } from "./context/ProfileContext";
+import { TutorialProvider } from "./context/TutorialContext";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { getAccessToken, getSelectedProfile } from "./utils/tokenStorage";
 import { addLogoutListener } from "./utils/authEvents";
@@ -24,6 +25,7 @@ import AnimalQuizScreen from "./screens/AnimalQuizScreen";
 import RolePlayingScreen from "./screens/RolePlayingScreen";
 import CalendarScreen from "./screens/CalendarScreen";
 import DiaryRecordScreen from "./screens/DiaryRecordScreen";
+import TutorialDiaryRecordScreen from "./screens/TutorialDiaryRecordScreen";
 import MyPageScreen from "./screens/MyPageScreen";
 import SettingsPasswordScreen from "./screens/SettingsPasswordScreen";
 import SettingsScreen from "./screens/SettingsScreen";
@@ -76,6 +78,7 @@ function MainStack() {
       <Stack.Screen name="RolePlaying" component={RolePlayingScreen} />
       <Stack.Screen name="Calendar" component={CalendarScreen} />
       <Stack.Screen name="DiaryRecord" component={DiaryRecordScreen} />
+      <Stack.Screen name="TutorialDiaryRecord" component={TutorialDiaryRecordScreen} />
       <Stack.Screen name="MyPage" component={MyPageScreen} />
       <Stack.Screen name="SettingsPassword" component={SettingsPasswordScreen} />
       <Stack.Screen name="FindPassword" component={FindPasswordScreen} />
@@ -150,23 +153,25 @@ export default function App() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <ProfileProvider>
-        <AuthContext.Provider value={{ step, setStep }}>
-          <NavigationContainer ref={navigationRef}>
-            {isBootstrapping ? (
-              <Stack.Navigator screenOptions={{ headerShown: false }}>
-                <Stack.Screen name="Splash">
-                  {props => <SplashScreen {...props} onDone={bootstrap} />}
-                </Stack.Screen>
-              </Stack.Navigator>
-            ) : step === "auth" ? (
-              <AuthStack />
-            ) : step === "profile" ? (
-              <ProfileStack />
-            ) : (
-              <MainStack />
-            )}
-          </NavigationContainer>
-        </AuthContext.Provider>
+        <TutorialProvider>
+          <AuthContext.Provider value={{ step, setStep }}>
+            <NavigationContainer ref={navigationRef}>
+              {isBootstrapping ? (
+                <Stack.Navigator screenOptions={{ headerShown: false }}>
+                  <Stack.Screen name="Splash">
+                    {props => <SplashScreen {...props} onDone={bootstrap} />}
+                  </Stack.Screen>
+                </Stack.Navigator>
+              ) : step === "auth" ? (
+                <AuthStack />
+              ) : step === "profile" ? (
+                <ProfileStack />
+              ) : (
+                <MainStack />
+              )}
+            </NavigationContainer>
+          </AuthContext.Provider>
+        </TutorialProvider>
       </ProfileProvider>
     </GestureHandlerRootView>
   );
