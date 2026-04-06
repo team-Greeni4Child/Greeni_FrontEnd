@@ -15,7 +15,7 @@ const DENT_VIEWBOX_H = 180;
 const DENT_D =
   "M 120.5 180 L 100.5 179 L 91.5 176 L 83.5 171 L 70 157.5 L 47 118.5 L 34.5 103 L 21.5 94 L 12.5 91 L 0 89.5 L 1 75.5 L 5.5 62.5 L 11.5 50.5 L 20 38.5 L 29.5 29 L 44.5 18 L 65.5 8 L 86.5 2 L 100.5 1 L 101.5 0.5 L 124.5 0.5 L 128 1 L 141.5 2 L 162.5 8 L 183.5 18 L 198.5 29 L 208 38.5 L 216.5 50.5 L 222.5 62.5 L 227 75.5 L 228 89.5 L 215.5 91 L 206.5 94 L 193.5 103 L 181 118.5 L 158 157.5 L 144.5 171 L 136.5 176 L 127.5 179 L 120.5 180 Z";
 
-export default function NavigationBar({ state = 0, onTabPress }) {
+export default function NavigationBar({ state = 0, onTabPress, tabRefs = [] }) {
   // 탭 개수 = 4
   const TAB_COUNT = 4;
 
@@ -144,6 +144,7 @@ export default function NavigationBar({ state = 0, onTabPress }) {
         return (
           <TouchableOpacity
             key={i}
+            ref={tabRefs[i] || null}
             style={styles.tab}
             onPress={() => onTabPress && onTabPress(i)}
             activeOpacity={0.8}
