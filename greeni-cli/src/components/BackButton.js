@@ -3,9 +3,10 @@ import { TouchableOpacity, Image, StyleSheet, Dimensions } from "react-native";
 
 const { height: H } = Dimensions.get("window");
 
-export default function BackButton({ navigation, top = 80, left = 25 }) {
+export default function BackButton({ navigation, top = 80, left = 25, touchableRef = null }) {
   return (
     <TouchableOpacity
+      ref={touchableRef}
       onPress={() => navigation.goBack()}
       style={[styles.backButton, { top, left }]}
     >
