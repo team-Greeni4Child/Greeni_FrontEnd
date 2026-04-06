@@ -1,10 +1,12 @@
-import React, { useContext, useEffect, useRef, useState } from "react";
+import React, { useCallback, useContext, useEffect, useRef, useState } from "react";
 import { View, Text, Image, StyleSheet, Dimensions, ImageBackground } from "react-native";
 import colors from "../theme/colors";
 import BackButton from "../components/BackButton";
 import MicButton from "../components/MicButton";
 import Button from "../components/Button";
+import TutorialOverlay from "../components/TutorialOverlay";
 import { ProfileContext } from "../context/ProfileContext";
+import { useTutorial } from "../context/TutorialContext";
 import { uploadDiaryVoice } from "../api/s3";
 import { sendDiaryVoice } from "../api/diary";
 import { requestDiaryAi, closeDiaryAi } from "../api/diaryAi";
@@ -17,8 +19,20 @@ function createSessionId() {
   return `diary_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
 }
 
-export default function DiaryScreen({ navigation }) {
+export default function DiaryScreen({ navigation, route }) {
   const { selectedProfile } = useContext(ProfileContext);
+  const {
+    isTutorialEnabled,
+    activeFlowId,
+    currentStep,
+    targets,
+    startedFlows,
+    startTutorial,
+    goToStep,
+    stopTutorial,
+    registerTarget,
+    clearTarget,
+  } = useTutorial();
 
   const [isSending, setIsSending] = useState(false);
   const [isAiSpeaking, setIsAiSpeaking] = useState(false);
@@ -30,6 +44,13 @@ export default function DiaryScreen({ navigation }) {
   const isEndingRef = useRef(false);
   const isClosingRef = useRef(false);
 
+  // 튜토리얼용 일기 Ref
+  const rootRef = useRef(null);
+  const micTouchableRef = useRef(null);
+  const drawButtonRef = useRef(null);
+
+  const shouldStartDiaryTutorial = route.params?.tutorialFlowId === "diary";
+
   useEffect(() => {
     isScreenActiveRef.current = true;
 
@@ -38,6 +59,14 @@ export default function DiaryScreen({ navigation }) {
       stopAiAudio();
     };
   }, []);
+
+  // 일기 튜토리얼 분기
+  useEffect(() => {
+    if (!shouldStartDiaryTutorial) return;
+    if (startedFlows.diary) return;
+    if (isTutorialEnabled) return;
+    startTutorial("diary");
+  }, [shouldStartDiaryTutorial, startedFlows.diary, isTutorialEnabled, startTutorial]);
 
   const playDiaryVoice = async audioBase64 => {
     if (!audioBase64 || !isScreenActiveRef.current) return;
@@ -88,7 +117,7 @@ export default function DiaryScreen({ navigation }) {
     }
   };
 
-  const handleEndDiary = async () => {
+  const handleEndDiary = async (params = {}) => {
     if (isEndingRef.current || isClosingRef.current) return;
 
     try {
@@ -101,6 +130,7 @@ export default function DiaryScreen({ navigation }) {
 
       navigation.replace("DiaryDraw", {
         sessionId: sessionIdRef.current,
+        ...params,
       });
     } catch (e) {
       console.log("[DIARY] 종료 실패:", e);
@@ -201,11 +231,118 @@ export default function DiaryScreen({ navigation }) {
     }
   };
 
+  // 일기 Ref 측정
+  const measureTarget = useCallback(
+    (targetKey, targetRef, borderRadius = 15, options = {}) => {
+      const { padX = 0, padY = 0, radiusOffset = 0 } = options;
+
+      if (!rootRef.current || !targetRef.current) return;
+
+      rootRef.current.measureInWindow((rootX, rootY) => {
+        targetRef.current.measureInWindow((x, y, width, height) => {
+          registerTarget(targetKey, {
+            x: x - rootX - padX,
+            y: y - rootY - padY,
+            width: width + padX * 2,
+            height: height + padY * 2,
+            borderRadius: borderRadius + radiusOffset,
+          });
+        });
+      });
+    },
+    [registerTarget],
+  );
+
+  // 일기 Ref 측정 - 마이크 버튼 hole view
+  const measureMicButton = useCallback(() => {
+    measureTarget("micButton", micTouchableRef, W * 0.21, {
+      padX: -20,
+      padY: -20,
+      radiusOffset: 10,
+    });
+  }, [measureTarget]);
+
+  // 일기 Ref 측정 - 그림일기 버튼 hole view
+  const measureDrawButton = useCallback(() => {
+    measureTarget("drawDiaryButton", drawButtonRef, 24.5, {
+      padX: 5,
+      padY: 5,
+      radiusOffset: 10,
+    });
+  }, [measureTarget]);
+
+  useEffect(() => {
+    if (!isTutorialEnabled || activeFlowId !== "diary") return;
+
+    if (currentStep?.targetKey === "micButton") {
+      const timer = setTimeout(measureMicButton, 50);
+      return () => clearTimeout(timer);
+    }
+
+    if (currentStep?.targetKey === "drawDiaryButton") {
+      const timer = setTimeout(measureDrawButton, 50);
+      return () => clearTimeout(timer);
+    }
+
+    clearTarget("micButton");
+    clearTarget("drawDiaryButton");
+  }, [
+    isTutorialEnabled,
+    activeFlowId,
+    currentStep?.targetKey,
+    measureMicButton,
+    measureDrawButton,
+    clearTarget,
+  ]);
+
+  // DiaryDraw로 넘어갈 때 튜토리얼 흐름을 이어주기 위한 분기 추가
+  const handleTutorialPressDrawDiary = async () => {
+    const isDrawButtonStep =
+      isTutorialEnabled && activeFlowId === "diary" && currentStep?.id === "draw_button_intro";
+
+    if (isDrawButtonStep) {
+      goToStep("tools_intro");
+      await handleEndDiary({ tutorialFlowId: "diary" });
+      return;
+    }
+
+    await handleEndDiary();
+  };
+
   const isMicDisabled = isSending || isAiSpeaking || isEndingRef.current || isClosingRef.current;
+  const isDiaryTutorial = isTutorialEnabled && activeFlowId === "diary";
+  const currentTutorialStep =
+    isDiaryTutorial && currentStep?.screen === "Diary" ? currentStep : null;
 
   return (
-    <View style={styles.root}>
+    <View
+      ref={rootRef}
+      style={styles.root}
+      onLayout={() => {
+        measureMicButton();
+        measureDrawButton();
+      }}
+    >
       <View style={styles.topBackground} />
+
+      <TutorialOverlay
+        visible={!!currentTutorialStep}
+        message={currentTutorialStep?.message || ""}
+        onPressPrimary={() => {
+          if (currentTutorialStep?.allowBackgroundPress) {
+            goToStep(currentTutorialStep.nextStepId);
+          }
+        }}
+        onPressSkip={stopTutorial}
+        allowBackgroundPress={currentTutorialStep?.allowBackgroundPress !== false}
+        onPressTarget={
+          currentTutorialStep?.id === "draw_button_intro" ? handleTutorialPressDrawDiary : undefined
+        }
+        target={
+          currentTutorialStep?.targetKey ? targets[currentTutorialStep.targetKey] ?? null : null
+        }
+      />
+
       {/* 상단 뒤로가기 + 제목 */}
       <BackButton navigation={{ ...navigation, goBack: handleCloseDiarySession }} top={H * 0.08} />
       <Text style={styles.title}>일기쓰기</Text>
@@ -227,13 +364,17 @@ export default function DiaryScreen({ navigation }) {
         />
       </View>
 
-      <MicButton onRecordComplete={handleRecordComplete} disabled={isMicDisabled} />
+      <MicButton
+        touchableRef={micTouchableRef}
+        onRecordComplete={handleRecordComplete}
+        disabled={isMicDisabled}
+      />
 
       {/* 일기 그리러 가는 버튼 */}
-      <View style={styles.diaryButton}>
+      <View ref={drawButtonRef} style={styles.diaryButton} onLayout={measureDrawButton}>
         <Button
           title="그림일기"
-          onPress={handleEndDiary}
+          onPress={handleTutorialPressDrawDiary}
           disabled={isEndingRef.current || isClosingRef.current}
         />
       </View>
