@@ -22,6 +22,7 @@
     "react-native": "0.83.1",
     "react-native-fs": "^2.20.0",
     "react-native-gesture-handler": "^2.30.0",
+    "react-native-hole-view": "^5.0.0",
     "react-native-image-picker": "^8.2.1",
     "react-native-linear-gradient": "^2.8.3",
     "react-native-modal-datetime-picker": "^18.0.0",
