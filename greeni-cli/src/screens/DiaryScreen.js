@@ -341,6 +341,7 @@ export default function DiaryScreen({ navigation, route }) {
         target={
           currentTutorialStep?.targetKey ? targets[currentTutorialStep.targetKey] ?? null : null
         }
+        contentStyle={{ marginTop: 170 }}
       />
 
       {/* 상단 뒤로가기 + 제목 */}
