@@ -259,11 +259,11 @@ export default function CalendarScreen({ navigation }) {
     rootRef.current.measureInWindow((rootX, rootY) => {
       statisticsTabButtonRef.current.measureInWindow((x, y, width, height) => {
         registerTarget("statisticsTabButton", {
-          x: x - rootX,
-          y: y - rootY,
-          width: width,
-          height: height,
-          borderRadius: 24,
+          x: x - rootX + 12,
+          y: y - rootY - 13,
+          width: width - 25,
+          height: height + 25,
+          borderRadius: 10,
         });
       });
     });
