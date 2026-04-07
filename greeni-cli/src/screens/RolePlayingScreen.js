@@ -1,14 +1,16 @@
-import React, { useState, useCallback, useContext, useRef } from "react";
+import React, { useState, useCallback, useContext, useRef, useEffect } from "react";
 import { View, Text, Image, StyleSheet, Dimensions, ImageBackground } from "react-native";
 import { StatusBar } from "react-native";
 import Button from "../components/Button";
 import BackButton from "../components/BackButton";
+import TutorialOverlay from "../components/TutorialOverlay";
 import colors from "../theme/colors";
 import MicButton from "../components/MicButton";
 import { createRolePlayingActivity } from "../api/activity";
 import { requestRolePlaying, closeRolePlaying } from "../api/rolePlaying";
 import { playBase64Mp3, stopAiAudio } from "../utils/audio";
 import { ProfileContext } from "../context/ProfileContext";
+import { useTutorial } from "../context/TutorialContext";
 
 // 현재 기기의 화면 너비 W, 화면 높이 H
 const { width: W, height: H } = Dimensions.get("window");
@@ -36,7 +38,23 @@ function toActivityRole(role) {
 
 export default function RolePlayingScreen({ navigation }) {
   const { selectedProfile } = useContext(ProfileContext);
+  const {
+    isTutorialEnabled,
+    activeFlowId,
+    currentStep,
+    targets,
+    nextStep,
+    startTutorial,
+    stopTutorial,
+    registerTarget,
+    clearTarget,
+  } = useTutorial();
   const isSubmittingRef = useRef(false);
+
+  // 튜토리얼용 역할놀이 Ref
+  const rootRef = useRef(null);
+  const backButtonRef = useRef(null);
+  const shopRoleButtonRef = useRef(null);
 
   const [selectedSituation, setSelectedSituation] = useState(null);
   const [bubbleText, setBubbleText] = useState(getInitialBubbleText(null));
@@ -122,21 +140,124 @@ export default function RolePlayingScreen({ navigation }) {
     }
   }, [navigation, selectedProfile?.profileId, selectedSituation, sessionId]);
 
+  // 역할놀이 Ref 측정
+  const measureTarget = useCallback(
+    (targetKey, targetRef, borderRadius = 15, options = {}) => {
+      const { padX = 0, padTop = 0, padBottom = 0, radiusOffset = 0 } = options;
+
+      if (!rootRef.current || !targetRef.current) return;
+
+      rootRef.current.measureInWindow((rootX, rootY) => {
+        targetRef.current.measureInWindow((x, y, width, height) => {
+          registerTarget(targetKey, {
+            x: x - rootX - padX,
+            y: y - rootY - padTop * 1.5 - padBottom,
+            width: width + padX * 2,
+            height: height + (padTop + padBottom) * 2,
+            borderRadius: borderRadius + radiusOffset,
+          });
+        });
+      });
+    },
+    [registerTarget],
+  );
+
+  const measureBackButton = useCallback(() => {
+    measureTarget("roleBackButton", backButtonRef, 18, {
+      padX: 5,
+      padTop: 2,
+      padBottom: 2,
+      radiusOffset: 10,
+    });
+  }, [measureTarget]);
+
+  const measureShopRoleButton = useCallback(() => {
+    measureTarget("shopRoleButton", shopRoleButtonRef, 12, {
+      padX: 5,
+      padTop: 10,
+      padBottom: -10,
+      radiusOffset: 0,
+    });
+  }, [measureTarget]);
+
+  useEffect(() => {
+    if (!isTutorialEnabled || activeFlowId !== "role") return;
+
+    if (currentStep?.targetKey === "shopRoleButton") {
+      const timer = setTimeout(measureShopRoleButton, 50);
+      return () => clearTimeout(timer);
+    }
+
+    if (currentStep?.targetKey === "roleBackButton") {
+      const timer = setTimeout(measureBackButton, 50);
+      return () => clearTimeout(timer);
+    }
+
+    clearTarget("shopRoleButton");
+    clearTarget("roleBackButton");
+  }, [
+    isTutorialEnabled,
+    activeFlowId,
+    currentStep?.targetKey,
+    measureShopRoleButton,
+    measureBackButton,
+    clearTarget,
+  ]);
+
+  // 뒤로가기 버튼 눌렀을 때 튜토리얼 흐름을 이어주기 위한 분기 추가
+  const handleTutorialBackPress = async () => {
+    const isRoleBackStep =
+      isTutorialEnabled && activeFlowId === "role" && currentStep?.id === "role_back_intro";
+
+    if (isRoleBackStep) {
+      startTutorial("nav");
+    }
+
+    await handleBackPress();
+  };
+
+  const currentTutorialStep =
+    isTutorialEnabled && activeFlowId === "role" && currentStep?.screen === "RolePlaying"
+      ? currentStep
+      : null;
+
   return (
-    <View style={styles.root}>
+    <View
+      ref={rootRef}
+      style={styles.root}
+      onLayout={() => {
+        measureBackButton();
+        measureShopRoleButton();
+      }}
+    >
+      <TutorialOverlay
+        visible={!!currentTutorialStep}
+        message={currentTutorialStep?.message || ""}
+        onPressPrimary={nextStep}
+        onPressSkip={stopTutorial}
+        allowBackgroundPress={currentTutorialStep?.allowBackgroundPress !== false}
+        onPressTarget={
+          currentTutorialStep?.id === "role_back_intro" ? handleTutorialBackPress : undefined
+        }
+        target={
+          currentTutorialStep?.targetKey ? targets[currentTutorialStep.targetKey] ?? null : null
+        }
+        contentStyle={{ marginTop: 150 }}
+      />
+
       <View style={styles.topBackground} />
 
       {/* 상단 뒤로가기 버튼 및 '역할놀이' 제목 */}
       <View style={styles.titleWrap}>
         <BackButton
-          navigation={{ ...navigation, goBack: handleBackPress }}
+          navigation={{ ...navigation, goBack: handleTutorialBackPress }}
           top={H * 0.001}
           left={W * 0.05}
+          touchableRef={backButtonRef}
         />
         <Text style={styles.title}>역할놀이</Text>
       </View>
 
-      {/*  */}
       <View
         style={[
           styles.greeniWrap,
@@ -165,17 +286,19 @@ export default function RolePlayingScreen({ navigation }) {
 
       {!selectedSituation && (
         <View style={styles.situationWrap}>
-          <Button
-            title="가게 주인과 손님"
-            backgroundColor={colors.white}
-            borderRadius={10}
-            borderWidth={2}
-            borderColor={colors.greenDark}
-            width={345}
-            height={51}
-            style={{ marginBottom: 12 }}
-            onPress={() => handleSituation("shop")}
-          ></Button>
+          <View ref={shopRoleButtonRef} onLayout={measureShopRoleButton}>
+            <Button
+              title="가게 주인과 손님"
+              backgroundColor={colors.white}
+              borderRadius={10}
+              borderWidth={2}
+              borderColor={colors.greenDark}
+              width={345}
+              height={51}
+              style={{ marginBottom: 12 }}
+              onPress={() => handleSituation("shop")}
+            />
+          </View>
           <Button
             title="선생님과 아이"
             backgroundColor={colors.white}
