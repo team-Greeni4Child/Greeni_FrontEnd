@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useContext, useRef } from "react";
 import { View, Text, Image, StyleSheet, Dimensions, ImageBackground } from "react-native";
 import BackButton from "../components/BackButton";
+import TutorialOverlay from "../components/TutorialOverlay";
 import colors from "../theme/colors";
 import MicButton from "../components/MicButton";
 import { createFiveQuestionsActivity } from "../api/activity";
@@ -8,12 +9,24 @@ import { createFiveQuestionsHint, checkFiveQuestionsAnswer } from "../api/fiveQu
 import { playBase64Mp3, stopAiAudio } from "../utils/audio";
 import { ProfileContext } from "../context/ProfileContext";
 import { getRandomFiveQuestionsAnswer } from "../utils/fiveQuestionsAnswers";
+import { useTutorial } from "../context/TutorialContext";
 
 // 현재 기기의 화면 너비 W, 화면 높이 H
 const { width: W, height: H } = Dimensions.get("window");
 
 export default function TwentyQuestionsScreen({ navigation }) {
   const { selectedProfile } = useContext(ProfileContext);
+  const {
+    isTutorialEnabled,
+    activeFlowId,
+    currentStep,
+    targets,
+    nextStep,
+    startTutorial,
+    stopTutorial,
+    registerTarget,
+    clearTarget,
+  } = useTutorial();
 
   const [currentQuestion, setCurrentQuestion] = useState(null);
   const [hints, setHints] = useState([]);
@@ -34,6 +47,10 @@ export default function TwentyQuestionsScreen({ navigation }) {
   const isMovingNextRef = useRef(false);
   const isScreenActiveRef = useRef(true);
   const nextQuestionTimerRef = useRef(null);
+
+  // 튜토리얼용 다섯고개 Ref
+  const rootRef = useRef(null);
+  const backButtonRef = useRef(null);
 
   useEffect(() => {
     if (!initialScoreRef.current) {
@@ -174,9 +191,15 @@ export default function TwentyQuestionsScreen({ navigation }) {
     loadNewQuestionRef.current = loadNewQuestion;
   }, [loadNewQuestion]);
 
+  // useEffect(() => {
+  //   loadNewQuestion();
+  // }, [loadNewQuestion]);
+
+  // 튜토리얼 과정 중에는 문제가 자동으로 시작하지 않게
   useEffect(() => {
+    if (isFiveTutorial) return;
     loadNewQuestion();
-  }, [loadNewQuestion]);
+  }, [loadNewQuestion, isFiveTutorial]);
 
   const showNextHint = useCallback(async () => {
     if (!isScreenActiveRef.current) return false;
@@ -313,20 +336,86 @@ export default function TwentyQuestionsScreen({ navigation }) {
     }
   }, [correctCount, wrongCount, navigation, selectedProfile?.profileId]);
 
+  // 다섯고개 Ref 측정
+  const measureBackButton = useCallback(() => {
+    if (!rootRef.current || !backButtonRef.current) return;
+
+    const padX = 5;
+    const padY = 5;
+    const radiusOffset = 10;
+
+    rootRef.current.measureInWindow((rootX, rootY) => {
+      backButtonRef.current.measureInWindow((x, y, width, height) => {
+        registerTarget("fiveBackButton", {
+          x: x - rootX - padX,
+          y: y - rootY - padY,
+          width: width + padX * 2,
+          height: height + padY * 2,
+          borderRadius: 18 + radiusOffset,
+        });
+      });
+    });
+  }, [registerTarget]);
+
+  useEffect(() => {
+    if (!isTutorialEnabled || activeFlowId !== "five") return;
+
+    if (currentStep?.targetKey === "fiveBackButton") {
+      const timer = setTimeout(measureBackButton, 50);
+      return () => clearTimeout(timer);
+    }
+
+    clearTarget("fiveBackButton");
+  }, [isTutorialEnabled, activeFlowId, currentStep?.targetKey, measureBackButton, clearTarget]);
+
+  // 다섯고개 튜토리얼 이후 튜토리얼 흐름을 이어주기 위한 분기 추가
+  const handleTutorialBackPress = async () => {
+    const isBackTutorialStep =
+      isTutorialEnabled && activeFlowId === "five" && currentStep?.id === "five_back_intro";
+
+    if (isBackTutorialStep) {
+      startTutorial("role");
+    }
+
+    await handleBackPress();
+  };
+
   const progress = hints.length > 0 ? (currentHint + 1) / hints.length : 0;
   const isMicDisabled =
     isLoadingQuestion || isCheckingAnswer || isAiSpeaking || isAnswerFeedbackShowing;
 
+  const isFiveTutorial = isTutorialEnabled && activeFlowId === "five";
+  const currentTutorialStep =
+    isTutorialEnabled && activeFlowId === "five" && currentStep?.screen === "FiveQuestions"
+      ? currentStep
+      : null;
+
   return (
-    <View style={styles.root}>
+    <View ref={rootRef} style={styles.root} onLayout={measureBackButton}>
+      <TutorialOverlay
+        visible={!!currentTutorialStep}
+        message={currentTutorialStep?.message || ""}
+        onPressPrimary={nextStep}
+        onPressSkip={stopTutorial}
+        allowBackgroundPress={currentTutorialStep?.allowBackgroundPress !== false}
+        onPressTarget={
+          currentTutorialStep?.id === "five_back_intro" ? handleTutorialBackPress : undefined
+        }
+        target={
+          currentTutorialStep?.targetKey ? targets[currentTutorialStep.targetKey] ?? null : null
+        }
+        contentStyle={{ marginTop: 170 }}
+      />
+
       <View style={styles.topBackground} />
 
       {/* 상단 뒤로가기 버튼 및 '다섯고개' 제목 */}
       <View style={styles.titleWrap}>
         <BackButton
-          navigation={{ ...navigation, goBack: handleBackPress }}
+          navigation={{ ...navigation, goBack: handleTutorialBackPress }}
           top={H * 0.001}
           left={W * 0.05}
+          touchableRef={backButtonRef}
         />
         <Text style={styles.title}>다섯고개</Text>
       </View>
@@ -345,7 +434,7 @@ export default function TwentyQuestionsScreen({ navigation }) {
         </View>
 
         <View style={styles.scoreDetailWrap}>
-          <Text style={styles.scoreItem}>맞춘 개수</Text>
+          <Text style={styles.scoreItem}>맞힌 개수</Text>
           <Text style={styles.scoreItemValue}>{correctCount}개</Text>
           <Text style={styles.scoreItem}>틀린 개수</Text>
           <Text style={[styles.scoreItemValue, { color: colors.pinkDark }]}>{wrongCount}개</Text>
@@ -436,7 +525,7 @@ const styles = StyleSheet.create({
   },
   progressBarFill: {
     height: "100%",
-    backgroundColor: "#BEEA8B",
+    backgroundColor: colors.green,
   },
   hintProgressTextWrap: {
     flexDirection: "row",
