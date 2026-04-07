@@ -1,4 +1,4 @@
-import React, { useCallback, useContext, useRef, useState } from "react";
+import React, { useCallback, useContext, useEffect, useRef, useState } from "react";
 import {
   View,
   Text,
@@ -17,6 +17,7 @@ import { useFocusEffect } from "@react-navigation/native";
 import colors from "../theme/colors";
 import BackButton from "../components/BackButton";
 import Button from "../components/Button";
+import TutorialOverlay from "../components/TutorialOverlay";
 
 import PenOptionsPanel from "../components/draw/PenOptionsPanel";
 import EraserOptionsPanel from "../components/draw/EraserOptionsPanel";
@@ -25,15 +26,34 @@ import SkiaDrawCanvas from "../components/draw/SkiaDrawCanvas";
 import { uploadDiaryJpeg } from "../api/s3";
 import { summarizeDiaryAi, closeDiaryAi } from "../api/diaryAi";
 import { ProfileContext } from "../context/ProfileContext";
+import { useTutorial } from "../context/TutorialContext";
 
 const { width: W, height: H } = Dimensions.get("window");
 
 export default function DiaryDrawScreen({ navigation, route }) {
   const canvasRef = useRef(null);
+
+  // 튜토리얼용 일기 Ref
+  const rootRef = useRef(null);
+  const toolsBarRef = useRef(null);
+  const saveButtonRef = useRef(null);
+
   const { selectedProfile } = useContext(ProfileContext);
   const { sessionId } = route.params || {};
 
   const [activeTool, setActiveTool] = useState("pen"); // pen | eraser | photo
+
+  const {
+    isTutorialEnabled,
+    activeFlowId,
+    currentStep,
+    targets,
+    goToStep,
+    startTutorial,
+    stopTutorial,
+    registerTarget,
+    clearTarget,
+  } = useTutorial();
 
   // 패널 on/off
   const [showPenPanel, setShowPenPanel] = useState(false);
@@ -276,8 +296,117 @@ export default function DiaryDrawScreen({ navigation, route }) {
     }
   };
 
+  // 그림일기 Ref 측정
+  const measureTarget = useCallback(
+    (targetKey, targetRef, borderRadius = 15, options = {}) => {
+      const { padX = 0, padY = 0, radiusOffset = 0 } = options;
+
+      if (!rootRef.current || !targetRef.current) return;
+
+      rootRef.current.measureInWindow((rootX, rootY) => {
+        targetRef.current.measureInWindow((x, y, width, height) => {
+          registerTarget(targetKey, {
+            x: x - rootX - padX,
+            y: y - rootY - padY,
+            width: width + padX * 2,
+            height: height + padY * 2,
+            borderRadius: borderRadius + radiusOffset,
+          });
+        });
+      });
+    },
+    [registerTarget],
+  );
+
+  // 그림일기 Ref 측정 - 그림 tool 버튼 hole view
+  const measureToolsBar = useCallback(() => {
+    measureTarget("toolsBar", toolsBarRef, 12, {
+      padX: 13,
+      padY: 13,
+      radiusOffset: 10,
+    });
+  }, [measureTarget]);
+
+  // 그림일기 Ref 측정 - 저장하기 버튼 hole view
+  const measureSaveButton = useCallback(() => {
+    measureTarget("saveButton", saveButtonRef, 24.5, {
+      padX: 7,
+      padY: 7,
+      radiusOffset: 10,
+    });
+  }, [measureTarget]);
+
+  useEffect(() => {
+    if (!isTutorialEnabled || activeFlowId !== "diary") return;
+
+    if (currentStep?.targetKey === "toolsBar") {
+      const timer = setTimeout(measureToolsBar, 50);
+      return () => clearTimeout(timer);
+    }
+
+    if (currentStep?.targetKey === "saveButton") {
+      const timer = setTimeout(measureSaveButton, 50);
+      return () => clearTimeout(timer);
+    }
+
+    clearTarget("toolsBar");
+    clearTarget("saveButton");
+  }, [
+    isTutorialEnabled,
+    activeFlowId,
+    currentStep?.targetKey,
+    measureToolsBar,
+    measureSaveButton,
+    clearTarget,
+  ]);
+
+  // 일기 저장할 때 튜토리얼 흐름을 이어주기 위한 분기 추가
+  const handleTutorialSave = () => {
+    const isSaveTutorialStep =
+      isTutorialEnabled && activeFlowId === "diary" && currentStep?.id === "save_intro";
+
+    if (isSaveTutorialStep) {
+      startTutorial("five");
+      navigation.reset({
+        index: 0,
+        routes: [{ name: "Home" }],
+      });
+      return;
+    }
+
+    handlePressSave();
+  };
+
+  const isDiaryTutorial = isTutorialEnabled && activeFlowId === "diary";
+  const currentTutorialStep =
+    isDiaryTutorial && currentStep?.screen === "DiaryDraw" ? currentStep : null;
+
   return (
-    <View style={styles.root}>
+    <View
+      ref={rootRef}
+      style={styles.root}
+      onLayout={() => {
+        measureToolsBar();
+        measureSaveButton();
+      }}
+    >
+      <TutorialOverlay
+        visible={!!currentTutorialStep}
+        message={currentTutorialStep?.message || ""}
+        onPressPrimary={() => {
+          if (currentTutorialStep?.nextStepId) {
+            goToStep(currentTutorialStep.nextStepId);
+          }
+        }}
+        onPressSkip={stopTutorial}
+        allowBackgroundPress={currentTutorialStep?.allowBackgroundPress !== false}
+        onPressTarget={currentTutorialStep?.id === "save_intro" ? handleTutorialSave : undefined}
+        target={
+          currentTutorialStep?.targetKey ? targets[currentTutorialStep.targetKey] ?? null : null
+        }
+        contentStyle={{ marginTop: 170 }}
+      />
+
       <View style={styles.topBar}>
         <BackButton navigation={{ ...navigation, goBack: handleOpenExitModal }} top={H * 0.08} />
 
@@ -285,7 +414,7 @@ export default function DiaryDrawScreen({ navigation, route }) {
         <Text style={styles.title}>일기쓰기</Text>
 
         {/* 도구 아이콘 영역 */}
-        <View style={styles.tools}>
+        <View ref={toolsBarRef} style={styles.tools} onLayout={measureToolsBar}>
           {/* 펜 */}
           <TouchableOpacity
             onPress={() => {
@@ -449,13 +578,15 @@ export default function DiaryDrawScreen({ navigation, route }) {
 
       {/* 저장 버튼 */}
       <View style={styles.bottomWrap}>
-        <Button
-          title="저장하기"
-          width={130}
-          backgroundColor={colors.greenLight}
-          onPress={handlePressSave}
-          disabled={isSaving || isExiting}
-        />
+        <View ref={saveButtonRef} onLayout={measureSaveButton}>
+          <Button
+            title="저장하기"
+            width={130}
+            backgroundColor={colors.green}
+            onPress={handleTutorialSave}
+            disabled={isSaving || isExiting}
+          />
+        </View>
       </View>
 
       {/* 컬러 피커 모달 */}
