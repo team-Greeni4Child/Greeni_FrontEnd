@@ -6,7 +6,6 @@ import {
   Dimensions,
   TouchableOpacity,
   Image,
-  ImageBackground,
   Alert,
   BackHandler,
 } from "react-native";
@@ -15,6 +14,7 @@ import colors from "../theme/colors";
 import NavigationBar from "../components/NavigationBar";
 import { getDiariesByMonth } from "../api/diary";
 import { ProfileContext } from "../context/ProfileContext";
+import { center } from "@shopify/react-native-skia";
 
 const { width: W, height: H } = Dimensions.get("window");
 
@@ -111,13 +111,6 @@ export default function CalendarScreen({ navigation }) {
           if (img) next[key] = img;
         }
 
-        // // --------- 테스트용: 3월 3일 ----------
-        // if (year === 2026 && month === 2) {
-        //   const testKey = `${year}-03-03`;
-        //   next[testKey] = emotionToSticker["HAPPY"];
-        // }
-        // //-------------------------------------
-
         if (alive) setStickerMap(next);
       } catch (e) {
         if (e?.code === "DIARY4001") {
@@ -191,12 +184,11 @@ export default function CalendarScreen({ navigation }) {
   const openDiary = d => {
     if (!hasDiary(d)) return; // 스티커 없으면 아무 것도 안 함
     const dateKey = ymd(d);
-    // '일기 보기' 화면으로 이동
-    // 아직 상세화면이 없다면 아래 Alert를 유지하고, 준비되면 navigate로 교체
+
     try {
       navigation.navigate("DiaryRecord", { date: dateKey });
     } catch {
-      Alert.alert("일기 보기", `${dateKey} 일기 화면으로 이동합니다 (화면 연결 필요)`);
+      Alert.alert("일기 보기", `${dateKey} 일기 화면으로 이동합니다.`);
     }
   };
 
@@ -219,168 +211,119 @@ export default function CalendarScreen({ navigation }) {
 
       <Text style={styles.title}>일기 보기</Text>
 
-      {/* 상단 타이틀/말풍선/그리니 영역 */}
-      <View style={styles.headerWrap}>
-        <ImageBackground
-          source={require("../assets/images/bubble_calendar2.png")}
-          style={styles.bubble}
-          resizeMode="stretch"
-        >
-          <Text style={styles.bubbleText}>예전에 쓴 일기를 볼 수 있어요</Text>
-        </ImageBackground>
-
-        <Image
-          source={require("../assets/images/greeni_face.png")}
-          style={styles.greeni}
-          resizeMode="contain"
-        />
-
+      <View style={styles.contents}>
         {/* 월 이동/표시 */}
         <View style={styles.monthRow}>
-          <TouchableOpacity onPress={goPrev} style={styles.arrowBtn}>
+          <TouchableOpacity onPress={goPrev} style={styles.arrowBtn} activeOpacity={0.7}>
             <Text style={styles.arrowText}>‹</Text>
           </TouchableOpacity>
+
           <Text style={styles.monthText}>{monthLabel}</Text>
-          <TouchableOpacity onPress={goNext} style={styles.arrowBtn}>
+
+          <TouchableOpacity onPress={goNext} style={styles.arrowBtn} activeOpacity={0.7}>
             <Text style={styles.arrowText}>›</Text>
           </TouchableOpacity>
         </View>
-      </View>
 
-      {/* 요일 헤더 */}
-      <View style={styles.weekHeader}>
-        {weekdayLabels.map((w, i) => (
-          <Text
-            key={i}
-            style={[styles.weekLabel, i === 0 ? styles.sun : i === 6 ? styles.sat : null]}
-          >
-            {w}
-          </Text>
-        ))}
-      </View>
+        {/* 요일 헤더 */}
+        <View style={styles.weekHeader}>
+          {weekdayLabels.map((w, i) => (
+            <Text
+              key={i}
+              style={[styles.weekLabel, i === 0 ? styles.sun : i === 6 ? styles.sat : null]}
+            >
+              {w}
+            </Text>
+          ))}
+        </View>
 
-      {/* 달력 그리드 */}
-      <View style={styles.grid}>
-        {matrix.map((row, r) => (
-          <View key={r} style={styles.row}>
-            {row.map((d, c) => {
-              const isThisMonth = !!d;
-              const dayNum = d ? d.getDate() : "";
-              const diary = hasDiary(d);
-              const stickerSource = getStickerSource(d);
+        {/* 달력 그리드 */}
+        <View style={styles.grid}>
+          {matrix.map((row, r) => (
+            <View key={r} style={styles.row}>
+              {row.map((d, c) => {
+                const dayNum = d ? d.getDate() : "";
+                const diary = hasDiary(d);
+                const stickerSource = getStickerSource(d);
 
-              return (
-                <View key={c} style={styles.cell}>
-                  {/* 날짜 숫자 */}
-                  <Text
-                    style={[
-                      styles.dayNum,
-                      !isThisMonth && styles.dim,
-                      c === 0 ? styles.sun : c === 6 ? styles.sat : null,
-                    ]}
-                  >
-                    {dayNum}
-                  </Text>
+                return (
+                  <View key={c} style={styles.cell}>
+                    <Text style={[styles.dayNum, !d && styles.invisible]}>{dayNum}</Text>
 
-                  {/* 스티커/빈칸 */}
-                  {d ? (
-                    diary ? (
-                      // 스티커 붙은 날: 터치 가능
-                      <TouchableOpacity
-                        style={styles.stickerHit}
-                        activeOpacity={0.8}
-                        onPress={() => openDiary(d)}
-                      >
+                    {d ? (
+                      diary ? (
+                        // 스티커 붙은 날: 터치 가능
+                        <TouchableOpacity
+                          style={styles.stickerHit}
+                          activeOpacity={0.8}
+                          onPress={() => openDiary(d)}
+                        >
+                          <Image
+                            source={stickerSource}
+                            style={styles.stickerImage}
+                            resizeMode="contain"
+                          />
+                        </TouchableOpacity>
+                      ) : (
+                        // 스티커 없는 날: 터치 X
                         <Image
-                          source={stickerSource}
+                          source={require("../assets/images/date_greeni_ivory.png")}
                           style={styles.stickerImage}
                           resizeMode="contain"
                         />
-                      </TouchableOpacity>
+                      )
                     ) : (
-                      // 스티커 없는 날: 터치 X
-                      <Image
-                        source={require("../assets/images/date_greeni_ivory.png")}
-                        style={styles.stickerImage}
-                        resizeMode="contain"
-                      />
-                    )
-                  ) : (
-                    <View style={{ height: 28 }} />
-                  )}
-                </View>
-              );
-            })}
-          </View>
-        ))}
+                      <View style={styles.stickerPlaceholder} />
+                    )}
+                  </View>
+                );
+              })}
+            </View>
+          ))}
+        </View>
       </View>
     </View>
   );
 }
 
-const CELL_W = Math.floor((W - 32) / 7); // 좌우 여백 감안
+const H_PADDING = 18;
+const GRID_W = W - H_PADDING * 2;
+const CELL_W = GRID_W / 7;
+const ROW_H = 62;
+const ROW_GAP = 8;
 
 const styles = StyleSheet.create({
   root: {
     flex: 1,
     alignItems: "center",
-    justifyContent: "flex-start",
     backgroundColor: colors.ivory,
-    paddingTop: 120,
+    paddingTop: H * 0.08 + 30,
+    paddingBottom: H * 0.06 + 60,
   },
   title: {
     position: "absolute",
-    // top: 80,
-    top: 65,
+    top: H * 0.08,
     fontFamily: "Maplestory_Bold",
-    // fontSize: 24,
     fontSize: 28,
     color: colors.brown,
   },
-  // --- 상단 ---
-  headerWrap: {
-    width: W,
-    height: H * 0.25,
-    //backgroundColor:"red",
-  },
-  bubble: {
-    maxWidth: W * 0.75,
-    paddingHorizontal: 10,
-    paddingVertical: 25,
-    alignItems: "center",
+
+  contents: {
+    flex: 1,
     justifyContent: "center",
-    top: 10,
-    right: -65,
-  },
-  bubbleText: {
-    fontSize: 28,
-    color: colors.brown,
-    fontFamily: "gangwongyoyuksaeeum",
-    textAlign: "center",
-    lineHeight: 26,
-  },
-  greeni: {
-    // height: H * 0.15,
-    // left: -50,
-    // top: -50,
-    width: 72,
-    height: 62,
-    left: 35,
-    top: -92,
+    alignItems: "center",
   },
   monthRow: {
-    marginTop: 2,
+    marginTop: 20,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 18,
-    left: 80,
-    // top: -90,
-    top: -25,
   },
   arrowBtn: {
-    paddingHorizontal: 12,
-    paddingVertical: 4,
+    width: 42,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 4,
   },
   arrowText: {
     fontSize: 24,
@@ -388,7 +331,9 @@ const styles = StyleSheet.create({
     fontFamily: "Maplestory_Bold",
   },
   monthText: {
-    fontSize: 18,
+    minWidth: 150,
+    textAlign: "center",
+    fontSize: 20,
     fontFamily: "Maplestory_Bold",
     color: colors.brown,
   },
@@ -397,18 +342,17 @@ const styles = StyleSheet.create({
   weekHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
-    width: W - 32,
-    // marginTop: 12,
-    marginTop: -35,
+    width: GRID_W,
+    marginTop: H * 0.04,
     borderBottomWidth: 2,
     borderBottomColor: colors.greenDark,
-    paddingBottom: 8,
+    paddingBottom: 10,
   },
   weekLabel: {
     width: CELL_W,
     textAlign: "center",
     fontFamily: "Maplestory_Light",
-    fontSize: 14,
+    fontSize: 16,
     color: colors.brown,
   },
   sun: { color: "#C85A54" },
@@ -416,34 +360,47 @@ const styles = StyleSheet.create({
 
   // --- 그리드 ---
   grid: {
-    width: W - 32,
-    marginTop: 10,
+    width: GRID_W,
+    marginTop: 15,
+    height: ROW_H * 6 + ROW_GAP * 5,
   },
   row: {
     flexDirection: "row",
     justifyContent: "space-between",
+    height: ROW_H,
     marginBottom: 10,
   },
   cell: {
     width: CELL_W,
+    height: ROW_H,
     alignItems: "center",
   },
   dayNum: {
     fontSize: 13,
     fontFamily: "Maplestory_Light",
     color: colors.brown,
-    marginBottom: 6,
+    marginBottom: 5,
   },
-  dim: { opacity: 0.25 },
+
+  invisible: {
+    opacity: 0,
+  },
 
   stickerHit: {
-    width: 36,
-    height: 36,
+    width: 40,
+    height: 40,
     justifyContent: "center",
     alignItems: "center",
+    marginBottom: 5,
   },
   stickerImage: {
-    width: 36,
-    height: 36,
+    width: 40,
+    height: 40,
+    marginBottom: 5,
+  },
+
+  stickerPlaceholder: {
+    width: 40,
+    height: 40,
   },
 });
