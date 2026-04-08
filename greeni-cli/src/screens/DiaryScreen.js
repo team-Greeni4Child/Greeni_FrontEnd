@@ -1,5 +1,17 @@
 import React, { useCallback, useContext, useEffect, useRef, useState } from "react";
-import { View, Text, Image, StyleSheet, Dimensions, ImageBackground } from "react-native";
+import {
+  View,
+  Text,
+  Image,
+  StyleSheet,
+  Dimensions,
+  ImageBackground,
+  TouchableOpacity,
+  Modal,
+  BackHandler,
+  Platform,
+} from "react-native";
+import { useFocusEffect } from "@react-navigation/native";
 import colors from "../theme/colors";
 import BackButton from "../components/BackButton";
 import MicButton from "../components/MicButton";
@@ -37,6 +49,9 @@ export default function DiaryScreen({ navigation, route }) {
   const [isSending, setIsSending] = useState(false);
   const [isAiSpeaking, setIsAiSpeaking] = useState(false);
   const [bubbleText, setBubbleText] = useState("오늘 어떤 일이 있었어?");
+  const [showExitModal, setShowExitModal] = useState(false);
+  const [showErrorModal, setShowErrorModal] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
   const sessionIdRef = useRef(createSessionId());
   const turnRef = useRef(0);
@@ -68,6 +83,35 @@ export default function DiaryScreen({ navigation, route }) {
     startTutorial("diary");
   }, [shouldStartDiaryTutorial, startedFlows.diary, isTutorialEnabled, startTutorial]);
 
+  useFocusEffect(
+    useCallback(() => {
+      const onBackPress = () => {
+        if (Platform.OS !== "android") return false;
+
+        if (showErrorModal) {
+          setShowErrorModal(false);
+          setErrorMessage("");
+          return true;
+        }
+
+        if (showExitModal) {
+          setShowExitModal(false);
+          return true;
+        }
+
+        if (isSending || isAiSpeaking || isEndingRef.current || isClosingRef.current) {
+          return true;
+        }
+
+        setShowExitModal(true);
+        return true;
+      };
+
+      const sub = BackHandler.addEventListener("hardwareBackPress", onBackPress);
+      return () => sub.remove();
+    }, [showExitModal, showErrorModal, isSending, isAiSpeaking]),
+  );
+
   const playDiaryVoice = async audioBase64 => {
     if (!audioBase64 || !isScreenActiveRef.current) return;
 
@@ -83,11 +127,26 @@ export default function DiaryScreen({ navigation, route }) {
     }
   };
 
+  const handleOpenExitModal = () => {
+    if (isSending || isAiSpeaking || isEndingRef.current || isClosingRef.current) return;
+    setShowExitModal(true);
+  };
+
+  const handleCancelExit = () => {
+    setShowExitModal(false);
+  };
+
+  const handleCloseErrorModal = () => {
+    setShowErrorModal(false);
+    setErrorMessage("");
+  };
+
   const handleCloseDiarySession = async () => {
     if (isClosingRef.current || isEndingRef.current) return;
 
     try {
       isClosingRef.current = true;
+      setShowExitModal(false);
 
       await stopAiAudio();
       if (isScreenActiveRef.current) {
@@ -345,7 +404,7 @@ export default function DiaryScreen({ navigation, route }) {
       />
 
       {/* 상단 뒤로가기 + 제목 */}
-      <BackButton navigation={{ ...navigation, goBack: handleCloseDiarySession }} top={H * 0.08} />
+      <BackButton navigation={{ ...navigation, goBack: handleOpenExitModal }} top={H * 0.08} />
       <Text style={styles.title}>일기쓰기</Text>
 
       {/* 말풍선 + 그리니 */}
@@ -372,13 +431,61 @@ export default function DiaryScreen({ navigation, route }) {
       />
 
       {/* 일기 그리러 가는 버튼 */}
-      <View ref={drawButtonRef} style={styles.diaryButton} onLayout={measureDrawButton}>
-        <Button
-          title="그림일기"
-          onPress={handleTutorialPressDrawDiary}
-          disabled={isEndingRef.current || isClosingRef.current}
+      <TouchableOpacity style={styles.diaryButton} onPress={handleEndDiary} activeOpacity={0.8}>
+        <Image
+          source={require("../assets/images/icon_draw_diary.png")}
+          style={styles.diaryButtonIcon}
+          resizeMode="contain"
         />
-      </View>
+      </TouchableOpacity>
+
+      {/* 중단 확인 모달 */}
+      <Modal transparent visible={showExitModal}>
+        <View style={styles.modalBackground}>
+          <View style={styles.modalWrap}>
+            <Text style={styles.modalText}>
+              지금 나가면{"\n"}대화 내용이 저장되지 않아요.{"\n"}일기쓰기를 그만할까요?
+            </Text>
+
+            <View style={styles.modalButtonWrap}>
+              <TouchableOpacity
+                style={[styles.modalButton, { width: "50%", backgroundColor: colors.ivory }]}
+                onPress={handleCancelExit}
+                activeOpacity={1}
+              >
+                <Text style={styles.modalButtonText}>아니요</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.modalButton, { width: "50%" }]}
+                onPress={handleCloseDiarySession}
+                activeOpacity={1}
+              >
+                <Text style={styles.modalButtonText}>예</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* 에러 안내 모달 */}
+      <Modal transparent visible={showErrorModal}>
+        <View style={styles.modalBackground}>
+          <View style={styles.modalWrap}>
+            <Text style={styles.modalText}>{errorMessage}</Text>
+
+            <View style={styles.modalButtonWrap}>
+              <TouchableOpacity
+                style={styles.modalButton}
+                onPress={handleCloseErrorModal}
+                activeOpacity={1}
+              >
+                <Text style={styles.modalButtonText}>확인</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -436,7 +543,52 @@ const styles = StyleSheet.create({
   // 일기 그리러 가는 버튼
   diaryButton: {
     position: "absolute",
-    top: H * 0.07,
+    top: H * 0.075,
     right: 15,
+  },
+  diaryButtonIcon: {
+    width: 50,
+    height: 50,
+  },
+
+  modalBackground: {
+    flex: 1,
+    backgroundColor: colors.lightGray95,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalWrap: {
+    width: W * 0.7,
+    backgroundColor: colors.ivory,
+    borderRadius: 20,
+    borderWidth: 3,
+    borderColor: colors.greenDark,
+    padding: 0,
+    alignItems: "center",
+    justifyContent: "flex-end",
+    overflow: "hidden",
+  },
+  modalText: {
+    fontSize: 16,
+    fontFamily: "Maplestory_Light",
+    color: colors.brown,
+    textAlign: "center",
+    margin: 30,
+  },
+  modalButtonWrap: {
+    flexDirection: "row",
+    height: 45,
+    width: "100%",
+  },
+  modalButton: {
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: colors.green,
+    width: "100%",
+  },
+  modalButtonText: {
+    color: colors.brown,
+    fontSize: 16,
+    fontFamily: "Maplestory_Light",
   },
 });

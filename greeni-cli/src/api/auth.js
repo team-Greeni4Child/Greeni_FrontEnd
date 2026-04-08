@@ -26,10 +26,15 @@ export function resetPassword({ email, password }) {
 }
 
 /** 일반 회원가입: POST /api/members/signup */
-export function signUp({ email, password, code }) {
+export async function signUp({ email, password, code, requiredAgreement }) {
   return request("/api/members/signup", {
     method: "POST",
-    body: JSON.stringify({ email, password, code }),
+    body: JSON.stringify({
+      email,
+      password,
+      code,
+      requiredAgreement,
+    }),
   });
 }
 

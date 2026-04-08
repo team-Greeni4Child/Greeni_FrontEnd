@@ -632,7 +632,9 @@ export default function DiaryDrawScreen({ navigation, route }) {
       <Modal transparent visible={showExitModal}>
         <View style={styles.modalBackground}>
           <View style={styles.modalWrap}>
-            <Text style={styles.modalText}>일기쓰기를 그만할까요?</Text>
+            <Text style={styles.modalText}>
+              지금 나가면{"\n"} 대화 내용이 저장되지 않아요.{"\n"}일기쓰기를 그만할까요?
+            </Text>
 
             <View style={styles.modalButtonWrap}>
               <TouchableOpacity
