@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext, useCallback } from "react";
+import React, { useState, useEffect, useContext, useCallback, useRef } from "react";
 import {
   View,
   Text,
@@ -21,6 +21,8 @@ import colors from "../theme/colors";
 import NavigationBar from "../components/NavigationBar";
 import EmotionVander from "../components/EmotionVander";
 import EmotionVander2 from "../components/EmotionVander2";
+import TutorialOverlay from "../components/TutorialOverlay";
+import { useTutorial } from "../context/TutorialContext";
 
 // 현재 기기의 화면 너비 W, 화면 높이 H
 const { width: W, height: H } = Dimensions.get("window");
@@ -56,8 +58,23 @@ const monthEmotions = [
 
 export default function StatisticsScreen({ route, navigation }) {
   const [tab, setTab] = useState(2);
+
+  // 튜토리얼용 통계 Ref
+  const rootRef = useRef(null);
+  const myPageTabButtonRef = useRef(null);
+
   const { selectedProfile } = useContext(ProfileContext);
   const { setStep } = useContext(AuthContext);
+  const {
+    isTutorialEnabled,
+    activeFlowId,
+    currentStep,
+    targets,
+    nextStep,
+    stopTutorial,
+    registerTarget,
+    clearTarget,
+  } = useTutorial();
 
   const [countData, setCountData] = useState({ attendance: 0, diaryCount: 0, name: "" });
   const [keyword, setKeyword] = useState("");
@@ -157,8 +174,81 @@ export default function StatisticsScreen({ route, navigation }) {
     }, [navigation]),
   );
 
+  // 통계화면 Ref 측정
+  const measureMyPageTabButton = useCallback(() => {
+    if (!rootRef.current || !myPageTabButtonRef.current) return;
+
+    rootRef.current.measureInWindow((rootX, rootY) => {
+      myPageTabButtonRef.current.measureInWindow((x, y, width, height) => {
+        registerTarget("myPageTabButton", {
+          x: x - rootX + 12,
+          y: y - rootY - 13,
+          width: width - 25,
+          height: height + 25,
+          borderRadius: 10,
+        });
+      });
+    });
+  }, [registerTarget]);
+
+  useEffect(() => {
+    if (!isTutorialEnabled || activeFlowId !== "stats") return;
+
+    if (currentStep?.targetKey === "myPageTabButton") {
+      const timer = setTimeout(measureMyPageTabButton, 50);
+      return () => clearTimeout(timer);
+    }
+
+    clearTarget("myPageTabButton");
+  }, [
+    isTutorialEnabled,
+    activeFlowId,
+    currentStep?.targetKey,
+    measureMyPageTabButton,
+    clearTarget,
+  ]);
+
+  const handlePressMyPage = (params = undefined) => {
+    setTab(3);
+    navigation.navigate("MyPage", params);
+  };
+
+  // 통계화면 튜토리얼 이후 튜토리얼 흐름을 이어주기 위한 분기 추가
+  const handleTutorialPressMyPage = () => {
+    const isMyPageIntroStep =
+      isTutorialEnabled && activeFlowId === "stats" && currentStep?.id === "stats_mypage_intro";
+
+    if (isMyPageIntroStep) {
+      nextStep();
+      handlePressMyPage({ tutorialFlowId: "stats" });
+      return;
+    }
+
+    handlePressMyPage();
+  };
+
+  const currentTutorialStep =
+    isTutorialEnabled && activeFlowId === "stats" && currentStep?.screen === "Statistics"
+      ? currentStep
+      : null;
+
   return (
-    <View style={styles.root}>
+    <View ref={rootRef} style={styles.root} onLayout={measureMyPageTabButton}>
+      <TutorialOverlay
+        visible={!!currentTutorialStep}
+        message={currentTutorialStep?.message || ""}
+        onPressPrimary={nextStep}
+        onPressSkip={stopTutorial}
+        allowBackgroundPress={currentTutorialStep?.allowBackgroundPress !== false}
+        onPressTarget={
+          currentTutorialStep?.id === "stats_mypage_intro" ? handleTutorialPressMyPage : undefined
+        }
+        target={
+          currentTutorialStep?.targetKey ? targets[currentTutorialStep.targetKey] ?? null : null
+        }
+        contentStyle={{ marginTop: 155 }}
+      />
+
       <View style={styles.topBackground}>
         <View style={styles.titleWrap}>
           <Text style={styles.title}>통계</Text>
@@ -336,12 +426,13 @@ export default function StatisticsScreen({ route, navigation }) {
       {/* 하단 네비게이션 바 */}
       <NavigationBar
         state={tab}
+        tabRefs={[null, null, null, myPageTabButtonRef]}
         onTabPress={i => {
           setTab(i);
           if (i === 0) navigation.navigate("Home");
           if (i === 1) navigation.navigate("Calendar");
           if (i === 2) navigation.navigate("Statistics");
-          if (i === 3) navigation.navigate("MyPage");
+          if (i === 3) handleTutorialPressMyPage();
         }}
       />
     </View>
