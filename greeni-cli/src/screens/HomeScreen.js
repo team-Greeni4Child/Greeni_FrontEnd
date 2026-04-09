@@ -32,7 +32,7 @@ export default function HomeScreen({ navigation }) {
     currentStep,
     targets,
     startedFlows,
-    hasCompletedTutorial,
+    isProfileTutorialCompleted,
     isTutorialReady,
     startTutorial,
     nextStep,
@@ -63,6 +63,7 @@ export default function HomeScreen({ navigation }) {
 
   // 일기 존재 여부 확인 중복 클릭 방지
   const [isCheckingDiary, setIsCheckingDiary] = useState(false);
+  const homeStartedKey = selectedProfile?.profileId ? `home:${selectedProfile.profileId}` : "home";
 
   // 인증 상태 확인
   const checkAuth = async () => {
@@ -338,12 +339,21 @@ export default function HomeScreen({ navigation }) {
   }, [registerTarget]);
 
   useEffect(() => {
-    if (startedFlows.home) return;
+    if (startedFlows[homeStartedKey]) return;
+    if (!selectedProfile?.profileId) return;
     if (!isTutorialReady) return;
-    if (hasCompletedTutorial) return;
+    if (isProfileTutorialCompleted) return;
     if (isTutorialEnabled) return;
     startTutorial("home");
-  }, [startedFlows.home, isTutorialReady, hasCompletedTutorial, isTutorialEnabled, startTutorial]);
+  }, [
+    startedFlows,
+    homeStartedKey,
+    selectedProfile?.profileId,
+    isTutorialReady,
+    isProfileTutorialCompleted,
+    isTutorialEnabled,
+    startTutorial,
+  ]);
 
   useEffect(() => {
     if (!isTutorialEnabled) return;
@@ -485,7 +495,7 @@ export default function HomeScreen({ navigation }) {
         target={
           currentTutorialStep?.targetKey ? targets[currentTutorialStep.targetKey] ?? null : null
         }
-        contentStyle={{ marginTop: 16 }}
+        contentStyle={{ marginTop: 90 }}
       />
 
       {/* 연못 */}

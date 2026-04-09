@@ -413,7 +413,7 @@ export default function TwentyQuestionsScreen({ navigation }) {
         target={
           currentTutorialStep?.targetKey ? targets[currentTutorialStep.targetKey] ?? null : null
         }
-        contentStyle={{ marginTop: 170 }}
+        contentStyle={{ marginTop: 130 }}
       />
 
       <View style={styles.topBackground} />

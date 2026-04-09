@@ -64,6 +64,9 @@ export default function DiaryScreen({ navigation, route }) {
   const rootRef = useRef(null);
   const micTouchableRef = useRef(null);
   const drawButtonRef = useRef(null);
+  const diaryStartedKey = selectedProfile?.profileId
+    ? `diary:${selectedProfile.profileId}`
+    : "diary";
 
   const shouldStartDiaryTutorial = route.params?.tutorialFlowId === "diary";
 
@@ -79,10 +82,10 @@ export default function DiaryScreen({ navigation, route }) {
   // 일기 튜토리얼 분기
   useEffect(() => {
     if (!shouldStartDiaryTutorial) return;
-    if (startedFlows.diary) return;
+    if (startedFlows[diaryStartedKey]) return;
     if (isTutorialEnabled) return;
     startTutorial("diary");
-  }, [shouldStartDiaryTutorial, startedFlows.diary, isTutorialEnabled, startTutorial]);
+  }, [shouldStartDiaryTutorial, startedFlows, diaryStartedKey, isTutorialEnabled, startTutorial]);
 
   useFocusEffect(
     useCallback(() => {
@@ -413,7 +416,7 @@ export default function DiaryScreen({ navigation, route }) {
         target={
           currentTutorialStep?.targetKey ? targets[currentTutorialStep.targetKey] ?? null : null
         }
-        contentStyle={{ marginTop: 170 }}
+        contentStyle={{ marginTop: 220 }}
       />
 
       {/* 상단 뒤로가기 + 제목 */}

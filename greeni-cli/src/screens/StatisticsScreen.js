@@ -255,7 +255,7 @@ export default function StatisticsScreen({ route, navigation }) {
         target={
           currentTutorialStep?.targetKey ? targets[currentTutorialStep.targetKey] ?? null : null
         }
-        contentStyle={{ marginTop: 155 }}
+        contentStyle={{ marginTop: 170 }}
       />
 
       <View style={styles.topBackground}>

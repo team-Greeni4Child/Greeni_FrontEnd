@@ -1,9 +1,14 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { ProfileContext } from "./ProfileContext";
 
 export const TutorialContext = createContext(null);
 
-const TUTORIAL_COMPLETED_KEY = "hasCompletedOnboardingTutorial";
+const TUTORIAL_COMPLETED_KEY = "completedTutorialProfiles";
+
+function getStartedFlowKey(flowId, profileId) {
+  return profileId ? `${flowId}:${profileId}` : flowId;
+}
 
 const TUTORIAL_FLOWS = {
   home: {
@@ -58,7 +63,7 @@ const TUTORIAL_FLOWS = {
         id: "draw_button_intro",
         screen: "Diary",
         type: "message",
-        message: "10번 대화를 주고받고 나면, 그림일기를 그리러 갈거야.",
+        message: "대화를 10번 주고받고 나면, 그림일기를 그리러 갈거야.",
         nextStepId: "draw_button_target_intro",
         allowBackgroundPress: true,
       },
@@ -185,7 +190,7 @@ const TUTORIAL_FLOWS = {
         id: "nav_home_intro",
         screen: "Home",
         type: "target",
-        message: "이 버튼을 눌러봐!\n언제든지 여기로 돌아올 수 있어!",
+        message: "이 버튼을 누르면\n언제든지 여기로 돌아올 수 있어!",
         targetKey: "homeTabButton",
         nextStepId: "nav_calendar_intro",
         allowBackgroundPress: true,
@@ -313,13 +318,14 @@ function getStep(flowId, stepId) {
 }
 
 export function TutorialProvider({ children }) {
+  const { selectedProfile } = useContext(ProfileContext);
   const [isTutorialEnabled, setIsTutorialEnabled] = useState(false);
   const [activeFlowId, setActiveFlowId] = useState(null);
   const [activeStepId, setActiveStepId] = useState(null);
   const [targets, setTargets] = useState({});
   const [startedFlows, setStartedFlows] = useState({});
   const [tutorialDiary, setTutorialDiary] = useState(null);
-  const [hasCompletedTutorial, setHasCompletedTutorial] = useState(false);
+  const [completedTutorialProfiles, setCompletedTutorialProfiles] = useState({});
   const [isTutorialReady, setIsTutorialReady] = useState(false);
 
   const currentStep = useMemo(
@@ -333,9 +339,10 @@ export function TutorialProvider({ children }) {
     const loadTutorialStatus = async () => {
       try {
         const savedValue = await AsyncStorage.getItem(TUTORIAL_COMPLETED_KEY);
+        const parsedValue = savedValue ? JSON.parse(savedValue) : {};
 
         if (!isMounted) return;
-        setHasCompletedTutorial(savedValue === "true");
+        setCompletedTutorialProfiles(parsedValue && typeof parsedValue === "object" ? parsedValue : {});
       } catch (e) {
         console.log("LOAD TUTORIAL STATUS FAIL:", e);
       } finally {
@@ -369,8 +376,6 @@ export function TutorialProvider({ children }) {
 
   const startTutorial = useCallback(
     (flowId, initialStepId = null) => {
-      if (hasCompletedTutorial) return;
-
       const flow = TUTORIAL_FLOWS[flowId];
       if (!flow) return;
 
@@ -379,14 +384,14 @@ export function TutorialProvider({ children }) {
       setActiveStepId(initialStepId || flow.initialStepId);
       setStartedFlows(prev => ({
         ...prev,
-        [flowId]: true,
+        [getStartedFlowKey(flowId, selectedProfile?.profileId)]: true,
       }));
 
       if (flowId === "calendar") {
         setTutorialDiary(prev => prev ?? createTutorialDiary());
       }
     },
-    [createTutorialDiary, hasCompletedTutorial],
+    [createTutorialDiary, selectedProfile?.profileId],
   );
 
   const stopTutorial = useCallback(() => {
@@ -399,14 +404,29 @@ export function TutorialProvider({ children }) {
 
   const completeTutorial = useCallback(async () => {
     try {
-      await AsyncStorage.setItem(TUTORIAL_COMPLETED_KEY, "true");
-      setHasCompletedTutorial(true);
+      const profileId = selectedProfile?.profileId;
+
+      if (profileId) {
+        const nextCompletedProfiles = {
+          ...completedTutorialProfiles,
+          [String(profileId)]: true,
+        };
+
+        await AsyncStorage.setItem(TUTORIAL_COMPLETED_KEY, JSON.stringify(nextCompletedProfiles));
+        setCompletedTutorialProfiles(nextCompletedProfiles);
+      }
     } catch (e) {
       console.log("SAVE TUTORIAL STATUS FAIL:", e);
     } finally {
       stopTutorial();
     }
-  }, [stopTutorial]);
+  }, [completedTutorialProfiles, selectedProfile?.profileId, stopTutorial]);
+
+  const isProfileTutorialCompleted = useMemo(() => {
+    const profileId = selectedProfile?.profileId;
+    if (!profileId) return false;
+    return completedTutorialProfiles[String(profileId)] === true;
+  }, [completedTutorialProfiles, selectedProfile?.profileId]);
 
   const nextStep = useCallback(() => {
     const nextStepId = currentStep?.nextStepId ?? null;
@@ -495,7 +515,8 @@ export function TutorialProvider({ children }) {
       targets,
       tutorialDiary,
       startedFlows,
-      hasCompletedTutorial,
+      completedTutorialProfiles,
+      isProfileTutorialCompleted,
       isTutorialReady,
       startTutorial,
       stopTutorial,
@@ -516,7 +537,8 @@ export function TutorialProvider({ children }) {
       targets,
       tutorialDiary,
       startedFlows,
-      hasCompletedTutorial,
+      completedTutorialProfiles,
+      isProfileTutorialCompleted,
       isTutorialReady,
       clearTutorialDiary,
     ],
