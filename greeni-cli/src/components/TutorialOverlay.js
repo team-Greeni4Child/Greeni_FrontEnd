@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   Pressable,
   ImageBackground,
+  Image,
   Dimensions,
 } from "react-native";
 import { RNHoleView } from "react-native-hole-view";
@@ -89,6 +90,12 @@ export default function TutorialOverlay({
 
       <View style={[styles.content, contentStyle]} pointerEvents="box-none">
         <View style={styles.bubbleWrap} pointerEvents="box-none">
+          <Image
+            source={require("../assets/images/greeni_face.png")}
+            style={styles.greeniFace}
+            resizeMode="contain"
+            pointerEvents="none"
+          />
           <ImageBackground
             source={require("../assets/images/bubble_tutorial.png")}
             style={styles.messageBubble}
@@ -145,6 +152,15 @@ const styles = StyleSheet.create({
   bubbleWrap: {
     width: "100%",
     alignItems: "center",
+  },
+  greeniFace: {
+    position: "absolute",
+    left: 3,
+    top: -18,
+    width: 60,
+    height: 60,
+    aspectRatio: 96 / 96,
+    zIndex: 2,
   },
   messageBubble: {
     width: Math.min(W * 0.8, 340),
