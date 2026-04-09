@@ -1,6 +1,9 @@
-import React, { createContext, useCallback, useContext, useMemo, useState } from "react";
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export const TutorialContext = createContext(null);
+
+const TUTORIAL_COMPLETED_KEY = "hasCompletedOnboardingTutorial";
 
 const TUTORIAL_FLOWS = {
   home: {
@@ -44,17 +47,26 @@ const TUTORIAL_FLOWS = {
       mic_intro: {
         id: "mic_intro",
         screen: "Diary",
-        type: "message",
+        type: "target",
         message:
           "마이크 버튼을 누르면 나와 대화 할 수 있어. 할 말을 다하면 버튼을 한 번 더 누르면 돼!",
+        targetKey: "micButton",
         nextStepId: "draw_button_intro",
         allowBackgroundPress: true,
       },
       draw_button_intro: {
         id: "draw_button_intro",
         screen: "Diary",
+        type: "message",
+        message: "10번 대화를 주고받고 나면, 그림일기를 그리러 갈거야.",
+        nextStepId: "draw_button_target_intro",
+        allowBackgroundPress: true,
+      },
+      draw_button_target_intro: {
+        id: "draw_button_target_intro",
+        screen: "Diary",
         type: "target",
-        message: "이제 그림일기를 그려볼까?",
+        message: "대화를 그만하고, 바로 그림일기를 그리고 싶으면 여기를 눌러줘",
         targetKey: "drawDiaryButton",
         nextStepId: "tools_intro",
         allowBackgroundPress: false,
@@ -173,7 +185,7 @@ const TUTORIAL_FLOWS = {
         id: "nav_home_intro",
         screen: "Home",
         type: "target",
-        message: "이 버튼을 누르면 언제든지 여기로 돌아올 수 있어!",
+        message: "이 버튼을 눌러봐!\n언제든지 여기로 돌아올 수 있어!",
         targetKey: "homeTabButton",
         nextStepId: "nav_calendar_intro",
         allowBackgroundPress: true,
@@ -182,7 +194,7 @@ const TUTORIAL_FLOWS = {
         id: "nav_calendar_intro",
         screen: "Home",
         type: "target",
-        message: "이 버튼을 누르면 전에 쓴 일기를 볼 수 있어!",
+        message: "이 버튼을 누르면\n전에 쓴 일기를 볼 수 있어!",
         targetKey: "calendarTabButton",
         nextStepId: null,
         allowBackgroundPress: false,
@@ -212,8 +224,9 @@ const TUTORIAL_FLOWS = {
       record_intro_2: {
         id: "record_intro_2",
         screen: "TutorialDiaryRecord",
-        type: "message",
+        type: "target",
         message: "헤드셋 버튼을 누르면,\n나랑 했던 대화를 다시 들을 수 있어.",
+        targetKey: "diaryRecordHeadsetButton",
         nextStepId: "record_toggle_intro",
         allowBackgroundPress: true,
       },
@@ -244,22 +257,38 @@ const TUTORIAL_FLOWS = {
         id: "stats_calendar_intro",
         screen: "Calendar",
         type: "target",
-        message: "이 버튼을 누르면 너의 활동을 한눈에 볼 수 있어!",
+        message: "이 버튼을 눌러봐!",
         targetKey: "statisticsTabButton",
-        nextStepId: "stats_mypage_intro",
+        nextStepId: "stats_intro",
         allowBackgroundPress: false,
+      },
+      stats_intro: {
+        id: "stats_intro",
+        screen: "Statistics",
+        type: "message",
+        message: "여기서는 너의 활동을 한눈에 볼 수 있어!",
+        nextStepId: "stats_mypage_intro",
+        allowBackgroundPress: true,
       },
       stats_mypage_intro: {
         id: "stats_mypage_intro",
         screen: "Statistics",
         type: "target",
-        message: "여기는 마이페이지야!",
+        message: "이 버튼을 눌러봐!",
         targetKey: "myPageTabButton",
-        nextStepId: "mypage_intro",
+        nextStepId: "mypage_intro_1",
         allowBackgroundPress: false,
       },
-      mypage_intro: {
-        id: "mypage_intro",
+      mypage_intro_1: {
+        id: "mypage_intro_1",
+        screen: "MyPage",
+        type: "message",
+        message: "여기는 마이페이지야!",
+        nextStepId: "mypage_intro_2",
+        allowBackgroundPress: true,
+      },
+      mypage_intro_2: {
+        id: "mypage_intro_2",
         screen: "MyPage",
         type: "message",
         message: "여기서는 모은 배지를 볼 수 있어.",
@@ -290,11 +319,38 @@ export function TutorialProvider({ children }) {
   const [targets, setTargets] = useState({});
   const [startedFlows, setStartedFlows] = useState({});
   const [tutorialDiary, setTutorialDiary] = useState(null);
+  const [hasCompletedTutorial, setHasCompletedTutorial] = useState(false);
+  const [isTutorialReady, setIsTutorialReady] = useState(false);
 
   const currentStep = useMemo(
     () => getStep(activeFlowId, activeStepId),
     [activeFlowId, activeStepId],
   );
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadTutorialStatus = async () => {
+      try {
+        const savedValue = await AsyncStorage.getItem(TUTORIAL_COMPLETED_KEY);
+
+        if (!isMounted) return;
+        setHasCompletedTutorial(savedValue === "true");
+      } catch (e) {
+        console.log("LOAD TUTORIAL STATUS FAIL:", e);
+      } finally {
+        if (isMounted) {
+          setIsTutorialReady(true);
+        }
+      }
+    };
+
+    loadTutorialStatus();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const createTutorialDiary = useCallback(() => {
     const today = new Date();
@@ -313,6 +369,8 @@ export function TutorialProvider({ children }) {
 
   const startTutorial = useCallback(
     (flowId, initialStepId = null) => {
+      if (hasCompletedTutorial) return;
+
       const flow = TUTORIAL_FLOWS[flowId];
       if (!flow) return;
 
@@ -328,7 +386,7 @@ export function TutorialProvider({ children }) {
         setTutorialDiary(prev => prev ?? createTutorialDiary());
       }
     },
-    [createTutorialDiary],
+    [createTutorialDiary, hasCompletedTutorial],
   );
 
   const stopTutorial = useCallback(() => {
@@ -339,16 +397,27 @@ export function TutorialProvider({ children }) {
     setTutorialDiary(null);
   }, []);
 
+  const completeTutorial = useCallback(async () => {
+    try {
+      await AsyncStorage.setItem(TUTORIAL_COMPLETED_KEY, "true");
+      setHasCompletedTutorial(true);
+    } catch (e) {
+      console.log("SAVE TUTORIAL STATUS FAIL:", e);
+    } finally {
+      stopTutorial();
+    }
+  }, [stopTutorial]);
+
   const nextStep = useCallback(() => {
     const nextStepId = currentStep?.nextStepId ?? null;
 
     if (!nextStepId) {
-      stopTutorial();
+      completeTutorial();
       return;
     }
 
     setActiveStepId(nextStepId);
-  }, [currentStep, stopTutorial]);
+  }, [completeTutorial, currentStep]);
 
   const goToStep = useCallback(
     stepId => {
@@ -426,8 +495,11 @@ export function TutorialProvider({ children }) {
       targets,
       tutorialDiary,
       startedFlows,
+      hasCompletedTutorial,
+      isTutorialReady,
       startTutorial,
       stopTutorial,
+      completeTutorial,
       nextStep,
       goToStep,
       registerTarget,
@@ -444,6 +516,8 @@ export function TutorialProvider({ children }) {
       targets,
       tutorialDiary,
       startedFlows,
+      hasCompletedTutorial,
+      isTutorialReady,
       clearTutorialDiary,
     ],
   );
