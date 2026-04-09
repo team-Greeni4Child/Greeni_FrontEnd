@@ -17,6 +17,8 @@ import { toBadgeImageUrl } from "../utils/badgeImageMap";
 import LinearGradient from "react-native-linear-gradient";
 import colors from "../theme/colors";
 import NavigationBar from "../components/NavigationBar";
+import TutorialOverlay from "../components/TutorialOverlay";
+import { useTutorial } from "../context/TutorialContext";
 
 const { width: W, height: H } = Dimensions.get("window");
 
@@ -28,6 +30,8 @@ export default function MyPageScreen({ navigation }) {
 
   const { selectedProfile } = useContext(ProfileContext);
   const { setStep } = useContext(AuthContext);
+  const { isTutorialEnabled, activeFlowId, currentStep, nextStep, stopTutorial, completeTutorial } =
+    useTutorial();
   const formatBirth = s => (typeof s === "string" ? s.replaceAll("-", ".") : "");
 
   const [badges, setBadges] = useState([]);
@@ -83,12 +87,45 @@ export default function MyPageScreen({ navigation }) {
 
   if (!selectedProfile) return null;
 
+  const currentTutorialStep =
+    isTutorialEnabled && activeFlowId === "stats" && currentStep?.screen === "MyPage"
+      ? currentStep
+      : null;
+
+  const handleTutorialPrimary = () => {
+    if (currentTutorialStep?.id === "mypage_intro_2") {
+      nextStep();
+      setTab(0);
+      navigation.navigate("Home");
+      return;
+    }
+
+    nextStep();
+  };
+
+  const handleTutorialSkip = async () => {
+    await completeTutorial();
+    navigation.reset({
+      index: 0,
+      routes: [{ name: "Home" }],
+    });
+  };
+
   const profileName = selectedProfile.name;
   const profileBirth = formatBirth(selectedProfile.birth);
   const profileImageSource = selectedProfile.image;
 
   return (
     <View style={styles.root}>
+      <TutorialOverlay
+        visible={!!currentTutorialStep}
+        message={currentTutorialStep?.message || ""}
+        onPressPrimary={handleTutorialPrimary}
+        onPressSkip={handleTutorialSkip}
+        allowBackgroundPress={currentTutorialStep?.allowBackgroundPress !== false}
+        contentStyle={{ marginTop: 130 }}
+      />
+
       {/* 상단 배경 */}
       <View style={styles.topBg} />
 

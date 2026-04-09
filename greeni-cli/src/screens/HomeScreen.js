@@ -1,4 +1,4 @@
-import React, { useCallback, useContext, useState } from "react";
+import React, { useCallback, useContext, useEffect, useRef, useState } from "react";
 import {
   View,
   Text,
@@ -13,9 +13,11 @@ import {
 } from "react-native";
 import colors from "../theme/colors";
 import NavigationBar from "../components/NavigationBar";
+import TutorialOverlay from "../components/TutorialOverlay";
 import { useFocusEffect } from "@react-navigation/native";
 import { AuthContext } from "../App";
 import { ProfileContext } from "../context/ProfileContext";
+import { useTutorial } from "../context/TutorialContext";
 import { getAccessToken, clearAuth } from "../utils/tokenStorage";
 import { getDiaryByDay } from "../api/diary";
 
@@ -24,8 +26,31 @@ const { width: W, height: H } = Dimensions.get("window");
 export default function HomeScreen({ navigation }) {
   const { setStep } = useContext(AuthContext);
   const { selectedProfile } = useContext(ProfileContext);
+  const {
+    isTutorialEnabled,
+    activeFlowId,
+    currentStep,
+    targets,
+    startedFlows,
+    isProfileTutorialCompleted,
+    isTutorialReady,
+    startTutorial,
+    nextStep,
+    stopTutorial,
+    completeTutorial,
+    registerTarget,
+    clearTarget,
+  } = useTutorial();
 
   const [tab, setTab] = useState(0);
+
+  // 튜토리얼용 홈화면 Ref
+  const rootRef = useRef(null);
+  const diaryButtonRef = useRef(null);
+  const fiveQuestionsButtonRef = useRef(null);
+  const rolePlayingButtonRef = useRef(null);
+  const homeTabButtonRef = useRef(null);
+  const calendarTabButtonRef = useRef(null);
 
   // "오늘 일기 작성 완료" 여부
   const [hasWrittenTodayDiary, setHasWrittenTodayDiary] = useState(false);
@@ -38,6 +63,7 @@ export default function HomeScreen({ navigation }) {
 
   // 일기 존재 여부 확인 중복 클릭 방지
   const [isCheckingDiary, setIsCheckingDiary] = useState(false);
+  const homeStartedKey = selectedProfile?.profileId ? `home:${selectedProfile.profileId}` : "home";
 
   // 인증 상태 확인
   const checkAuth = async () => {
@@ -101,7 +127,7 @@ export default function HomeScreen({ navigation }) {
   );
 
   // 일기 버튼 클릭 처리
-  const handlePressDiary = async () => {
+  const handlePressDiary = async (params = undefined) => {
     if (isCheckingDiary) return;
 
     try {
@@ -115,10 +141,88 @@ export default function HomeScreen({ navigation }) {
         return;
       }
 
-      navigation.navigate("Diary");
+      navigation.navigate("Diary", params);
     } finally {
       setIsCheckingDiary(false);
     }
+  };
+
+  // 일기버튼 눌렀을 때 다음 튜토리얼로 넘어가기 위한 핸들러
+  const handleTutorialPressDiary = async () => {
+    const isDiaryIntroStep =
+      isTutorialEnabled && activeFlowId === "home" && currentStep?.id === "diary_intro";
+
+    if (isDiaryIntroStep) {
+      stopTutorial();
+      startTutorial("diary");
+      await handlePressDiary({ tutorialFlowId: "diary" });
+      return;
+    }
+
+    await handlePressDiary();
+  };
+
+  const handlePressFiveQuestions = (params = undefined) => {
+    navigation.navigate("FiveQuestions", params);
+  };
+
+  // 다섯고개 버튼 눌렀을 때 다음 튜토리얼로 넘어가기 위한 핸들러
+  const handleTutorialPressFiveQuestions = () => {
+    const isFiveIntroStep =
+      isTutorialEnabled && activeFlowId === "five" && currentStep?.id === "home_five_intro";
+
+    if (isFiveIntroStep) {
+      nextStep();
+      handlePressFiveQuestions({ tutorialFlowId: "five" });
+      return;
+    }
+
+    handlePressFiveQuestions();
+  };
+
+  const handlePressRolePlaying = (params = undefined) => {
+    navigation.navigate("RolePlaying", params);
+  };
+
+  // 역할놀이 버튼 눌렀을 때 다음 튜토리얼로 넘어가기 위한 핸들러
+  const handleTutorialPressRolePlaying = () => {
+    const isRoleIntroStep =
+      isTutorialEnabled && activeFlowId === "role" && currentStep?.id === "home_role_intro";
+
+    if (isRoleIntroStep) {
+      nextStep();
+      handlePressRolePlaying({ tutorialFlowId: "role" });
+      return;
+    }
+
+    handlePressRolePlaying();
+  };
+
+  const handlePressCalendar = (params = undefined) => {
+    setTab(1);
+    navigation.navigate("Calendar", params);
+  };
+
+  // 달력 버튼 눌렀을 때 다음 튜토리얼로 넘어가기 위한 핸들러
+  const handleTutorialPressCalendar = () => {
+    const isCalendarIntroStep =
+      isTutorialEnabled && activeFlowId === "nav" && currentStep?.id === "nav_calendar_intro";
+
+    if (isCalendarIntroStep) {
+      startTutorial("calendar");
+      handlePressCalendar({ tutorialFlowId: "calendar" });
+      return;
+    }
+
+    handlePressCalendar();
+  };
+
+  const handleTutorialSkip = async () => {
+    await completeTutorial();
+    navigation.reset({
+      index: 0,
+      routes: [{ name: "Home" }],
+    });
   };
 
   // 종료 모달 띄우기
@@ -153,8 +257,178 @@ export default function HomeScreen({ navigation }) {
     setShowDiaryModal(false);
   };
 
+  // 홈화면 Ref 측정
+  const measureDiaryButton = useCallback(() => {
+    if (!rootRef.current || !diaryButtonRef.current) return;
+
+    rootRef.current.measureInWindow((rootX, rootY) => {
+      diaryButtonRef.current.measureInWindow((x, y, width, height) => {
+        registerTarget("diaryButton", {
+          x: x - rootX - 5,
+          y: y - rootY - 5,
+          width: width + 10,
+          height: height + 10,
+          borderRadius: 15,
+        });
+      });
+    });
+  }, [registerTarget]);
+
+  const measureFiveQuestionsButton = useCallback(() => {
+    if (!rootRef.current || !fiveQuestionsButtonRef.current) return;
+
+    rootRef.current.measureInWindow((rootX, rootY) => {
+      fiveQuestionsButtonRef.current.measureInWindow((x, y, width, height) => {
+        registerTarget("fiveQuestionsButton", {
+          x: x - rootX - 5,
+          y: y - rootY - 5,
+          width: width + 10,
+          height: height + 10,
+          borderRadius: 15,
+        });
+      });
+    });
+  }, [registerTarget]);
+
+  const measureRolePlayingButton = useCallback(() => {
+    if (!rootRef.current || !rolePlayingButtonRef.current) return;
+
+    rootRef.current.measureInWindow((rootX, rootY) => {
+      rolePlayingButtonRef.current.measureInWindow((x, y, width, height) => {
+        registerTarget("rolePlayingButton", {
+          x: x - rootX - 5,
+          y: y - rootY - 5,
+          width: width + 10,
+          height: height + 10,
+          borderRadius: 15,
+        });
+      });
+    });
+  }, [registerTarget]);
+
+  const measureHomeTabButton = useCallback(() => {
+    if (!rootRef.current || !homeTabButtonRef.current) return;
+
+    rootRef.current.measureInWindow((rootX, rootY) => {
+      homeTabButtonRef.current.measureInWindow((x, y, width, height) => {
+        registerTarget("homeTabButton", {
+          x: x - rootX + 12,
+          y: y - rootY - 13,
+          width: width - 25,
+          height: height + 25,
+          borderRadius: 10,
+        });
+      });
+    });
+  }, [registerTarget]);
+
+  const measureCalendarTabButton = useCallback(() => {
+    if (!rootRef.current || !calendarTabButtonRef.current) return;
+
+    rootRef.current.measureInWindow((rootX, rootY) => {
+      calendarTabButtonRef.current.measureInWindow((x, y, width, height) => {
+        registerTarget("calendarTabButton", {
+          x: x - rootX + 12,
+          y: y - rootY - 13,
+          width: width - 25,
+          height: height + 25,
+          borderRadius: 10,
+        });
+      });
+    });
+  }, [registerTarget]);
+
+  useEffect(() => {
+    if (startedFlows[homeStartedKey]) return;
+    if (!selectedProfile?.profileId) return;
+    if (!isTutorialReady) return;
+    if (isProfileTutorialCompleted) return;
+    if (isTutorialEnabled) return;
+    startTutorial("home");
+  }, [
+    startedFlows,
+    homeStartedKey,
+    selectedProfile?.profileId,
+    isTutorialReady,
+    isProfileTutorialCompleted,
+    isTutorialEnabled,
+    startTutorial,
+  ]);
+
+  useEffect(() => {
+    if (!isTutorialEnabled) return;
+
+    if (currentStep?.targetKey === "diaryButton") {
+      const timer = setTimeout(() => {
+        measureDiaryButton();
+      }, 50);
+
+      return () => clearTimeout(timer);
+    }
+
+    if (currentStep?.targetKey === "fiveQuestionsButton") {
+      const timer = setTimeout(() => {
+        measureFiveQuestionsButton();
+      }, 50);
+
+      return () => clearTimeout(timer);
+    }
+
+    if (currentStep?.targetKey === "rolePlayingButton") {
+      const timer = setTimeout(() => {
+        measureRolePlayingButton();
+      }, 50);
+
+      return () => clearTimeout(timer);
+    }
+
+    if (currentStep?.targetKey === "homeTabButton") {
+      const timer = setTimeout(() => {
+        measureHomeTabButton();
+      }, 50);
+
+      return () => clearTimeout(timer);
+    }
+
+    if (currentStep?.targetKey === "calendarTabButton") {
+      const timer = setTimeout(() => {
+        measureCalendarTabButton();
+      }, 50);
+
+      return () => clearTimeout(timer);
+    }
+
+    clearTarget("diaryButton");
+    clearTarget("fiveQuestionsButton");
+    clearTarget("rolePlayingButton");
+    clearTarget("homeTabButton");
+    clearTarget("calendarTabButton");
+  }, [
+    isTutorialEnabled,
+    currentStep?.targetKey,
+    clearTarget,
+    measureDiaryButton,
+    measureFiveQuestionsButton,
+    measureRolePlayingButton,
+    measureHomeTabButton,
+    measureCalendarTabButton,
+  ]);
+
+  const currentTutorialStep =
+    isTutorialEnabled && currentStep?.screen === "Home" ? currentStep : null;
+
   return (
-    <View style={styles.root}>
+    <View
+      ref={rootRef}
+      style={styles.root}
+      onLayout={() => {
+        measureDiaryButton();
+        measureFiveQuestionsButton();
+        measureRolePlayingButton();
+        measureHomeTabButton();
+        measureCalendarTabButton();
+      }}
+    >
       {/* 오늘 일기 작성 완료 안내 모달 */}
       <Modal transparent visible={showDiaryModal}>
         <View style={styles.modalBackground}>
@@ -201,6 +475,29 @@ export default function HomeScreen({ navigation }) {
         </View>
       </Modal>
 
+      <TutorialOverlay
+        visible={!!currentTutorialStep}
+        message={currentTutorialStep?.message || ""}
+        onPressPrimary={nextStep}
+        onPressSkip={handleTutorialSkip}
+        allowBackgroundPress={currentTutorialStep?.allowBackgroundPress !== false}
+        onPressTarget={
+          currentTutorialStep?.id === "diary_intro"
+            ? handleTutorialPressDiary
+            : currentTutorialStep?.id === "home_five_intro"
+            ? handleTutorialPressFiveQuestions
+            : currentTutorialStep?.id === "home_role_intro"
+            ? handleTutorialPressRolePlaying
+            : currentTutorialStep?.id === "nav_calendar_intro"
+            ? handleTutorialPressCalendar
+            : undefined
+        }
+        target={
+          currentTutorialStep?.targetKey ? targets[currentTutorialStep.targetKey] ?? null : null
+        }
+        contentStyle={{ marginTop: 90 }}
+      />
+
       {/* 연못 */}
       <Image
         source={require("../assets/images/pond_home.png")}
@@ -211,10 +508,11 @@ export default function HomeScreen({ navigation }) {
       {/* 네비게이션 바 */}
       <NavigationBar
         state={tab}
+        tabRefs={[homeTabButtonRef, calendarTabButtonRef]}
         onTabPress={i => {
           setTab(i);
           if (i === 0) navigation.navigate("Home");
-          if (i === 1) navigation.navigate("Calendar");
+          if (i === 1) handleTutorialPressCalendar();
           if (i === 2) navigation.navigate("Statistics");
           if (i === 3) navigation.navigate("MyPage");
         }}
@@ -242,9 +540,11 @@ export default function HomeScreen({ navigation }) {
       <View style={styles.grid}>
         {/* 일기 */}
         <TouchableOpacity
+          ref={diaryButtonRef}
           style={[styles.diaryButton, { backgroundColor: colors.pink }]}
-          onPress={handlePressDiary}
+          onPress={handleTutorialPressDiary}
           disabled={isCheckingDiary}
+          onLayout={measureDiaryButton}
         >
           <Image source={require("../assets/images/icon_diary.png")} style={styles.icon} />
           <Text style={styles.buttonText}>일기</Text>
@@ -252,8 +552,10 @@ export default function HomeScreen({ navigation }) {
 
         {/* 다섯고개 */}
         <TouchableOpacity
+          ref={fiveQuestionsButtonRef}
           style={[styles.button, { backgroundColor: colors.green }]}
-          onPress={() => navigation.navigate("FiveQuestions")}
+          onPress={handleTutorialPressFiveQuestions}
+          onLayout={measureFiveQuestionsButton}
         >
           <Image source={require("../assets/images/icon_twenty.png")} style={styles.icon} />
           <Text style={styles.buttonText}>다섯고개</Text>
@@ -261,8 +563,10 @@ export default function HomeScreen({ navigation }) {
 
         {/* 역할놀이 */}
         <TouchableOpacity
+          ref={rolePlayingButtonRef}
           style={[styles.button, { backgroundColor: "#E1EE95" }]}
-          onPress={() => navigation.navigate("RolePlaying")}
+          onPress={handleTutorialPressRolePlaying}
+          onLayout={measureRolePlayingButton}
         >
           <Image source={require("../assets/images/icon_role.png")} style={styles.icon} />
           <Text style={styles.buttonText}>역할놀이</Text>

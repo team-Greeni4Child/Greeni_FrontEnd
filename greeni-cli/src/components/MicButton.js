@@ -23,7 +23,7 @@ const micIcons = [
 const SILENCE_MS = 3000;
 const SILENCE_DB = -45;
 
-export default function MicButton({ onRecordComplete, disabled = false }) {
+export default function MicButton({ onRecordComplete, disabled = false, touchableRef = null }) {
   const [active, setActive] = useState(false);
   const [frame, setFrame] = useState(0);
 
@@ -178,7 +178,12 @@ export default function MicButton({ onRecordComplete, disabled = false }) {
   };
 
   return (
-    <TouchableOpacity onPress={toggleMic} style={styles.button} disabled={disabled}>
+    <TouchableOpacity
+      ref={touchableRef}
+      onPress={toggleMic}
+      style={styles.button}
+      disabled={disabled}
+    >
       <Image source={micIcons[frame]} style={[styles.icon, disabled && styles.iconDisabled]} />
     </TouchableOpacity>
   );

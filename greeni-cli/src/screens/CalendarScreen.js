@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useCallback, useEffect, useContext } from "react";
+import React, { useMemo, useState, useCallback, useEffect, useContext, useRef } from "react";
 import {
   View,
   Text,
@@ -12,8 +12,10 @@ import {
 import { useFocusEffect } from "@react-navigation/native";
 import colors from "../theme/colors";
 import NavigationBar from "../components/NavigationBar";
+import TutorialOverlay from "../components/TutorialOverlay";
 import { getDiariesByMonth } from "../api/diary";
 import { ProfileContext } from "../context/ProfileContext";
+import { useTutorial } from "../context/TutorialContext";
 import { center } from "@shopify/react-native-skia";
 
 const { width: W, height: H } = Dimensions.get("window");
@@ -69,6 +71,24 @@ export default function CalendarScreen({ navigation }) {
 
   // 서버 연동 스티커 맵: "YYYY-MM-DD" -> require(...)
   const [stickerMap, setStickerMap] = useState({});
+
+  // 튜토리얼용 달력 Ref
+  const rootRef = useRef(null);
+  const tutorialDiaryRef = useRef(null);
+  const statisticsTabButtonRef = useRef(null);
+
+  const {
+    isTutorialEnabled,
+    activeFlowId,
+    currentStep,
+    targets,
+    tutorialDiary,
+    nextStep,
+    stopTutorial,
+    completeTutorial,
+    registerTarget,
+    clearTarget,
+  } = useTutorial();
 
   // 뒤로가기 누르면 Home으로
   useFocusEffect(
@@ -144,8 +164,19 @@ export default function CalendarScreen({ navigation }) {
     };
   }, [year, month, selectedProfile?.profileId]);
 
-  const diaryDates = useMemo(() => new Set(Object.keys(stickerMap)), [stickerMap]);
+  // 튜토리얼용 날짜 (오늘 날짜)
+  const tutorialDiaryDate = tutorialDiary?.date || "";
 
+  const mergedStickerMap = useMemo(() => {
+    if (!tutorialDiaryDate) return stickerMap;
+
+    return {
+      ...stickerMap,
+      [tutorialDiaryDate]: emotionToSticker[tutorialDiary?.emotion] || emotionToSticker.HAPPY,
+    };
+  }, [stickerMap, tutorialDiaryDate, tutorialDiary?.emotion]);
+
+  const diaryDates = useMemo(() => new Set(Object.keys(mergedStickerMap)), [mergedStickerMap]);
   const matrix = useMemo(() => buildMonthMatrix(year, month), [year, month]);
 
   const hasDiary = useCallback(d => (d ? diaryDates.has(ymd(d)) : false), [diaryDates]);
@@ -155,9 +186,9 @@ export default function CalendarScreen({ navigation }) {
     d => {
       if (!d) return null;
       const key = ymd(d);
-      return stickerMap[key] || null;
+      return mergedStickerMap[key] || null;
     },
-    [stickerMap],
+    [mergedStickerMap],
   );
 
   const goPrev = () => {
@@ -185,26 +216,161 @@ export default function CalendarScreen({ navigation }) {
     if (!hasDiary(d)) return; // 스티커 없으면 아무 것도 안 함
     const dateKey = ymd(d);
 
+    // '일기 보기' 화면으로 이동
+
+    // 튜토리얼용 Mock Diary
+    const isTutorialMockDiary =
+      isTutorialEnabled &&
+      activeFlowId === "calendar" &&
+      tutorialDiaryDate &&
+      dateKey === tutorialDiaryDate;
+
     try {
-      navigation.navigate("DiaryRecord", { date: dateKey });
+      navigation.navigate(isTutorialMockDiary ? "TutorialDiaryRecord" : "DiaryRecord", {
+        date: dateKey,
+        tutorialMockDiary: isTutorialMockDiary,
+      });
     } catch {
       Alert.alert("일기 보기", `${dateKey} 일기 화면으로 이동합니다.`);
     }
   };
 
+  const measureTutorialDiaryDate = useCallback(() => {
+    if (!rootRef.current || !tutorialDiaryRef.current) return;
+
+    rootRef.current.measureInWindow((rootX, rootY) => {
+      tutorialDiaryRef.current.measureInWindow((x, y, width, height) => {
+        registerTarget("tutorialDiaryDate", {
+          x: x - rootX - 5,
+          y: y - rootY - 5,
+          width: width + 10,
+          height: height + 10,
+          borderRadius: 28,
+        });
+      });
+    });
+  }, [registerTarget]);
+
+  const measureStatisticsTabButton = useCallback(() => {
+    if (!rootRef.current || !statisticsTabButtonRef.current) return;
+
+    rootRef.current.measureInWindow((rootX, rootY) => {
+      statisticsTabButtonRef.current.measureInWindow((x, y, width, height) => {
+        registerTarget("statisticsTabButton", {
+          x: x - rootX + 12,
+          y: y - rootY - 13,
+          width: width - 25,
+          height: height + 25,
+          borderRadius: 10,
+        });
+      });
+    });
+  }, [registerTarget]);
+
+  useEffect(() => {
+    if (!isTutorialEnabled) return;
+
+    if (currentStep?.targetKey === "tutorialDiaryDate") {
+      const timer = setTimeout(measureTutorialDiaryDate, 50);
+      return () => clearTimeout(timer);
+    }
+
+    if (currentStep?.targetKey === "statisticsTabButton") {
+      const timer = setTimeout(measureStatisticsTabButton, 50);
+      return () => clearTimeout(timer);
+    }
+
+    clearTarget("tutorialDiaryDate");
+    clearTarget("statisticsTabButton");
+  }, [
+    isTutorialEnabled,
+    activeFlowId,
+    currentStep?.targetKey,
+    measureTutorialDiaryDate,
+    measureStatisticsTabButton,
+    clearTarget,
+  ]);
+
+  // 튜토리얼용 Mock Diary 눌렀을 때 튜토리얼 흐름을 이어주기 위한 분기 추가
+  const handleTutorialOpenDiary = () => {
+    if (!tutorialDiaryDate) return;
+
+    nextStep();
+    navigation.navigate("TutorialDiaryRecord", {
+      date: tutorialDiaryDate,
+      tutorialMockDiary: true,
+    });
+  };
+
+  const handlePressStatistics = (params = undefined) => {
+    setTab(2);
+    navigation.navigate("Statistics", params);
+  };
+
+  // 통계 버튼 눌렀을 때 튜토리얼 흐름을 이어주기 위한 분기 추가
+  const handleTutorialPressStatistics = () => {
+    const isStatsIntroStep =
+      isTutorialEnabled && activeFlowId === "stats" && currentStep?.id === "stats_calendar_intro";
+
+    if (isStatsIntroStep) {
+      nextStep();
+      handlePressStatistics({ tutorialFlowId: "stats" });
+      return;
+    }
+
+    handlePressStatistics();
+  };
+
+  const handleTutorialSkip = async () => {
+    await completeTutorial();
+    navigation.reset({
+      index: 0,
+      routes: [{ name: "Home" }],
+    });
+  };
+
+  const currentTutorialStep =
+    isTutorialEnabled && currentStep?.screen === "Calendar" ? currentStep : null;
+
   const monthLabel = `${year}년 ${month + 1}월`;
   const weekdayLabels = ["일", "월", "화", "수", "목", "금", "토"];
 
   return (
-    <View style={styles.root}>
+    <View
+      ref={rootRef}
+      style={styles.root}
+      onLayout={() => {
+        measureTutorialDiaryDate();
+        measureStatisticsTabButton();
+      }}
+    >
+      <TutorialOverlay
+        visible={!!currentTutorialStep}
+        message={currentTutorialStep?.message || ""}
+        onPressPrimary={nextStep}
+        onPressSkip={handleTutorialSkip}
+        allowBackgroundPress={currentTutorialStep?.allowBackgroundPress !== false}
+        onPressTarget={
+          currentTutorialStep?.id === "calendar_date_intro"
+            ? handleTutorialOpenDiary
+            : currentTutorialStep?.id === "stats_calendar_intro"
+            ? handleTutorialPressStatistics
+            : undefined
+        }
+        target={
+          currentTutorialStep?.targetKey ? targets[currentTutorialStep.targetKey] ?? null : null
+        }
+        contentStyle={{ marginTop: 100 }}
+      />
       {/* 네비게이션 바 */}
       <NavigationBar
         state={tab}
+        tabRefs={[null, null, statisticsTabButtonRef]}
         onTabPress={i => {
           setTab(i);
           if (i === 0) navigation.navigate("Home");
           if (i === 1) navigation.navigate("Calendar");
-          if (i === 2) navigation.navigate("Statistics");
+          if (i === 2) handleTutorialPressStatistics();
           if (i === 3) navigation.navigate("MyPage");
         }}
       />
@@ -242,18 +408,23 @@ export default function CalendarScreen({ navigation }) {
           {matrix.map((row, r) => (
             <View key={r} style={styles.row}>
               {row.map((d, c) => {
+                const isThisMonth = !!d;
                 const dayNum = d ? d.getDate() : "";
                 const diary = hasDiary(d);
                 const stickerSource = getStickerSource(d);
+                const dateKey = d ? ymd(d) : "";
+                const isTutorialDate = tutorialDiaryDate && dateKey === tutorialDiaryDate;
 
                 return (
                   <View key={c} style={styles.cell}>
                     <Text style={[styles.dayNum, !d && styles.invisible]}>{dayNum}</Text>
 
+                    {/* 스티커/빈칸 */}
                     {d ? (
                       diary ? (
                         // 스티커 붙은 날: 터치 가능
                         <TouchableOpacity
+                          ref={isTutorialDate ? tutorialDiaryRef : null}
                           style={styles.stickerHit}
                           activeOpacity={0.8}
                           onPress={() => openDiary(d)}
