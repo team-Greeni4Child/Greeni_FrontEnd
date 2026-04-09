@@ -72,6 +72,7 @@ export default function StatisticsScreen({ route, navigation }) {
     targets,
     nextStep,
     stopTutorial,
+    completeTutorial,
     registerTarget,
     clearTarget,
   } = useTutorial();
@@ -227,6 +228,14 @@ export default function StatisticsScreen({ route, navigation }) {
     handlePressMyPage();
   };
 
+  const handleTutorialSkip = async () => {
+    await completeTutorial();
+    navigation.reset({
+      index: 0,
+      routes: [{ name: "Home" }],
+    });
+  };
+
   const currentTutorialStep =
     isTutorialEnabled && activeFlowId === "stats" && currentStep?.screen === "Statistics"
       ? currentStep
@@ -238,7 +247,7 @@ export default function StatisticsScreen({ route, navigation }) {
         visible={!!currentTutorialStep}
         message={currentTutorialStep?.message || ""}
         onPressPrimary={nextStep}
-        onPressSkip={stopTutorial}
+        onPressSkip={handleTutorialSkip}
         allowBackgroundPress={currentTutorialStep?.allowBackgroundPress !== false}
         onPressTarget={
           currentTutorialStep?.id === "stats_mypage_intro" ? handleTutorialPressMyPage : undefined

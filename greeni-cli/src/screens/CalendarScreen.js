@@ -85,6 +85,7 @@ export default function CalendarScreen({ navigation }) {
     tutorialDiary,
     nextStep,
     stopTutorial,
+    completeTutorial,
     registerTarget,
     clearTarget,
   } = useTutorial();
@@ -320,6 +321,14 @@ export default function CalendarScreen({ navigation }) {
     handlePressStatistics();
   };
 
+  const handleTutorialSkip = async () => {
+    await completeTutorial();
+    navigation.reset({
+      index: 0,
+      routes: [{ name: "Home" }],
+    });
+  };
+
   const currentTutorialStep =
     isTutorialEnabled && currentStep?.screen === "Calendar" ? currentStep : null;
 
@@ -339,7 +348,7 @@ export default function CalendarScreen({ navigation }) {
         visible={!!currentTutorialStep}
         message={currentTutorialStep?.message || ""}
         onPressPrimary={nextStep}
-        onPressSkip={stopTutorial}
+        onPressSkip={handleTutorialSkip}
         allowBackgroundPress={currentTutorialStep?.allowBackgroundPress !== false}
         onPressTarget={
           currentTutorialStep?.id === "calendar_date_intro"

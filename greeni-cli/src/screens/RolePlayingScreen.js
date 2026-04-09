@@ -46,6 +46,7 @@ export default function RolePlayingScreen({ navigation }) {
     nextStep,
     startTutorial,
     stopTutorial,
+    completeTutorial,
     registerTarget,
     clearTarget,
   } = useTutorial();
@@ -216,6 +217,14 @@ export default function RolePlayingScreen({ navigation }) {
     await handleBackPress();
   };
 
+  const handleTutorialSkip = async () => {
+    await completeTutorial();
+    navigation.reset({
+      index: 0,
+      routes: [{ name: "Home" }],
+    });
+  };
+
   const currentTutorialStep =
     isTutorialEnabled && activeFlowId === "role" && currentStep?.screen === "RolePlaying"
       ? currentStep
@@ -234,7 +243,7 @@ export default function RolePlayingScreen({ navigation }) {
         visible={!!currentTutorialStep}
         message={currentTutorialStep?.message || ""}
         onPressPrimary={nextStep}
-        onPressSkip={stopTutorial}
+        onPressSkip={handleTutorialSkip}
         allowBackgroundPress={currentTutorialStep?.allowBackgroundPress !== false}
         onPressTarget={
           currentTutorialStep?.id === "role_back_intro" ? handleTutorialBackPress : undefined

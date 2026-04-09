@@ -24,6 +24,7 @@ export default function TwentyQuestionsScreen({ navigation }) {
     nextStep,
     startTutorial,
     stopTutorial,
+    completeTutorial,
     registerTarget,
     clearTarget,
   } = useTutorial();
@@ -380,6 +381,14 @@ export default function TwentyQuestionsScreen({ navigation }) {
     await handleBackPress();
   };
 
+  const handleTutorialSkip = async () => {
+    await completeTutorial();
+    navigation.reset({
+      index: 0,
+      routes: [{ name: "Home" }],
+    });
+  };
+
   const progress = hints.length > 0 ? (currentHint + 1) / hints.length : 0;
   const isMicDisabled =
     isLoadingQuestion || isCheckingAnswer || isAiSpeaking || isAnswerFeedbackShowing;
@@ -396,7 +405,7 @@ export default function TwentyQuestionsScreen({ navigation }) {
         visible={!!currentTutorialStep}
         message={currentTutorialStep?.message || ""}
         onPressPrimary={nextStep}
-        onPressSkip={stopTutorial}
+        onPressSkip={handleTutorialSkip}
         allowBackgroundPress={currentTutorialStep?.allowBackgroundPress !== false}
         onPressTarget={
           currentTutorialStep?.id === "five_back_intro" ? handleTutorialBackPress : undefined

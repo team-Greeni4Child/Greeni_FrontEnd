@@ -32,9 +32,12 @@ export default function HomeScreen({ navigation }) {
     currentStep,
     targets,
     startedFlows,
+    hasCompletedTutorial,
+    isTutorialReady,
     startTutorial,
     nextStep,
     stopTutorial,
+    completeTutorial,
     registerTarget,
     clearTarget,
   } = useTutorial();
@@ -213,6 +216,14 @@ export default function HomeScreen({ navigation }) {
     handlePressCalendar();
   };
 
+  const handleTutorialSkip = async () => {
+    await completeTutorial();
+    navigation.reset({
+      index: 0,
+      routes: [{ name: "Home" }],
+    });
+  };
+
   // 종료 모달 띄우기
   useFocusEffect(
     useCallback(() => {
@@ -328,9 +339,11 @@ export default function HomeScreen({ navigation }) {
 
   useEffect(() => {
     if (startedFlows.home) return;
+    if (!isTutorialReady) return;
+    if (hasCompletedTutorial) return;
     if (isTutorialEnabled) return;
     startTutorial("home");
-  }, [startedFlows.home, isTutorialEnabled, startTutorial]);
+  }, [startedFlows.home, isTutorialReady, hasCompletedTutorial, isTutorialEnabled, startTutorial]);
 
   useEffect(() => {
     if (!isTutorialEnabled) return;
@@ -456,7 +469,7 @@ export default function HomeScreen({ navigation }) {
         visible={!!currentTutorialStep}
         message={currentTutorialStep?.message || ""}
         onPressPrimary={nextStep}
-        onPressSkip={stopTutorial}
+        onPressSkip={handleTutorialSkip}
         allowBackgroundPress={currentTutorialStep?.allowBackgroundPress !== false}
         onPressTarget={
           currentTutorialStep?.id === "diary_intro"

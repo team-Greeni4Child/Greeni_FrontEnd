@@ -42,6 +42,7 @@ export default function DiaryScreen({ navigation, route }) {
     startTutorial,
     goToStep,
     stopTutorial,
+    completeTutorial,
     registerTarget,
     clearTarget,
   } = useTutorial();
@@ -315,8 +316,8 @@ export default function DiaryScreen({ navigation, route }) {
   // 일기 Ref 측정 - 마이크 버튼 hole view
   const measureMicButton = useCallback(() => {
     measureTarget("micButton", micTouchableRef, W * 0.21, {
-      padX: -20,
-      padY: -20,
+      padX: -25,
+      padY: -25,
       radiusOffset: 10,
     });
   }, [measureTarget]);
@@ -324,8 +325,8 @@ export default function DiaryScreen({ navigation, route }) {
   // 일기 Ref 측정 - 그림일기 버튼 hole view
   const measureDrawButton = useCallback(() => {
     measureTarget("drawDiaryButton", drawButtonRef, 24.5, {
-      padX: 5,
-      padY: 5,
+      padX: 3,
+      padY: -3,
       radiusOffset: 10,
     });
   }, [measureTarget]);
@@ -357,7 +358,9 @@ export default function DiaryScreen({ navigation, route }) {
   // DiaryDraw로 넘어갈 때 튜토리얼 흐름을 이어주기 위한 분기 추가
   const handleTutorialPressDrawDiary = async () => {
     const isDrawButtonStep =
-      isTutorialEnabled && activeFlowId === "diary" && currentStep?.id === "draw_button_intro";
+      isTutorialEnabled &&
+      activeFlowId === "diary" &&
+      currentStep?.id === "draw_button_target_intro";
 
     if (isDrawButtonStep) {
       goToStep("tools_intro");
@@ -366,6 +369,14 @@ export default function DiaryScreen({ navigation, route }) {
     }
 
     await handleEndDiary();
+  };
+
+  const handleTutorialSkip = async () => {
+    await completeTutorial();
+    navigation.reset({
+      index: 0,
+      routes: [{ name: "Home" }],
+    });
   };
 
   const isMicDisabled = isSending || isAiSpeaking || isEndingRef.current || isClosingRef.current;
@@ -392,10 +403,12 @@ export default function DiaryScreen({ navigation, route }) {
             goToStep(currentTutorialStep.nextStepId);
           }
         }}
-        onPressSkip={stopTutorial}
+        onPressSkip={handleTutorialSkip}
         allowBackgroundPress={currentTutorialStep?.allowBackgroundPress !== false}
         onPressTarget={
-          currentTutorialStep?.id === "draw_button_intro" ? handleTutorialPressDrawDiary : undefined
+          currentTutorialStep?.id === "draw_button_target_intro"
+            ? handleTutorialPressDrawDiary
+            : undefined
         }
         target={
           currentTutorialStep?.targetKey ? targets[currentTutorialStep.targetKey] ?? null : null
@@ -431,7 +444,12 @@ export default function DiaryScreen({ navigation, route }) {
       />
 
       {/* 일기 그리러 가는 버튼 */}
-      <TouchableOpacity style={styles.diaryButton} onPress={handleEndDiary} activeOpacity={0.8}>
+      <TouchableOpacity
+        ref={drawButtonRef}
+        style={styles.diaryButton}
+        onPress={handleTutorialPressDrawDiary}
+        activeOpacity={0.8}
+      >
         <Image
           source={require("../assets/images/icon_draw_diary.png")}
           style={styles.diaryButtonIcon}

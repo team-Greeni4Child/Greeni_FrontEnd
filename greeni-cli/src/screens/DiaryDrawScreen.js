@@ -51,6 +51,7 @@ export default function DiaryDrawScreen({ navigation, route }) {
     goToStep,
     startTutorial,
     stopTutorial,
+    completeTutorial,
     registerTarget,
     clearTarget,
   } = useTutorial();
@@ -377,6 +378,14 @@ export default function DiaryDrawScreen({ navigation, route }) {
     handlePressSave();
   };
 
+  const handleTutorialSkip = async () => {
+    await completeTutorial();
+    navigation.reset({
+      index: 0,
+      routes: [{ name: "Home" }],
+    });
+  };
+
   const isDiaryTutorial = isTutorialEnabled && activeFlowId === "diary";
   const currentTutorialStep =
     isDiaryTutorial && currentStep?.screen === "DiaryDraw" ? currentStep : null;
@@ -398,13 +407,13 @@ export default function DiaryDrawScreen({ navigation, route }) {
             goToStep(currentTutorialStep.nextStepId);
           }
         }}
-        onPressSkip={stopTutorial}
+        onPressSkip={handleTutorialSkip}
         allowBackgroundPress={currentTutorialStep?.allowBackgroundPress !== false}
         onPressTarget={currentTutorialStep?.id === "save_intro" ? handleTutorialSave : undefined}
         target={
           currentTutorialStep?.targetKey ? targets[currentTutorialStep.targetKey] ?? null : null
         }
-        contentStyle={{ marginTop: 170 }}
+        contentStyle={{ marginTop: 250 }}
       />
 
       <View style={styles.topBar}>

@@ -39,6 +39,7 @@ export default function TutorialDiaryRecordScreen({ navigation, route }) {
     tutorialDiary,
     nextStep,
     stopTutorial,
+    completeTutorial,
     startTutorial,
     registerTarget,
     clearTarget,
@@ -51,6 +52,7 @@ export default function TutorialDiaryRecordScreen({ navigation, route }) {
   const rootRef = useRef(null);
   const backButtonRef = useRef(null);
   const toggleRef = useRef(null);
+  const headsetButtonRef = useRef(null);
 
   const diaryData = tutorialDiary;
   const titleDate = useMemo(
@@ -95,6 +97,14 @@ export default function TutorialDiaryRecordScreen({ navigation, route }) {
     });
   }, [measureTarget]);
 
+  const measureHeadsetButton = useCallback(() => {
+    measureTarget("diaryRecordHeadsetButton", headsetButtonRef, 18, {
+      padX: 0,
+      padY: 0,
+      radiusOffset: 10,
+    });
+  }, [measureTarget]);
+
   useEffect(() => {
     if (!isTutorialEnabled || activeFlowId !== "calendar") return;
 
@@ -108,14 +118,21 @@ export default function TutorialDiaryRecordScreen({ navigation, route }) {
       return () => clearTimeout(timer);
     }
 
+    if (currentStep?.targetKey === "diaryRecordHeadsetButton") {
+      const timer = setTimeout(measureHeadsetButton, 50);
+      return () => clearTimeout(timer);
+    }
+
     clearTarget("diaryRecordBackButton");
     clearTarget("diaryRecordToggle");
+    clearTarget("diaryRecordHeadsetButton");
   }, [
     isTutorialEnabled,
     activeFlowId,
     currentStep?.targetKey,
     measureBackButton,
     measureToggle,
+    measureHeadsetButton,
     clearTarget,
   ]);
 
@@ -136,6 +153,14 @@ export default function TutorialDiaryRecordScreen({ navigation, route }) {
     }
 
     navigation.goBack();
+  };
+
+  const handleTutorialSkip = async () => {
+    await completeTutorial();
+    navigation.reset({
+      index: 0,
+      routes: [{ name: "Home" }],
+    });
   };
 
   const currentTutorialStep =
@@ -181,13 +206,14 @@ export default function TutorialDiaryRecordScreen({ navigation, route }) {
       onLayout={() => {
         measureBackButton();
         measureToggle();
+        measureHeadsetButton();
       }}
     >
       <TutorialOverlay
         visible={!!currentTutorialStep}
         message={currentTutorialStep?.message || ""}
         onPressPrimary={nextStep}
-        onPressSkip={stopTutorial}
+        onPressSkip={handleTutorialSkip}
         allowBackgroundPress={currentTutorialStep?.allowBackgroundPress !== false}
         onPressTarget={
           currentStep?.id === "record_toggle_intro"
@@ -208,7 +234,12 @@ export default function TutorialDiaryRecordScreen({ navigation, route }) {
           touchableRef={backButtonRef}
         />
         <Text style={styles.title}>{titleDate}</Text>
-        <TouchableOpacity style={styles.headsetBtn} activeOpacity={0.8} disabled>
+        <TouchableOpacity
+          ref={headsetButtonRef}
+          style={styles.headsetBtn}
+          activeOpacity={0.8}
+          disabled
+        >
           <Image
             source={require("../assets/images/headset.png")}
             style={styles.headsetIcon}
