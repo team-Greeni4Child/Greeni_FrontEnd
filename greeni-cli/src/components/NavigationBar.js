@@ -79,8 +79,8 @@ export default function NavigationBar({ state = 0, onTabPress, tabRefs = [] }) {
   const BAR_W = W * 0.9;
   const BAR_H = 60;
 
-  const DENT_W = W * 0.245;
-  const DENT_H = DENT_W * (DENT_VIEWBOX_H / DENT_VIEWBOX_W);
+  const DENT_H = BAR_H * 1.34;
+  const DENT_W = DENT_H * (DENT_VIEWBOX_W / DENT_VIEWBOX_H);
 
   const BAR_PAD_X = 20;
 
