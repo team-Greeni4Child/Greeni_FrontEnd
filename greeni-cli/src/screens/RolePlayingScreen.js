@@ -354,7 +354,7 @@ const styles = StyleSheet.create({
     top: 0,
     left: 0,
     right: 0,
-    height: H * 0.14,
+    height: H * 0.15,
     backgroundColor: colors.pink,
     borderBottomLeftRadius: 30,
     borderBottomRightRadius: 30,
@@ -402,8 +402,8 @@ const styles = StyleSheet.create({
     lineHeight: 26,
   },
   bubbleTextSelected: {
-    fontSize: 20,
-    lineHeight: 24,
+    fontSize: 28,
+    lineHeight: 26,
   },
   greeni: {
     aspectRatio: 80 / 110,

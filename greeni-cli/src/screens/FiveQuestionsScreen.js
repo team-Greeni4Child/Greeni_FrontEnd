@@ -603,7 +603,7 @@ const styles = StyleSheet.create({
     color: colors.brown,
     fontFamily: "gangwongyoyuksaeeum",
     textAlign: "center",
-    lineHeight: 34,
+    lineHeight: 26,
   },
 
   // 그리니
