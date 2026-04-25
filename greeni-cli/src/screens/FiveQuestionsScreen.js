@@ -610,13 +610,12 @@ const styles = StyleSheet.create({
   greeniWrap: {
     position: "absolute",
     flexDirection: "row",
-    top: H * 0.53,
-    left: W * 0.1,
+    top: H * 0.6,
+    left: W * 0.08,
     zIndex: 3,
   },
   greeni: {
     aspectRatio: 92.35 / 124,
-    width: 92.35,
-    height: 124,
+    width: W * 0.25,
   },
 });
