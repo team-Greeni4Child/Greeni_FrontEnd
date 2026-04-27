@@ -23,7 +23,7 @@ function getInitialBubbleText(role) {
   if (!role) {
     return `밑에 있는 세가지 상황 중에\n하나를 골라줘`;
   }
-  if (role === "shop") return "어서 오세요.\n신선 과일가게입니다!";
+  if (role === "shop") return "어서 오세요.\n그리니 잡화점입니다!";
   if (role === "teacher") return "안녕!\n오늘은 선생님과 이야기해보자.";
   if (role === "friend") return "만나서 반가워!\n나랑 같이 놀자~";
   return "";
@@ -128,9 +128,11 @@ export default function RolePlayingScreen({ navigation }) {
       const profileId = Number(selectedProfile?.profileId);
 
       if (selectedSituation && Number.isFinite(profileId)) {
-        await createRolePlayingActivity({
+        const roleName = toActivityRole(selectedSituation);
+
+        const activityRes = await createRolePlayingActivity({
           profileId,
-          roleName: toActivityRole(selectedSituation),
+          roleName,
         });
       }
     } catch (e) {
