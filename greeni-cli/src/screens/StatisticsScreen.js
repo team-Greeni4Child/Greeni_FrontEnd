@@ -35,6 +35,44 @@ const emotionSourceMap = {
   anxiety: require("../assets/images/anxiety.png"),
 };
 
+// 3개의 활동요약 슬롯
+const activitySummarySlots = [
+  {
+    align: "left",
+    image: require("../assets/images/mustache_greeni_big.png"),
+    imageStyle: null,
+    textStyle: null,
+  },
+  {
+    align: "right",
+    image: require("../assets/images/20_greeni_big.png"),
+    imageStyle: null,
+    textStyle: null,
+  },
+  {
+    align: "left",
+    image: require("../assets/images/quiz_greeni_big.png"),
+  },
+];
+
+const getActivitySummaryText = activity => {
+  if (typeof activity === "string") return activity;
+
+  return activity?.description ?? activity?.summary ?? activity?.content ?? activity?.name ?? "";
+};
+
+const getDailyActivityItems = response => {
+  const result = response?.result ?? {};
+
+  if (Array.isArray(result.activityList)) return result.activityList;
+  if (Array.isArray(result.ActivityList)) return result.ActivityList;
+  if (Array.isArray(result.activities)) return result.activities;
+  if (Array.isArray(result.day?.activities)) return result.day.activities;
+  if (Array.isArray(result.days?.[0]?.activities)) return result.days[0].activities;
+
+  return [];
+};
+
 // 예시 데이터 (하루하루 쌓이면 배열에 push)
 const monthEmotions = [
   "happy",
@@ -128,7 +166,24 @@ export default function StatisticsScreen({ route, navigation }) {
 
       try {
         const res = await getDailyActivities(selectedProfile.profileId);
-        setTodayActivities(res?.result?.activityList ?? []);
+        const activityList = getDailyActivityItems(res);
+
+        const firstThreeActivities = activityList
+          .map((activity, index) => ({
+            activity,
+            index,
+            createdAt: new Date(typeof activity === "string" ? "" : activity?.createdAt).getTime(),
+          }))
+          .sort((a, b) => {
+            const aTime = Number.isNaN(a.createdAt) ? Infinity : a.createdAt;
+            const bTime = Number.isNaN(b.createdAt) ? Infinity : b.createdAt;
+
+            return aTime === bTime ? a.index - b.index : aTime - bTime;
+          })
+          .slice(0, 3)
+          .map(({ activity }) => activity);
+
+        setTodayActivities(firstThreeActivities);
       } catch (e) {
         if (e?.code === "PROFILE4031" || e?.code === "PROFILE4041") {
           setStep("profile");
@@ -369,7 +424,12 @@ export default function StatisticsScreen({ route, navigation }) {
               </Text>
             </View>
             <View style={styles.keywordContent}>
-              <Text style={{ fontFamily: "Maplestory_Light", fontSize: 34, color: colors.brown }}>
+              <Text
+                style={[
+                  styles.keywordText,
+                  keyword === "오늘 작성된 일기가 없어요." && styles.emptyKeywordText,
+                ]}
+              >
                 {keyword}
               </Text>
             </View>
@@ -386,48 +446,52 @@ export default function StatisticsScreen({ route, navigation }) {
             </View>
             <View style={styles.summaryContent}>
               {todayActivities.length === 0 ? (
-                <Text style={styles.bubbleText}>오늘 활동 요약이 없어요.</Text>
+                <View style={styles.emptySummaryWrap}>
+                  <Text style={styles.emptySummaryText}>오늘 활동 요약이 없어요.</Text>
+                </View>
               ) : (
-                todayActivities.map((text, idx) => (
-                  <View key={`${text}-${idx}`} style={styles.chatLeft}>
+                activitySummarySlots.map((slot, idx) => {
+                  const activity = todayActivities[idx];
+                  const isRight = slot.align === "right";
+
+                  if (!activity) {
+                    return (
+                      <View
+                        key={`empty-activity-${idx}`}
+                        style={[
+                          isRight ? styles.chatRight : styles.chatLeft,
+                          styles.emptyActivitySlot,
+                        ]}
+                      />
+                    );
+                  }
+
+                  const image = (
+                    <Image
+                      source={slot.image}
+                      style={[styles.greeni, slot.imageStyle]}
+                      resizeMode="contain"
+                    />
+                  );
+                  const bubble = (
                     <View style={styles.bubble}>
-                      <Text style={styles.bubbleText}>{text}</Text>
+                      <Text style={[styles.bubbleText, slot.textStyle]}>
+                        {getActivitySummaryText(activity)}
+                      </Text>
                     </View>
-                  </View>
-                ))
+                  );
+
+                  return (
+                    <View
+                      key={`${activity?.id ?? activity?.createdAt ?? activity}-${idx}`}
+                      style={isRight ? styles.chatRight : styles.chatLeft}
+                    >
+                      {isRight ? bubble : image}
+                      {isRight ? image : bubble}
+                    </View>
+                  );
+                })
               )}
-              {/* <View style={styles.chatLeft}>
-                            <Image 
-                              source={require("../assets/images/mustache_greeni_big.png")}
-                              style={styles.greeni}
-                              resizeMode="contain"
-                            />
-                            <View style={styles.bubble}>
-                              <Text style={styles.bubbleText}>오늘 {profileName}는 역할놀이에서{"\n"}환자 역할을 했어요.</Text>
-                            </View>
-                          </View>
-
-                          <View style={styles.chatRight}>
-                            <View style={styles.bubble}>
-                              <Text style={styles.bubbleText}>다섯고개 20문제 중에서 5문제를{"\n"}틀렸어요.</Text>
-                            </View>
-                            <Image 
-                              source={require("../assets/images/20_greeni_big.png")}
-                              style={styles.greeni}
-                              resizeMode="contain"
-                            />
-                          </View>
-
-                          <View style={styles.chatLeft}>
-                            <Image 
-                              source={require("../assets/images/quiz_greeni_big.png")}
-                              style={[styles.greeni, { width: 80, height: 85 }]}
-                              resizeMode="contain"
-                            />
-                            <View style={styles.bubble}>
-                              <Text style={[styles.bubbleText, { paddingTop: 10, paddingBottom: 10, textAlign: 'center' }]}>동물퀴즈 10문제를 모두 맞혔어요.</Text>
-                            </View>
-                          </View> */}
             </View>
           </TouchableOpacity>
         </ScrollView>
@@ -595,12 +659,19 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
+  },
+  keywordText: {
+    fontFamily: "Maplestory_Light",
     fontSize: 34,
+    color: colors.brown,
+  },
+  emptyKeywordText: {
+    fontSize: 24,
   },
   summaryWrap: {
     borderWidth: 2,
     borderColor: colors.pinkDark,
-    height: 300,
+    minHeight: 320,
     width: "90%",
     flexDirection: "column",
     marginBottom: 120,
@@ -632,35 +703,50 @@ const styles = StyleSheet.create({
   summaryContent: {
     flex: 1,
     width: "100%",
-    height: "80%",
+    // height: "80%",
     justifyContent: "center",
     alignItems: "center",
-    paddingTop: 44,
-    paddingBottom: 28,
+    // paddingBottom: 28,
+    paddingHorizontal: 12,
+    gap: 12,
+  },
+  emptySummaryWrap: {
+    flex: 1,
+    width: "100%",
+    justifyContent: "center",
+    alignItems: "center",
+    paddingBottom: 36,
+  },
+  emptySummaryText: {
+    fontSize: 20,
+    fontFamily: "gangwongyoyuksaeeum",
+    color: colors.brown,
+    textAlign: "center",
   },
   chatLeft: {
     width: "100%",
-    height: "30%",
+    minHeight: 64,
     flexDirection: "row",
     justifyContent: "flex-start",
     alignItems: "center",
-    marginBottom: 20,
+    // marginBottom: 20,
   },
   chatRight: {
     width: "100%",
-    height: "30%",
+    minHeight: 64,
     flexDirection: "row",
     justifyContent: "flex-end",
     alignItems: "center",
-    marginBottom: 20,
+    // marginBottom: 20,
+  },
+  emptyActivitySlot: {
+    opacity: 0,
   },
   greeni: {
     width: "20%",
     height: "120%",
     marginLeft: 15,
     marginRight: 15,
-    // borderWidth: 2,
-    // borderColor: 'red'
   },
   bubble: {
     backgroundColor: colors.pink,
@@ -674,6 +760,7 @@ const styles = StyleSheet.create({
   },
   bubbleText: {
     paddingHorizontal: 5,
+    marginBottom: 4,
     fontSize: 20,
     fontFamily: "gangwongyoyuksaeeum",
     color: colors.brown,

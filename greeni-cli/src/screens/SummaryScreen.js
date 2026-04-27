@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useContext } from "react";
-import { View, Text, StyleSheet, Dimensions, ScrollView } from "react-native";
+import React, { useCallback, useContext, useEffect, useRef, useState } from "react";
+import { View, Text, StyleSheet, Dimensions, FlatList } from "react-native";
 import { StatusBar } from "react-native";
 
 import { getDailyActivityList } from "../api/activity";
@@ -12,8 +12,28 @@ import colors from "../theme/colors";
 // 현재 기기의 화면 너비 W, 화면 높이 H
 const { width: W, height: H } = Dimensions.get("window");
 
+// 같은 요일의 활동요약 합치기
+function mergeDaysByDate(prevDays, nextDays) {
+  const merged = [...prevDays];
+
+  nextDays.forEach(nextDay => {
+    const existingIndex = merged.findIndex(day => day.date === nextDay.date);
+
+    if (existingIndex === -1) {
+      merged.push(nextDay);
+      return;
+    }
+
+    merged[existingIndex] = {
+      ...merged[existingIndex],
+      activities: [...(merged[existingIndex].activities ?? []), ...(nextDay.activities ?? [])],
+    };
+  });
+
+  return merged;
+}
+
 export default function SummaryScreen({ navigation }) {
-  const [today, setToday] = useState("");
   const { selectedProfile } = useContext(ProfileContext);
   const { setStep } = useContext(AuthContext);
   const [days, setDays] = useState([]);
@@ -21,25 +41,24 @@ export default function SummaryScreen({ navigation }) {
   const [cursorId, setCursorId] = useState(null);
   const [hasNext, setHasNext] = useState(true);
   const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    const date = new Date();
-    const formatted = `${date.getFullYear()}년 ${date.getMonth() + 1}월 ${date.getDate()}일`;
-    setToday(formatted);
-  }, []);
+  const [listHeight, setListHeight] = useState(0);
+  const [contentHeight, setContentHeight] = useState(0);
+  const loadingRef = useRef(false);
 
   useEffect(() => {
     const loadFirst = async () => {
       if (!selectedProfile?.profileId) return;
 
       try {
+        loadingRef.current = true;
         setLoading(true);
         const res = await getDailyActivityList({
           profileId: selectedProfile.profileId,
-          size: 8,
         });
         const result = res?.result ?? {};
-        setDays(result.days ?? []);
+        const nextDays = result.days ?? [];
+
+        setDays(nextDays);
         setCursorCreatedAt(result.nextCursorCreatedAt ?? null);
         setCursorId(result.nextCursorId ?? null);
         setHasNext(!!result.hasNext);
@@ -51,35 +70,64 @@ export default function SummaryScreen({ navigation }) {
         console.log("LOAD SUMMARY LIST FAIL:", e);
         setDays([]);
       } finally {
+        loadingRef.current = false;
         setLoading(false);
       }
     };
 
     loadFirst();
-  }, [selectedProfile?.profileId, navigation, setStep]);
+  }, [selectedProfile?.profileId, setStep]);
 
-  const loadMore = async () => {
-    if (!hasNext || loading || !selectedProfile?.profileId) return;
+  const loadMore = useCallback(async () => {
+    if (!hasNext || loadingRef.current || !selectedProfile?.profileId) return;
 
     try {
+      loadingRef.current = true;
       setLoading(true);
       const res = await getDailyActivityList({
         profileId: selectedProfile.profileId,
         cursorCreatedAt,
         cursorId,
-        size: 8,
       });
       const result = res?.result ?? {};
-      setDays(prev => [...prev, ...(result.days ?? [])]);
+      const nextPageDays = result.days ?? [];
+
+      setDays(prev => mergeDaysByDate(prev, nextPageDays));
       setCursorCreatedAt(result.nextCursorCreatedAt ?? null);
       setCursorId(result.nextCursorId ?? null);
       setHasNext(!!result.hasNext);
     } catch (e) {
       console.log("LOAD MORE SUMMARY FAIL:", e);
     } finally {
+      loadingRef.current = false;
       setLoading(false);
     }
-  };
+  }, [cursorCreatedAt, cursorId, hasNext, selectedProfile?.profileId]);
+
+  useEffect(() => {
+    const contentDoesNotFillList =
+      listHeight > 0 && contentHeight > 0 && contentHeight <= listHeight;
+
+    if (contentDoesNotFillList && hasNext && !loading) {
+      loadMore();
+    }
+  }, [contentHeight, hasNext, listHeight, loadMore, loading]);
+
+  const renderDay = ({ item: day }) => (
+    <View style={styles.dailySummaryWrap}>
+      <View style={styles.dailyDateWrap}>
+        <Text style={styles.dailyDateText}>{day.date}</Text>
+      </View>
+      <View style={styles.dailyActivitiesWrap}>
+        {(day.activities ?? []).map((activity, idx) => (
+          <View key={`${day.date}-${idx}`} style={styles.activityItemWrap}>
+            <Text style={styles.activityTitle}>[활동] {activity.name}</Text>
+            <Text style={styles.activityDetails}>{activity.description}</Text>
+          </View>
+        ))}
+      </View>
+    </View>
+  );
 
   return (
     <View style={styles.root}>
@@ -91,129 +139,21 @@ export default function SummaryScreen({ navigation }) {
         <Text style={styles.title}>활동요약</Text>
       </View>
 
-      <View>
-        <ScrollView
-          style={styles.summaryScrollWrap}
-          contentContainerStyle={{ alignItems: "center", paddingBottom: 20 }}
-          onMomentumScrollEnd={loadMore}
-        >
-          {days.length === 0 && !loading ? (
-            <Text style={styles.activityDetails}>활동 내역이 없어요.</Text>
-          ) : (
-            days.map(day => (
-              <View key={day.date} style={styles.dailySummaryWrap}>
-                <View style={styles.dailyDateWrap}>
-                  <Text style={styles.dailyDateText}>{day.date}</Text>
-                </View>
-                <View style={styles.dailyActivitiesWrap}>
-                  {(day.activities ?? []).map((a, idx) => (
-                    <View key={`${day.date}-${idx}`} style={styles.activityItemWrap}>
-                      <Text style={styles.activityTitle}>[활동] {a.name}</Text>
-                      <Text style={styles.activityDetails}>{a.description}</Text>
-                    </View>
-                  ))}
-                </View>
-              </View>
-            ))
-          )}
-          {/* 당일 */}
-          {/* <View style={styles.dailySummaryWrap}>
-                            <View style={styles.dailyDateWrap}>
-                                <Text style={styles.dailyDateText}>{today}</Text>
-                            </View>
-                            <View style={styles.dailyActivitiesWrap}>
-                                {loading ? (
-                                    <Text style={styles.activityDetails}>불러오는 중...</Text>
-                                ) : activityList.length === 0 ? (
-                                    <Text style={styles.activityDetails}>오늘 활동 요약이 없어요.</Text>
-                                ) : (
-                                    activityList.map((item, idx) => (
-                                    <View key={`${item}-${idx}`} style={styles.activityItemWrap}>
-                                        <Text style={styles.activityTitle}>[활동]</Text>
-                                        <Text style={styles.activityDetails}>{item}</Text>
-                                    </View>
-                                    ))
-                                )} */}
-          {/* <View style={styles.activityItemWrap}>
-                                    <Text style={styles.activityTitle}>[활동] 역할놀이</Text>
-                                    <Text style={styles.activityDetails}>역할놀이에서 친구 역할을 했어요.</Text>
-                                </View>
-                                <View style={styles.activityItemWrap}>
-                                    <Text style={styles.activityTitle}>[활동] 동물퀴즈</Text>
-                                    <Text style={styles.activityDetails}>동물퀴즈에서 병아리 문제를 맞혔어요.</Text>
-                                </View>
-                                <View style={styles.activityItemWrap}>
-                                    <Text style={styles.activityTitle}>[활동] 스무고개</Text>
-                                    <Text style={styles.activityDetails}>스무고개에서 5문제를 맞혔어요.</Text>
-                                </View>
-                                <View style={styles.activityItemWrap}>
-                                    <Text style={styles.activityTitle}>[활동] 일기쓰기</Text>
-                                    <Text style={styles.activityDetails}>일기 작성을 완료했어요. 보러 가실래요?</Text>
-                                </View>
-                                <View style={styles.activityItemWrap}>
-                                    <Text style={styles.activityTitle}>[활동] 나는야 퀴즈왕</Text>
-                                    <Text style={styles.activityDetails}>나는야 퀴즈왕 배지를 획득했어요.</Text>
-                                </View> */}
-
-          {/* 하루 전 */}
-          {/* <View style={styles.dailySummaryWrap}>
-                            <View style={styles.dailyDateWrap}>
-                                <Text style={styles.dailyDateText}>2025년 11월 22일</Text>
-                            </View>
-                            <View style={styles.dailyActivitiesWrap}>
-                                <View style={styles.activityItemWrap}>
-                                    <Text style={styles.activityTitle}>[활동] 역할놀이</Text>
-                                    <Text style={styles.activityDetails}>역할놀이에서 친구 역할을 했어요.</Text>
-                                </View>
-                                <View style={styles.activityItemWrap}>
-                                    <Text style={styles.activityTitle}>[활동] 동물퀴즈</Text>
-                                    <Text style={styles.activityDetails}>동물퀴즈에서 병아리 문제를 맞혔어요.</Text>
-                                </View>
-                                <View style={styles.activityItemWrap}>
-                                    <Text style={styles.activityTitle}>[활동] 스무고개</Text>
-                                    <Text style={styles.activityDetails}>스무고개에서 5문제를 맞혔어요.</Text>
-                                </View>
-                                <View style={styles.activityItemWrap}>
-                                    <Text style={styles.activityTitle}>[활동] 일기쓰기</Text>
-                                    <Text style={styles.activityDetails}>일기 작성을 완료했어요. 보러 가실래요?</Text>
-                                </View>
-                                <View style={styles.activityItemWrap}>
-                                    <Text style={styles.activityTitle}>[활동] 나는야 퀴즈왕</Text>
-                                    <Text style={styles.activityDetails}>나는야 퀴즈왕 배지를 획득했어요.</Text>
-                                </View>
-                            </View>
-                        </View> */}
-
-          {/* 이틀 전 */}
-          {/* <View style={styles.dailySummaryWrap}>
-                            <View style={styles.dailyDateWrap}>
-                                <Text style={styles.dailyDateText}>2025년 11월 21일</Text>
-                            </View>
-                            <View style={styles.dailyActivitiesWrap}>
-                                <View style={styles.activityItemWrap}>
-                                    <Text style={styles.activityTitle}>[활동] 역할놀이</Text>
-                                    <Text style={styles.activityDetails}>역할놀이에서 친구 역할을 했어요.</Text>
-                                </View>
-                                <View style={styles.activityItemWrap}>
-                                    <Text style={styles.activityTitle}>[활동] 동물퀴즈</Text>
-                                    <Text style={styles.activityDetails}>동물퀴즈에서 병아리 문제를 맞혔어요.</Text>
-                                </View>
-                                <View style={styles.activityItemWrap}>
-                                    <Text style={styles.activityTitle}>[활동] 스무고개</Text>
-                                    <Text style={styles.activityDetails}>스무고개에서 5문제를 맞혔어요.</Text>
-                                </View>
-                                <View style={styles.activityItemWrap}>
-                                    <Text style={styles.activityTitle}>[활동] 일기쓰기</Text>
-                                    <Text style={styles.activityDetails}>일기 작성을 완료했어요. 보러 가실래요?</Text>
-                                </View>
-                                <View style={styles.activityItemWrap}>
-                                    <Text style={styles.activityTitle}>[활동] 나는야 퀴즈왕</Text>
-                                    <Text style={styles.activityDetails}>나는야 퀴즈왕 배지를 획득했어요.</Text>
-                                </View>
-                            </View>
-                        </View> */}
-        </ScrollView>
-      </View>
+      {/* ScrollView에서 FlatList로 변경 */}
+      <FlatList
+        style={styles.summaryList}
+        contentContainerStyle={styles.summaryListContent}
+        data={days}
+        keyExtractor={day => day.date}
+        renderItem={renderDay}
+        onEndReached={loadMore}
+        onEndReachedThreshold={0.2}
+        onLayout={event => setListHeight(event.nativeEvent.layout.height)}
+        onContentSizeChange={(_, height) => setContentHeight(height)}
+        ListEmptyComponent={
+          !loading ? <Text style={styles.activityDetails}>활동 내역이 없어요.</Text> : null
+        }
+      />
     </View>
   );
 }
@@ -223,7 +163,6 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: "column",
     alignItems: "center",
-    justifyContent: "center",
     backgroundColor: colors.ivory,
   },
 
@@ -240,13 +179,17 @@ const styles = StyleSheet.create({
     color: colors.brown,
   },
 
-  summaryScrollWrap: {
+  summaryList: {
     flex: 1,
     width: W,
     marginTop: H * 0.15,
   },
+  summaryListContent: {
+    alignItems: "center",
+    paddingBottom: 20,
+  },
   dailySummaryWrap: {
-    width: "90%",
+    width: W * 0.9,
     flexDirection: "column",
     marginBottom: 20,
   },
