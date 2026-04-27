@@ -523,7 +523,7 @@ const styles = StyleSheet.create({
     top: 0,
     left: 0,
     right: 0,
-    height: H * 0.14,
+    height: H * 0.15,
     backgroundColor: colors.pink,
     borderBottomLeftRadius: 30,
     borderBottomRightRadius: 30,

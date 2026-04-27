@@ -531,7 +531,7 @@ export default function HomeScreen({ navigation }) {
 
       {/* 그리니 */}
       <Image
-        source={require("../assets/images/greeni_shy.png")}
+        source={require("../assets/images/pond_greeni.png")}
         style={styles.greeni}
         resizeMode="contain"
       />
@@ -608,6 +608,7 @@ const styles = StyleSheet.create({
 
   greeni: {
     height: H * 0.2,
+    marginRight: H * 0.04,
   },
 
   grid: {

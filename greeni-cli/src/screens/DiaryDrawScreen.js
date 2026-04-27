@@ -696,7 +696,7 @@ const styles = StyleSheet.create({
   },
   topBar: {
     backgroundColor: colors.pink,
-    height: 180,
+    height: H * 0.15 + 50,
     borderBottomLeftRadius: 30,
     borderBottomRightRadius: 30,
     flexDirection: "column",
