@@ -58,6 +58,7 @@ export default function SettingsScreen({ route, navigation }) {
   const [isDeleteAccountModalVisible, setDeleteAccountModalVisible] = useState(false);
   const [showErrorModal, setShowErrorModal] = useState(false);
   const [errorModalMessage, setErrorModalMessage] = useState("");
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const [activeSheet, setActiveSheet] = useState(null);
 
@@ -233,15 +234,21 @@ export default function SettingsScreen({ route, navigation }) {
   };
 
   const handleLogout = async () => {
+    if (isLoggingOut) return;
+
     try {
-      /* 로그아웃 api 수정 완료되면 주석 풀기 */
-      // await logout();
+      setIsLoggingOut(true);
+
+      await logout();
     } catch (e) {
       console.log("Logout Fail:", e);
     } finally {
       await clearAuth();
+      setSelectedProfile(null);
+      setProfiles([]);
       setLogoutModalVisible(false);
       setStep("auth");
+      setIsLoggingOut(false);
     }
   };
 
@@ -542,12 +549,14 @@ export default function SettingsScreen({ route, navigation }) {
                   <TouchableOpacity
                     style={[styles.modalButton, styles.leftButton]}
                     onPress={handleLogout}
+                    disabled={isLoggingOut}
                   >
                     <Text style={styles.modalButtonText}>예</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={[styles.modalButton, styles.rightButton]}
                     onPress={() => setLogoutModalVisible(false)}
+                    disabled={isLoggingOut}
                   >
                     <Text style={[styles.modalButtonText, { color: colors.brown }]}>아니오</Text>
                   </TouchableOpacity>
