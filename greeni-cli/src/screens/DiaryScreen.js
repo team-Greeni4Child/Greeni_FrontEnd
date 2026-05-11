@@ -27,9 +27,15 @@ import { playBase64Mp3, stopAiAudio } from "../utils/audio";
 
 const { width: W, height: H } = Dimensions.get("window");
 const MAX_DIARY_TURNS = 10;
+const DRAW_TRANSITION_MESSAGE = "이제 그림일기 그리러 가자!";
+const DRAW_TRANSITION_DELAY_MS = 1200;
 
 function createSessionId() {
   return `diary_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+}
+
+function wait(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 export default function DiaryScreen({ navigation, route }) {
@@ -340,6 +346,12 @@ export default function DiaryScreen({ navigation, route }) {
       if (!isScreenActiveRef.current) return;
 
       if (isLastTurn) {
+        setBubbleText(DRAW_TRANSITION_MESSAGE);
+
+        await wait(DRAW_TRANSITION_DELAY_MS);
+
+        if (!isScreenActiveRef.current) return;
+
         await handleEndDiary();
       }
     } catch (e) {
