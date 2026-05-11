@@ -286,7 +286,15 @@ export default function DiaryDrawScreen({ navigation, route }) {
 
       navigation.reset({
         index: 0,
-        routes: [{ name: "Home", params: { diaryAlreadyExists: true } }],
+        routes: [
+          {
+            name: "Home",
+            params: {
+              diaryAlreadyExists: true,
+              playDiarySaveAnimation: true,
+            },
+          },
+        ],
       });
     } catch (e) {
       console.log("SAVE DIARY FAIL:", e);
