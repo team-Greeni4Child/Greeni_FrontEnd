@@ -544,7 +544,10 @@ export default function SettingsScreen({ route, navigation }) {
           >
             <TouchableWithoutFeedback>
               <View style={styles.modalWrap}>
-                <Text style={styles.modalText}>정말 로그아웃하시겠습니까?</Text>
+                <Text style={styles.modalText}>
+                  이 계정으로 로그인 된{"\n"}모든 기기가 함께 로그아웃됩니다.{"\n"}
+                  로그아웃 하시겠습니까?
+                </Text>
                 <View style={styles.modalButtonWrap}>
                   <TouchableOpacity
                     style={[styles.modalButton, styles.leftButton]}
