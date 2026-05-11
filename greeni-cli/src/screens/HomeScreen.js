@@ -28,7 +28,7 @@ const { width: W, height: H } = Dimensions.get("window");
 const SAVE_ANIMATION_ICON_SIZE = 120;
 const SAVE_ANIMATION_DURATION = 820;
 const SAVE_ANIMATION_FLOAT_Y = -28;
-const SAVE_ANIMATION_FLOAT_DURATION = 500;
+const SAVE_ANIMATION_FLOAT_DURATION = 600;
 const SAVE_ANIMATION_HOLD_DURATION = 200;
 
 const NAV_BAR_W = W * 0.9;
