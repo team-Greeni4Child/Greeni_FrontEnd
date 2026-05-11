@@ -63,6 +63,9 @@ export default function RolePlayingScreen({ navigation }) {
   const [isLoading, setIsLoading] = useState(false);
   const [isAiSpeaking, setIsAiSpeaking] = useState(false);
 
+  const displayedBubbleText = isLoading ? "    ...    " : bubbleText;
+  const useLongBubble = displayedBubbleText.length >= 55;
+
   const handleSituation = key => {
     setSelectedSituation(key);
     setBubbleText(getInitialBubbleText(key));
@@ -276,8 +279,16 @@ export default function RolePlayingScreen({ navigation }) {
         ]}
       >
         <ImageBackground
-          style={[styles.bubble, selectedSituation ? styles.bubbleSelected : styles.bubble]}
-          source={require("../assets/images/bubble_diary.png")}
+          style={[
+            styles.bubble,
+            selectedSituation ? styles.bubbleSelected : styles.bubble,
+            useLongBubble && styles.bubbleLong,
+          ]}
+          source={
+            useLongBubble
+              ? require("../assets/images/bubble_role_long.png")
+              : require("../assets/images/bubble_diary.png")
+          }
           resizeMode="stretch"
         >
           <Text
@@ -286,7 +297,7 @@ export default function RolePlayingScreen({ navigation }) {
               selectedSituation ? styles.bubbleTextSelected : styles.bubbleText,
             ]}
           >
-            {isLoading ? "    ...    " : bubbleText}
+            {displayedBubbleText}
           </Text>
         </ImageBackground>
         <Image
@@ -396,6 +407,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 40,
     paddingVertical: 50,
     marginTop: 30,
+  },
+  bubbleLong: {
+    minWidth: W * 0.5,
+    maxWidth: W * 0.85,
+    paddingHorizontal: 30,
+    paddingVertical: 60,
   },
   bubbleText: {
     fontSize: 28,
