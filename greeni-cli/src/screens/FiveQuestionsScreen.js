@@ -592,6 +592,7 @@ const styles = StyleSheet.create({
   },
   hintBubble: {
     maxWidth: W * 0.65,
+    minWidth: W * 0.45,
     paddingHorizontal: 30,
     paddingVertical: 30,
     alignItems: "center",

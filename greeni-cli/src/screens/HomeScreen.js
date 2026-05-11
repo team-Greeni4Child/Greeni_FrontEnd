@@ -829,6 +829,7 @@ const styles = StyleSheet.create({
   bubble: {
     bottom: -10,
     maxWidth: W * 0.85,
+    minWidth: W * 0.5,
     paddingHorizontal: 40,
     paddingVertical: 60,
     alignItems: "center",
