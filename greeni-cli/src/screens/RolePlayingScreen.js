@@ -51,6 +51,7 @@ export default function RolePlayingScreen({ navigation }) {
     clearTarget,
   } = useTutorial();
   const isSubmittingRef = useRef(false);
+  const isScreenActiveRef = useRef(true);
 
   // 튜토리얼용 역할놀이 Ref
   const rootRef = useRef(null);
@@ -66,6 +67,15 @@ export default function RolePlayingScreen({ navigation }) {
   const displayedBubbleText = isLoading ? "    ...    " : bubbleText;
   const useLongBubble = displayedBubbleText.length >= 55;
 
+  useEffect(() => {
+    isScreenActiveRef.current = true;
+
+    return () => {
+      isScreenActiveRef.current = false;
+      stopAiAudio();
+    };
+  }, []);
+
   const handleSituation = key => {
     setSelectedSituation(key);
     setBubbleText(getInitialBubbleText(key));
@@ -76,6 +86,7 @@ export default function RolePlayingScreen({ navigation }) {
     if (!selectedSituation) return;
     if (isLoading) return;
     if (!voicePath) return;
+    if (!isScreenActiveRef.current) return;
 
     try {
       setIsLoading(true);
@@ -88,6 +99,8 @@ export default function RolePlayingScreen({ navigation }) {
         voicePath,
       });
 
+      if (!isScreenActiveRef.current) return;
+
       const nextSessionId = result?.sessionId || currentSessionId;
       setSessionId(nextSessionId);
 
@@ -97,24 +110,30 @@ export default function RolePlayingScreen({ navigation }) {
 
       setIsLoading(false);
 
-      if (result?.base64Voice) {
+      if (result?.base64Voice && isScreenActiveRef.current) {
         try {
           setIsAiSpeaking(true);
           await playBase64Mp3(result.base64Voice);
         } finally {
-          setIsAiSpeaking(false);
+          if (isScreenActiveRef.current) {
+            setIsAiSpeaking(false);
+          }
         }
       }
     } catch (e) {
       console.log("REQUEST ROLE PLAYING FAIL:", e);
-      setBubbleText("앗, 잘 못 들었어.\n한 번만 다시 말해줄래?");
-      setIsLoading(false);
+
+      if (isScreenActiveRef.current) {
+        setBubbleText("앗, 잘 못 들었어.\n한 번만 다시 말해줄래?");
+        setIsLoading(false);
+      }
     }
   };
 
   const handleBackPress = useCallback(async () => {
     if (isSubmittingRef.current) return;
     isSubmittingRef.current = true;
+    isScreenActiveRef.current = false;
 
     try {
       await stopAiAudio();
