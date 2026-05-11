@@ -9,7 +9,6 @@ import {
   Alert,
 } from "react-native";
 import Sound, { AudioEncoderAndroidType, AudioSourceAndroidType } from "react-native-nitro-sound";
-import colors from "../theme/colors";
 
 const { width: W, height: H } = Dimensions.get("window");
 
@@ -19,6 +18,8 @@ const micIcons = [
   require("../assets/images/mic3.png"),
   require("../assets/images/mic4.png"),
 ];
+
+const disabledMicIcon = require("../assets/images/mic_disabled.png");
 
 // 무음 상태가 유지되어야 하는 시간
 const SILENCE_MS = 1200;
@@ -48,6 +49,7 @@ const NOISE_UPDATE_ALPHA = 0.08;
 export default function MicButton({ onRecordComplete, disabled = false, touchableRef = null }) {
   const [active, setActive] = useState(false);
   const [frame, setFrame] = useState(0);
+  const [showDisabledIcon, setShowDisabledIcon] = useState(disabled);
 
   const silenceStartedAtRef = useRef(null);
   const recordStartedAtRef = useRef(null);
@@ -78,6 +80,17 @@ export default function MicButton({ onRecordComplete, disabled = false, touchabl
       clearInterval(interval);
     };
   }, [active, frame]);
+
+  useEffect(() => {
+    if (!disabled) {
+      setShowDisabledIcon(false);
+      return;
+    }
+
+    if (!active && frame === 0) {
+      setShowDisabledIcon(true);
+    }
+  }, [disabled, active, frame]);
 
   useEffect(() => {
     return () => {
@@ -312,8 +325,9 @@ export default function MicButton({ onRecordComplete, disabled = false, touchabl
       onPress={toggleMic}
       style={styles.button}
       disabled={disabled}
+      activeOpacity={disabled ? 1 : 0.7}
     >
-      <Image source={micIcons[frame]} style={[styles.icon, disabled && styles.iconDisabled]} />
+      <Image source={showDisabledIcon ? disabledMicIcon : micIcons[frame]} style={styles.icon} />
     </TouchableOpacity>
   );
 }
@@ -327,8 +341,5 @@ const styles = StyleSheet.create({
   icon: {
     width: W * 0.42,
     height: W * 0.42,
-  },
-  iconDisabled: {
-    opacity: 0.45,
   },
 });
