@@ -1,14 +1,5 @@
 import React, { useEffect, useMemo, useState, useCallback, useContext, useRef } from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  Dimensions,
-  TouchableOpacity,
-  Image,
-  Alert,
-  Pressable,
-} from "react-native";
+import { View, Text, StyleSheet, Dimensions, TouchableOpacity, Image, Alert } from "react-native";
 import Animated, {
   Easing,
   interpolate,
@@ -21,6 +12,7 @@ import Sound from "react-native-nitro-sound";
 import colors from "../theme/colors";
 import BackButton from "../components/BackButton";
 import DiarySummaryToggle from "../components/DiarySummaryToggle";
+import DiaryVoicePlayer from "../components/DiaryVoicePlayer";
 import { ProfileContext } from "../context/ProfileContext";
 import { getDiaryByDay, getDiaryVoiceByDay } from "../api/diary";
 
@@ -79,14 +71,6 @@ function normalizeVoiceList(rawVoiceList) {
           : `음성 ${index + 1}`,
     }))
     .filter(item => item.url.length > 0);
-}
-
-function formatMs(ms) {
-  const safe = Math.max(0, Number(ms) || 0);
-  const totalSec = Math.floor(safe / 1000);
-  const min = Math.floor(totalSec / 60);
-  const sec = totalSec % 60;
-  return `${String(min).padStart(2, "0")}:${String(sec).padStart(2, "0")}`;
 }
 
 export default function DiaryRecordScreen({ navigation, route }) {
@@ -551,78 +535,32 @@ export default function DiaryRecordScreen({ navigation, route }) {
 
       {/* 음성 플레이어 */}
       {showPlayer && (
-        <View style={styles.playerWrap}>
-          <View style={styles.playerTopRow}>
-            <Text style={styles.playerTitle}>
-              {currentVoice?.role === "GREENI"
-                ? "그리니"
-                : currentVoice?.role === "CHILD"
-                ? "아이"
-                : "음성"}
-              {voiceList.length > 1 ? ` (${currentVoiceIndex + 1}/${voiceList.length})` : ""}
-            </Text>
-
-            <TouchableOpacity
-              onPress={() => stopPlayback({ hide: true, resetIndex: false })}
-              activeOpacity={0.8}
-            >
-              <Text style={styles.playerClose}>닫기</Text>
-            </TouchableOpacity>
-          </View>
-
-          <View style={styles.playerControlRow}>
-            <TouchableOpacity
-              style={[styles.sideBtn, currentVoiceIndex === 0 && styles.sideBtnDisabled]}
-              onPress={handlePrevVoice}
-              activeOpacity={0.8}
-              disabled={currentVoiceIndex === 0}
-            >
-              <Text style={styles.sideBtnText}>‹</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.playBtn}
-              onPress={handleTogglePlayPause}
-              activeOpacity={0.85}
-              disabled={isVoiceLoading}
-            >
-              <Text style={styles.playBtnText}>
-                {isVoiceLoading ? "..." : isPlaying ? "❚❚" : "▶"}
-              </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[
-                styles.sideBtn,
-                currentVoiceIndex >= voiceList.length - 1 && styles.sideBtnDisabled,
-              ]}
-              onPress={handleNextVoice}
-              activeOpacity={0.8}
-              disabled={currentVoiceIndex >= voiceList.length - 1}
-            >
-              <Text style={styles.sideBtnText}>›</Text>
-            </TouchableOpacity>
-          </View>
-
-          <Pressable
-            style={styles.progressArea}
-            onLayout={e => {
-              setProgressBarW(e?.nativeEvent?.layout?.width ?? 0);
-            }}
-            onPress={e => {
-              handleSeek(e.nativeEvent.locationX);
-            }}
-          >
-            <View style={styles.progressTrack} />
-            <View style={[styles.progressFill, { width: `${progressRatio * 100}%` }]} />
-            <View style={[styles.progressThumb, { left: `${progressRatio * 100}%` }]} />
-          </Pressable>
-
-          <View style={styles.timeRow}>
-            <Text style={styles.timeText}>{formatMs(safePosition)}</Text>
-            <Text style={styles.timeText}>{formatMs(safeDuration)}</Text>
-          </View>
-        </View>
+        <DiaryVoicePlayer
+          title={
+            currentVoice?.role === "GREENI"
+              ? "그리니"
+              : currentVoice?.role === "CHILD"
+              ? "아이"
+              : "음성"
+          }
+          currentIndex={currentVoiceIndex}
+          totalCount={voiceList.length}
+          isPlaying={isPlaying}
+          isLoading={isVoiceLoading}
+          currentPosition={safePosition}
+          duration={safeDuration}
+          progressRatio={progressRatio}
+          isPrevDisabled={currentVoiceIndex === 0}
+          isNextDisabled={currentVoiceIndex >= voiceList.length - 1}
+          onPressPrev={handlePrevVoice}
+          onPressNext={handleNextVoice}
+          onPressPlayPause={handleTogglePlayPause}
+          onPressClose={() => stopPlayback({ hide: true, resetIndex: false })}
+          onSeek={handleSeek}
+          onProgressLayout={e => {
+            setProgressBarW(e?.nativeEvent?.layout?.width ?? 0);
+          }}
+        />
       )}
 
       {/* 토글 */}
@@ -712,118 +650,6 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-  },
-
-  playerWrap: {
-    position: "absolute",
-    left: 16,
-    right: 16,
-    top: 155,
-    backgroundColor: colors.white,
-    borderRadius: 18,
-    borderWidth: 3,
-    borderColor: colors.greenDark,
-    paddingHorizontal: 16,
-    paddingTop: 14,
-    paddingBottom: 14,
-    zIndex: 20,
-  },
-  playerTopRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 10,
-  },
-  playerTitle: {
-    flex: 1,
-    fontFamily: "Maplestory_Bold",
-    fontSize: 14,
-    color: colors.brown,
-    marginRight: 10,
-  },
-  playerClose: {
-    fontFamily: "Maplestory_Light",
-    fontSize: 13,
-    color: colors.brown,
-  },
-  playerControlRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 12,
-    gap: 12,
-  },
-  sideBtn: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    borderWidth: 2,
-    borderColor: colors.greenDark,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: colors.ivory,
-  },
-  sideBtnDisabled: {
-    opacity: 0.35,
-  },
-  sideBtnText: {
-    fontSize: 22,
-    color: colors.brown,
-    fontFamily: "Maplestory_Bold",
-    bottom: 1,
-  },
-  playBtn: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    borderWidth: 2,
-    borderColor: colors.greenDark,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: colors.green,
-  },
-  playBtnText: {
-    fontSize: 24,
-    color: colors.brown,
-    fontFamily: "Maplestory_Bold",
-  },
-  progressArea: {
-    justifyContent: "center",
-    height: 22,
-  },
-  progressTrack: {
-    position: "absolute",
-    left: 0,
-    right: 0,
-    height: 8,
-    borderRadius: 999,
-    backgroundColor: "#E8E3D3",
-  },
-  progressFill: {
-    position: "absolute",
-    left: 0,
-    height: 8,
-    borderRadius: 999,
-    backgroundColor: colors.green,
-  },
-  progressThumb: {
-    position: "absolute",
-    marginLeft: -7,
-    width: 14,
-    height: 14,
-    borderRadius: 7,
-    backgroundColor: colors.greenDark,
-  },
-  timeRow: {
-    marginTop: 6,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  timeText: {
-    fontFamily: "Maplestory_Light",
-    fontSize: 12,
-    color: colors.brown,
   },
 
   // 토글
