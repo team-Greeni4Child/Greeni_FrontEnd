@@ -42,7 +42,9 @@ export default function EraserOptionsPanel({ eraserWidth, setEraserWidth }) {
           onPress={() => setEraserWidth(v => Math.max(5, v - 1))}
           activeOpacity={0.8}
         >
-          <Text style={styles.thicknessBtnText}>—</Text>
+          <View style={styles.minusIcon}>
+            <View style={styles.minusLine} />
+          </View>
         </TouchableOpacity>
 
         <Slider
@@ -62,7 +64,10 @@ export default function EraserOptionsPanel({ eraserWidth, setEraserWidth }) {
           onPress={() => setEraserWidth(v => Math.min(80, v + 1))}
           activeOpacity={0.8}
         >
-          <Text style={styles.thicknessBtnText}>＋</Text>
+          <View style={styles.plusIcon}>
+            <View style={styles.plusHorizontal} />
+            <View style={styles.plusVertical} />
+          </View>
         </TouchableOpacity>
       </View>
 
@@ -137,11 +142,37 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  thicknessBtnText: {
-    fontFamily: "Maplestory_Bold",
-    color: colors.brown,
-    fontSize: 28,
-    lineHeight: 28,
+  minusIcon: {
+    width: 28,
+    height: 28,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  minusLine: {
+    width: 18,
+    height: 3,
+    borderRadius: 2,
+    backgroundColor: colors.brown,
+  },
+  plusIcon: {
+    width: 28,
+    height: 28,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  plusHorizontal: {
+    position: "absolute",
+    width: 16,
+    height: 3,
+    borderRadius: 2,
+    backgroundColor: colors.brown,
+  },
+  plusVertical: {
+    position: "absolute",
+    width: 3,
+    height: 16,
+    borderRadius: 2,
+    backgroundColor: colors.brown,
   },
 
   previewRow: {
