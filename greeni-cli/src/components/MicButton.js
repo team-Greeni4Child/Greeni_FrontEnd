@@ -20,19 +20,48 @@ const micIcons = [
   require("../assets/images/mic4.png"),
 ];
 
-const SILENCE_MS = 3000;
-const SILENCE_DB = -45;
+// 무음 상태가 유지되어야 하는 시간
+const SILENCE_MS = 1200;
+
+// 말소리가 감지되지 않았을 때 자동 종료까지 기다리는 시간
+const NO_SPEECH_TIMEOUT_MS = 2000;
+
+// 강제 종료까지의 최대 녹음 시간
+const MAX_RECORDING_MS = 15000;
+
+// 자동 종료를 막는 최소 녹음 시간
+const MIN_RECORDING_MS = 800;
+
+// 주변 소음보다 이 정도 커야 말소리로 판단. 말소리 잘 못잡으면 2낮추기
+const SPEECH_MARGIN_DB = 12;
+
+// 주변 소음 기준값의 최소/최대 범위
+const NOISE_FLOOR_MIN = -60;
+const NOISE_FLOOR_MAX = -28;
+
+// 동적 기준이 안정되기 전 사용할 기본 무음 기준
+const DEFAULT_NOISE_FLOOR = -50;
+
+// 주변 소음 기준을 천천히 갱신하는 비율
+const NOISE_UPDATE_ALPHA = 0.08;
 
 export default function MicButton({ onRecordComplete, disabled = false, touchableRef = null }) {
   const [active, setActive] = useState(false);
   const [frame, setFrame] = useState(0);
 
   const silenceStartedAtRef = useRef(null);
+  const recordStartedAtRef = useRef(null);
+  const maxRecordingTimerRef = useRef(null);
+  const noSpeechTimerRef = useRef(null);
   const isStoppingRef = useRef(false);
   const recordPathRef = useRef("");
 
+  const noiseFloorRef = useRef(null);
+  const hasDetectedSpeechRef = useRef(false);
+
   useEffect(() => {
     let interval;
+
     if (active) {
       interval = setInterval(() => {
         setFrame(prev => (prev + 1) % micIcons.length);
@@ -52,6 +81,9 @@ export default function MicButton({ onRecordComplete, disabled = false, touchabl
 
   useEffect(() => {
     return () => {
+      clearMaxRecordingTimer();
+      clearNoSpeechTimer();
+
       try {
         Sound.removeRecordBackListener();
       } catch (e) {
@@ -59,6 +91,60 @@ export default function MicButton({ onRecordComplete, disabled = false, touchabl
       }
     };
   }, []);
+
+  const clearMaxRecordingTimer = () => {
+    if (maxRecordingTimerRef.current) {
+      clearTimeout(maxRecordingTimerRef.current);
+      maxRecordingTimerRef.current = null;
+    }
+  };
+
+  const clearNoSpeechTimer = () => {
+    if (noSpeechTimerRef.current) {
+      clearTimeout(noSpeechTimerRef.current);
+      noSpeechTimerRef.current = null;
+    }
+  };
+
+  const clampNoiseFloor = value => {
+    return Math.max(NOISE_FLOOR_MIN, Math.min(NOISE_FLOOR_MAX, value));
+  };
+
+  const getNoiseFloor = () => {
+    if (typeof noiseFloorRef.current === "number") {
+      return clampNoiseFloor(noiseFloorRef.current);
+    }
+
+    return DEFAULT_NOISE_FLOOR;
+  };
+
+  const getSpeechThreshold = () => {
+    return getNoiseFloor() + SPEECH_MARGIN_DB;
+  };
+
+  const updateNoiseFloor = meter => {
+    if (typeof meter !== "number") return;
+
+    const safeMeter = clampNoiseFloor(meter);
+
+    if (noiseFloorRef.current === null) {
+      noiseFloorRef.current = safeMeter;
+      return;
+    }
+
+    const prev = noiseFloorRef.current;
+    const next = prev * (1 - NOISE_UPDATE_ALPHA) + safeMeter * NOISE_UPDATE_ALPHA;
+
+    noiseFloorRef.current = clampNoiseFloor(next);
+  };
+
+  const resetRecordingRefs = () => {
+    silenceStartedAtRef.current = null;
+    recordStartedAtRef.current = null;
+    recordPathRef.current = "";
+    noiseFloorRef.current = null;
+    hasDetectedSpeechRef.current = false;
+  };
 
   const requestMicPermission = async () => {
     if (Platform.OS !== "android") return true;
@@ -86,12 +172,13 @@ export default function MicButton({ onRecordComplete, disabled = false, touchabl
 
     try {
       isStoppingRef.current = true;
+      clearMaxRecordingTimer();
+      clearNoSpeechTimer();
 
       const resultPath = await Sound.stopRecorder();
       Sound.removeRecordBackListener();
 
       setActive(false);
-      silenceStartedAtRef.current = null;
 
       const finalPath = resultPath || recordPathRef.current || "";
 
@@ -102,8 +189,8 @@ export default function MicButton({ onRecordComplete, disabled = false, touchabl
       }
     } catch (e) {
       console.log("STOP RECORD FAIL:", e);
-      Alert.alert("오류", "녹음을 종료하지 못했어요.");
     } finally {
+      resetRecordingRefs();
       isStoppingRef.current = false;
     }
   };
@@ -119,8 +206,12 @@ export default function MicButton({ onRecordComplete, disabled = false, touchabl
 
     try {
       isStoppingRef.current = false;
-      silenceStartedAtRef.current = null;
-      recordPathRef.current = "";
+      resetRecordingRefs();
+
+      recordStartedAtRef.current = Date.now();
+
+      clearMaxRecordingTimer();
+      clearNoSpeechTimer();
 
       Sound.setSubscriptionDuration(0.2);
 
@@ -135,17 +226,40 @@ export default function MicButton({ onRecordComplete, disabled = false, touchabl
       Sound.addRecordBackListener(e => {
         const meter = typeof e.currentMetering === "number" ? e.currentMetering : null;
         const now = Date.now();
+        const startedAt = recordStartedAtRef.current;
 
-        if (meter === null) return;
+        if (meter === null || !startedAt) return;
 
-        if (meter < SILENCE_DB) {
-          if (!silenceStartedAtRef.current) {
-            silenceStartedAtRef.current = now;
-          } else if (now - silenceStartedAtRef.current >= SILENCE_MS) {
-            stopRecording();
-          }
-        } else {
+        const elapsed = now - startedAt;
+
+        if (elapsed < MIN_RECORDING_MS) {
+          updateNoiseFloor(meter);
+          return;
+        }
+
+        const speechThreshold = getSpeechThreshold();
+        const isSpeech = meter >= speechThreshold;
+
+        if (isSpeech) {
+          hasDetectedSpeechRef.current = true;
+          clearNoSpeechTimer();
           silenceStartedAtRef.current = null;
+          return;
+        }
+
+        updateNoiseFloor(meter);
+
+        if (!hasDetectedSpeechRef.current) {
+          return;
+        }
+
+        if (!silenceStartedAtRef.current) {
+          silenceStartedAtRef.current = now;
+          return;
+        }
+
+        if (now - silenceStartedAtRef.current >= SILENCE_MS) {
+          stopRecording();
         }
       });
 
@@ -153,16 +267,31 @@ export default function MicButton({ onRecordComplete, disabled = false, touchabl
       recordPathRef.current = uri;
       setActive(true);
 
+      noSpeechTimerRef.current = setTimeout(() => {
+        if (!hasDetectedSpeechRef.current) {
+          stopRecording();
+        }
+      }, NO_SPEECH_TIMEOUT_MS);
+
+      maxRecordingTimerRef.current = setTimeout(() => {
+        stopRecording();
+      }, MAX_RECORDING_MS);
+
       console.log("RECORD START:", uri);
     } catch (e) {
       console.log("START RECORD FAIL:", e);
-      Alert.alert("오류", "녹음을 시작하지 못했어요.");
+
+      clearMaxRecordingTimer();
+      clearNoSpeechTimer();
 
       try {
         Sound.removeRecordBackListener();
       } catch (err) {
         console.log("REMOVE RECORD LISTENER FAIL:", err);
       }
+
+      resetRecordingRefs();
+      setActive(false);
     }
   };
 
@@ -196,7 +325,6 @@ const styles = StyleSheet.create({
     bottom: H * 0.06,
   },
   icon: {
-    //backgroundColor: "green",
     width: W * 0.42,
     height: W * 0.42,
   },
