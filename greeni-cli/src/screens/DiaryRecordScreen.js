@@ -57,7 +57,13 @@ function buildDiaryImageUri(diaryImage) {
 function normalizeVoiceList(rawVoiceList) {
   if (!Array.isArray(rawVoiceList)) return [];
 
-  return rawVoiceList
+  const shouldRemoveInjectedVoice = rawVoiceList[0]?.voiceRole === "GREENI";
+
+  const filteredVoiceList = shouldRemoveInjectedVoice
+    ? rawVoiceList.filter((_, index) => index % 3 !== 0)
+    : rawVoiceList;
+
+  return filteredVoiceList
     .map((item, index) => ({
       id: `${item?.createdAt ?? index}-${index}`,
       url: typeof item?.voiceUrl === "string" ? item.voiceUrl.trim() : "",
