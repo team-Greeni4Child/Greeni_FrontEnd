@@ -840,7 +840,7 @@ const styles = StyleSheet.create({
     color: colors.brown,
     fontFamily: "gangwongyoyuksaeeum",
     textAlign: "center",
-    lineHeight: 26,
+    lineHeight: 28,
   },
 
   greeni: {

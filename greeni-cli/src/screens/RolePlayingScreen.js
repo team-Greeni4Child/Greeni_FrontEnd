@@ -402,11 +402,11 @@ const styles = StyleSheet.create({
     color: colors.brown,
     fontFamily: "gangwongyoyuksaeeum",
     textAlign: "center",
-    lineHeight: 26,
+    lineHeight: 28,
   },
   bubbleTextSelected: {
     fontSize: 28,
-    lineHeight: 26,
+    lineHeight: 28,
   },
   greeni: {
     aspectRatio: 80 / 110,

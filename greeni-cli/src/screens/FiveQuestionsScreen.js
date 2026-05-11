@@ -597,14 +597,14 @@ const styles = StyleSheet.create({
     paddingVertical: 30,
     alignItems: "center",
     justifyContent: "center",
-    top: -45,
+    top: -60,
   },
   hintText: {
     fontSize: 28,
     color: colors.brown,
     fontFamily: "gangwongyoyuksaeeum",
     textAlign: "center",
-    lineHeight: 26,
+    lineHeight: 30,
   },
 
   // 그리니
