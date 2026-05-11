@@ -7,19 +7,22 @@ import {
   PermissionsAndroid,
   Platform,
   Alert,
+  Animated,
+  Easing,
 } from "react-native";
 import Sound, { AudioEncoderAndroidType, AudioSourceAndroidType } from "react-native-nitro-sound";
 
 const { width: W, height: H } = Dimensions.get("window");
 
-const micIcons = [
-  require("../assets/images/mic1.png"),
-  require("../assets/images/mic2.png"),
-  require("../assets/images/mic3.png"),
-  require("../assets/images/mic4.png"),
-];
-
+const micIcon = require("../assets/images/mic.png");
+const micWaveIcon = require("../assets/images/mic_wave.png");
 const disabledMicIcon = require("../assets/images/mic_disabled.png");
+
+// 녹음 전 파동 원 크기
+const IDLE_WAVE_SCALE = 0.5;
+
+// 녹음 중 파동 원 최대 크기
+const ACTIVE_WAVE_SCALE = 1;
 
 // 무음 상태가 유지되어야 하는 시간
 const SILENCE_MS = 1200;
@@ -48,8 +51,11 @@ const NOISE_UPDATE_ALPHA = 0.08;
 
 export default function MicButton({ onRecordComplete, disabled = false, touchableRef = null }) {
   const [active, setActive] = useState(false);
-  const [frame, setFrame] = useState(0);
   const [showDisabledIcon, setShowDisabledIcon] = useState(disabled);
+
+  const pulseScale = useRef(new Animated.Value(IDLE_WAVE_SCALE)).current;
+  const pulseOpacity = useRef(new Animated.Value(1)).current;
+  const pulseAnimationRef = useRef(null);
 
   const silenceStartedAtRef = useRef(null);
   const recordStartedAtRef = useRef(null);
@@ -62,40 +68,92 @@ export default function MicButton({ onRecordComplete, disabled = false, touchabl
   const hasDetectedSpeechRef = useRef(false);
 
   useEffect(() => {
-    let interval;
-
     if (active) {
-      interval = setInterval(() => {
-        setFrame(prev => (prev + 1) % micIcons.length);
-      }, 200);
-    } else {
-      if (frame > 0) {
-        interval = setInterval(() => {
-          setFrame(prev => (prev > 0 ? prev - 1 : 0));
-        }, 200);
-      }
-    }
-
-    return () => {
-      clearInterval(interval);
-    };
-  }, [active, frame]);
-
-  useEffect(() => {
-    if (!disabled) {
       setShowDisabledIcon(false);
+
+      if (pulseAnimationRef.current) {
+        pulseAnimationRef.current.stop();
+        pulseAnimationRef.current = null;
+      }
+
+      pulseScale.setValue(IDLE_WAVE_SCALE);
+      pulseOpacity.setValue(1);
+
+      pulseAnimationRef.current = Animated.loop(
+        Animated.sequence([
+          Animated.parallel([
+            Animated.timing(pulseScale, {
+              toValue: ACTIVE_WAVE_SCALE,
+              duration: 650,
+              easing: Easing.out(Easing.quad),
+              useNativeDriver: true,
+            }),
+            Animated.timing(pulseOpacity, {
+              toValue: 0.9,
+              duration: 650,
+              easing: Easing.out(Easing.quad),
+              useNativeDriver: true,
+            }),
+          ]),
+          Animated.parallel([
+            Animated.timing(pulseScale, {
+              toValue: IDLE_WAVE_SCALE,
+              duration: 650,
+              easing: Easing.inOut(Easing.quad),
+              useNativeDriver: true,
+            }),
+            Animated.timing(pulseOpacity, {
+              toValue: 1,
+              duration: 650,
+              easing: Easing.inOut(Easing.quad),
+              useNativeDriver: true,
+            }),
+          ]),
+        ]),
+      );
+
+      pulseAnimationRef.current.start();
       return;
     }
 
-    if (!active && frame === 0) {
-      setShowDisabledIcon(true);
+    if (pulseAnimationRef.current) {
+      pulseAnimationRef.current.stop();
+      pulseAnimationRef.current = null;
     }
-  }, [disabled, active, frame]);
+
+    if (!disabled) {
+      setShowDisabledIcon(false);
+    }
+
+    Animated.parallel([
+      Animated.timing(pulseScale, {
+        toValue: IDLE_WAVE_SCALE,
+        duration: 250,
+        easing: Easing.out(Easing.quad),
+        useNativeDriver: true,
+      }),
+      Animated.timing(pulseOpacity, {
+        toValue: 1,
+        duration: 250,
+        easing: Easing.out(Easing.quad),
+        useNativeDriver: true,
+      }),
+    ]).start(({ finished }) => {
+      if (finished && disabled) {
+        setShowDisabledIcon(true);
+      }
+    });
+  }, [active, disabled, pulseScale, pulseOpacity]);
 
   useEffect(() => {
     return () => {
       clearMaxRecordingTimer();
       clearNoSpeechTimer();
+
+      if (pulseAnimationRef.current) {
+        pulseAnimationRef.current.stop();
+        pulseAnimationRef.current = null;
+      }
 
       try {
         Sound.removeRecordBackListener();
@@ -327,7 +385,25 @@ export default function MicButton({ onRecordComplete, disabled = false, touchabl
       disabled={disabled}
       activeOpacity={disabled ? 1 : 0.7}
     >
-      <Image source={showDisabledIcon ? disabledMicIcon : micIcons[frame]} style={styles.icon} />
+      {showDisabledIcon ? (
+        <Image source={disabledMicIcon} style={styles.disabledIcon} />
+      ) : (
+        <Animated.View style={styles.micWrap}>
+          <Animated.Image
+            source={micWaveIcon}
+            style={[
+              styles.waveIcon,
+              {
+                opacity: pulseOpacity,
+                transform: [{ scale: pulseScale }],
+              },
+            ]}
+            resizeMode="contain"
+          />
+
+          <Image source={micIcon} style={styles.micIcon} resizeMode="contain" />
+        </Animated.View>
+      )}
     </TouchableOpacity>
   );
 }
@@ -336,9 +412,27 @@ const styles = StyleSheet.create({
   button: {
     position: "absolute",
     alignItems: "center",
+    justifyContent: "center",
     bottom: H * 0.06,
+    width: W * 0.42,
+    height: W * 0.42,
   },
-  icon: {
+  micWrap: {
+    width: W * 0.42,
+    height: W * 0.42,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  waveIcon: {
+    position: "absolute",
+    width: W * 0.42,
+    height: W * 0.42,
+  },
+  micIcon: {
+    width: W * 0.42,
+    height: W * 0.42,
+  },
+  disabledIcon: {
     width: W * 0.42,
     height: W * 0.42,
   },
