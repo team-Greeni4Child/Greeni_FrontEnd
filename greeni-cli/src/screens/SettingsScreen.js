@@ -662,13 +662,13 @@ const styles = StyleSheet.create({
   },
   topBackground: {
     width: W,
-    height: H * 0.87,
     backgroundColor: colors.pink,
     borderBottomLeftRadius: 30,
     borderBottomRightRadius: 30,
     alignItems: "center",
     justifyContent: "flex-start",
     paddingTop: H * 0.08,
+    paddingBlock: 20,
   },
 
   titleWrap: {
