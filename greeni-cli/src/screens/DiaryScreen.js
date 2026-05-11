@@ -113,7 +113,7 @@ export default function DiaryScreen({ navigation, route }) {
           return true;
         }
 
-        if (isSending || isAiSpeaking || isEndingRef.current || isClosingRef.current) {
+        if (isEndingRef.current || isClosingRef.current) {
           return true;
         }
 
@@ -123,7 +123,7 @@ export default function DiaryScreen({ navigation, route }) {
 
       const sub = BackHandler.addEventListener("hardwareBackPress", onBackPress);
       return () => sub.remove();
-    }, [showExitModal, showErrorModal, isSending, isAiSpeaking]),
+    }, [showExitModal, showErrorModal]),
   );
 
   const playDiaryVoice = async audioBase64 => {
@@ -142,7 +142,7 @@ export default function DiaryScreen({ navigation, route }) {
   };
 
   const handleOpenExitModal = () => {
-    if (isSending || isAiSpeaking || isEndingRef.current || isClosingRef.current) return;
+    if (isEndingRef.current || isClosingRef.current) return;
     setShowExitModal(true);
   };
 
