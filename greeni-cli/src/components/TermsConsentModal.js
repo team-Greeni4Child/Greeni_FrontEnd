@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   Pressable,
   Dimensions,
+  ScrollView,
 } from "react-native";
 import Animated, {
   Easing,
@@ -18,6 +19,9 @@ import Animated, {
 import TermsRow from "./TermsRow";
 import Button from "./Button";
 import colors from "../theme/colors";
+import ParentConsentContent from "../contents/ParentConsentContent";
+import PrivacyPolicyContent from "../contents/PrivacyPolicyContent";
+import TermsOfServiceContent from "../contents/TermsOfServiceContent";
 
 const { width: W, height: H } = Dimensions.get("window");
 
@@ -48,6 +52,7 @@ export default function TermsConsentModal({
   onSubmit,
 }) {
   const [renderModal, setRenderModal] = useState(visible);
+  const [activeSheet, setActiveSheet] = useState(null);
 
   const translateY = useSharedValue(H);
   const overlayOpacity = useSharedValue(0);
@@ -131,6 +136,29 @@ export default function TermsConsentModal({
     onSubmit?.();
   };
 
+  const handlePressDetail = key => {
+    setActiveSheet(key);
+    onPressDetail?.(key);
+  };
+
+  const handleCloseSheet = () => {
+    setActiveSheet(null);
+  };
+
+  const getSheetTitle = () => {
+    if (activeSheet === "parentConsent") return "법정대리인 동의";
+    if (activeSheet === "privacyConsent") return "개인정보 수집·이용 동의";
+    if (activeSheet === "serviceConsent") return "이용약관";
+    return "";
+  };
+
+  const renderSheetContent = () => {
+    if (activeSheet === "parentConsent") return <ParentConsentContent />;
+    if (activeSheet === "privacyConsent") return <PrivacyPolicyContent />;
+    if (activeSheet === "serviceConsent") return <TermsOfServiceContent />;
+    return null;
+  };
+
   const overlayAnimStyle = useAnimatedStyle(() => {
     return {
       opacity: overlayOpacity.value,
@@ -146,73 +174,104 @@ export default function TermsConsentModal({
   if (!renderModal) return null;
 
   return (
-    <Modal
-      visible={renderModal}
-      transparent
-      animationType="none"
-      onRequestClose={handleClose}
-      statusBarTranslucent
-      navigationBarTranslucent
-    >
-      <Animated.View style={[styles.overlay, overlayAnimStyle]}>
-        <Pressable style={StyleSheet.absoluteFill} onPress={handleClose} />
+    <>
+      <Modal
+        visible={renderModal}
+        transparent
+        animationType="none"
+        onRequestClose={handleClose}
+        statusBarTranslucent
+        navigationBarTranslucent
+      >
+        <Animated.View style={[styles.overlay, overlayAnimStyle]}>
+          <Pressable style={StyleSheet.absoluteFill} onPress={handleClose} />
 
-        <Animated.View style={[styles.sheet, sheetAnimStyle]}>
-          <View style={styles.sheetInner}>
-            <TouchableOpacity style={styles.closeButton} activeOpacity={0.8} onPress={handleClose}>
-              <Text style={styles.closeText}>×</Text>
-            </TouchableOpacity>
+          <Animated.View style={[styles.sheet, sheetAnimStyle]}>
+            <View style={styles.sheetInner}>
+              <TouchableOpacity
+                style={styles.closeButton}
+                activeOpacity={0.8}
+                onPress={handleClose}
+              >
+                <Text style={styles.closeText}>×</Text>
+              </TouchableOpacity>
 
-            <Text style={styles.title}>잠시만요!</Text>
-            <Text style={styles.subTitle}>서비스 이용을 위해 약관 동의가 필요해요.</Text>
+              <Text style={styles.title}>잠시만요!</Text>
+              <Text style={styles.subTitle}>서비스 이용을 위해 약관 동의가 필요해요.</Text>
 
-            <View style={styles.divider} />
+              <View style={styles.divider} />
 
-            <Text style={styles.guideText}>
-              본 서비스는 만 14세 미만 아동을 대상으로 하며,{"\n"}
-              회원가입은 반드시 보호자가 진행해야 합니다.
-            </Text>
-
-            <TouchableOpacity
-              style={styles.allAgreeRow}
-              activeOpacity={0.2}
-              onPress={handleToggleAll}
-            >
-              <Text style={styles.allAgreeText}>
-                {isAllChecked ? "전체 동의 해제" : "전체 동의"}
+              <Text style={styles.guideText}>
+                본 서비스는 만 14세 미만 아동을 대상으로 하며,{"\n"}
+                회원가입은 반드시 보호자가 진행해야 합니다.
               </Text>
-            </TouchableOpacity>
 
-            <View style={styles.termsList}>
-              {TERMS_ITEMS.map(item => (
-                <View key={item.key} style={styles.rowWrap}>
-                  <TermsRow
-                    checked={!!terms[item.key]}
-                    required={item.required}
-                    title={item.title}
-                    onToggle={() => onToggleTerm?.(item.key)}
-                    onPressDetail={() => onPressDetail?.(item.key)}
-                  />
-                </View>
-              ))}
-            </View>
+              <TouchableOpacity
+                style={styles.allAgreeRow}
+                activeOpacity={0.2}
+                onPress={handleToggleAll}
+              >
+                <Text style={styles.allAgreeText}>
+                  {isAllChecked ? "전체 동의 해제" : "전체 동의"}
+                </Text>
+              </TouchableOpacity>
 
-            <View style={styles.buttonWrap}>
-              <Button
-                title="가입하기"
-                width={W * 0.82}
-                height={42}
-                borderRadius={8}
-                fontSize={12}
-                onPress={handleSubmit}
-                disabled={!isRequiredChecked}
-                disabledColor="#E2E2E2"
-              />
+              <View style={styles.termsList}>
+                {TERMS_ITEMS.map(item => (
+                  <View key={item.key} style={styles.rowWrap}>
+                    <TermsRow
+                      checked={!!terms[item.key]}
+                      required={item.required}
+                      title={item.title}
+                      onToggle={() => onToggleTerm?.(item.key)}
+                      onPressDetail={() => handlePressDetail(item.key)}
+                    />
+                  </View>
+                ))}
+              </View>
+
+              <View style={styles.buttonWrap}>
+                <Button
+                  title="가입하기"
+                  width={W * 0.82}
+                  height={42}
+                  borderRadius={8}
+                  fontSize={12}
+                  onPress={handleSubmit}
+                  disabled={!isRequiredChecked}
+                  disabledColor="#E2E2E2"
+                />
+              </View>
             </View>
-          </View>
+          </Animated.View>
         </Animated.View>
-      </Animated.View>
-    </Modal>
+      </Modal>
+
+      <Modal
+        visible={activeSheet !== null}
+        animationType="slide"
+        transparent={false}
+        onRequestClose={handleCloseSheet}
+      >
+        <View style={styles.detailScreen}>
+          <View style={styles.detailHeader}>
+            <Text style={styles.detailTitle}>{getSheetTitle()}</Text>
+
+            <TouchableOpacity style={styles.detailCloseButton} onPress={handleCloseSheet}>
+              <Text style={styles.detailCloseText}>닫기</Text>
+            </TouchableOpacity>
+          </View>
+
+          <ScrollView
+            style={styles.detailBody}
+            contentContainerStyle={styles.detailBodyContent}
+            showsVerticalScrollIndicator={true}
+          >
+            {renderSheetContent()}
+          </ScrollView>
+        </View>
+      </Modal>
+    </>
   );
 }
 
@@ -305,5 +364,45 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 80,
     alignItems: "center",
+  },
+
+  detailScreen: {
+    flex: 1,
+    backgroundColor: colors.white,
+  },
+  detailHeader: {
+    height: 72,
+    paddingHorizontal: 20,
+    alignItems: "center",
+    justifyContent: "center",
+    borderBottomWidth: 1,
+    borderBottomColor: "#EEE",
+    position: "relative",
+  },
+  detailTitle: {
+    fontSize: 18,
+    fontFamily: "Maplestory_Bold",
+    color: colors.brown,
+    textAlign: "center",
+  },
+  detailCloseButton: {
+    position: "absolute",
+    right: 20,
+    top: 0,
+    bottom: 0,
+    justifyContent: "center",
+  },
+  detailCloseText: {
+    fontSize: 16,
+    fontFamily: "Maplestory_Light",
+    color: colors.brown,
+  },
+  detailBody: {
+    flex: 1,
+    backgroundColor: colors.white,
+  },
+  detailBodyContent: {
+    padding: 24,
+    paddingBottom: 40,
   },
 });
