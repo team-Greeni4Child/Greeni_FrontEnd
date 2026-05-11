@@ -1,5 +1,14 @@
 import React, { useState, useEffect, useCallback, useContext, useRef } from "react";
-import { View, Text, Image, StyleSheet, Dimensions, ImageBackground } from "react-native";
+import {
+  View,
+  Text,
+  Image,
+  StyleSheet,
+  Dimensions,
+  ImageBackground,
+  Modal,
+  TouchableOpacity,
+} from "react-native";
 import BackButton from "../components/BackButton";
 import TutorialOverlay from "../components/TutorialOverlay";
 import colors from "../theme/colors";
@@ -42,12 +51,14 @@ export default function TwentyQuestionsScreen({ navigation }) {
   const [canAnswerCurrentQuestion, setCanAnswerCurrentQuestion] = useState(false);
   const [showAnswerText, setShowAnswerText] = useState(false);
   const [isAnswerFeedbackShowing, setIsAnswerFeedbackShowing] = useState(false);
+  const [showErrorModal, setShowErrorModal] = useState(false);
 
   const initialScoreRef = useRef(null);
   const isSubmittingRef = useRef(false);
   const isMovingNextRef = useRef(false);
   const isScreenActiveRef = useRef(true);
   const nextQuestionTimerRef = useRef(null);
+  const failCountRef = useRef(0);
 
   // 튜토리얼용 다섯고개 Ref
   const rootRef = useRef(null);
@@ -81,6 +92,27 @@ export default function TwentyQuestionsScreen({ navigation }) {
     const result = res?.result || res || {};
     return result?.sessionId || result?.session_id || "";
   };
+
+  const handleErrorModalOk = async () => {
+    setShowErrorModal(false);
+    await handleBackPress();
+  };
+
+  const handleApiFail = useCallback(() => {
+    if (!isScreenActiveRef.current) return true;
+
+    failCountRef.current += 1;
+
+    if (failCountRef.current >= 2) {
+      setIsLoadingQuestion(false);
+      setIsCheckingAnswer(false);
+      setCanAnswerCurrentQuestion(false);
+      setShowErrorModal(true);
+      return true;
+    }
+
+    return false;
+  }, []);
 
   const playHintVoice = useCallback(async audioBase64 => {
     if (!audioBase64) return;
@@ -126,6 +158,7 @@ export default function TwentyQuestionsScreen({ navigation }) {
   const loadNewQuestion = useCallback(async () => {
     try {
       if (!isScreenActiveRef.current) return;
+      if (showErrorModal) return;
 
       setIsLoadingQuestion(true);
       setIsCheckingAnswer(false);
@@ -164,6 +197,8 @@ export default function TwentyQuestionsScreen({ navigation }) {
         throw new Error("힌트를 받아오지 못했어요.");
       }
 
+      failCountRef.current = 0;
+
       setHints(nextHints);
       setSessionId(nextSessionId);
       setCurrentHint(0);
@@ -178,15 +213,19 @@ export default function TwentyQuestionsScreen({ navigation }) {
       console.log("CREATE FIVE QUESTIONS HINT FAIL:", e);
 
       if (isScreenActiveRef.current) {
-        setCanAnswerCurrentQuestion(false);
-        goToNextQuestion();
+        const shouldStop = handleApiFail();
+
+        if (!shouldStop) {
+          setCanAnswerCurrentQuestion(false);
+          goToNextQuestion();
+        }
       }
     } finally {
-      if (isScreenActiveRef.current) {
+      if (isScreenActiveRef.current && !showErrorModal) {
         setIsLoadingQuestion(false);
       }
     }
-  }, [playHintVoice, goToNextQuestion]);
+  }, [playHintVoice, goToNextQuestion, handleApiFail, showErrorModal]);
 
   useEffect(() => {
     loadNewQuestionRef.current = loadNewQuestion;
@@ -231,6 +270,7 @@ export default function TwentyQuestionsScreen({ navigation }) {
       if (!isScreenActiveRef.current) return;
       if (!canAnswerCurrentQuestion) return;
       if (isAnswerFeedbackShowing) return;
+      if (showErrorModal) return;
 
       try {
         setIsCheckingAnswer(true);
@@ -243,6 +283,8 @@ export default function TwentyQuestionsScreen({ navigation }) {
         });
 
         if (!isScreenActiveRef.current) return;
+
+        failCountRef.current = 0;
 
         console.log("CHECK RES:", res);
 
@@ -284,10 +326,14 @@ export default function TwentyQuestionsScreen({ navigation }) {
         console.log("CHECK FIVE QUESTIONS ANSWER FAIL:", e);
 
         if (isScreenActiveRef.current) {
-          setBubbleText("다시 한 번 말해줄래?");
+          const shouldStop = handleApiFail();
+
+          if (!shouldStop) {
+            setBubbleText("다시 한 번 말해줄래?");
+          }
         }
       } finally {
-        if (isScreenActiveRef.current) {
+        if (isScreenActiveRef.current && !showErrorModal) {
           setIsCheckingAnswer(false);
         }
       }
@@ -301,6 +347,8 @@ export default function TwentyQuestionsScreen({ navigation }) {
       isAnswerFeedbackShowing,
       showNextHint,
       goToNextQuestion,
+      handleApiFail,
+      showErrorModal,
     ],
   );
 
@@ -391,7 +439,11 @@ export default function TwentyQuestionsScreen({ navigation }) {
 
   const progress = hints.length > 0 ? (currentHint + 1) / hints.length : 0;
   const isMicDisabled =
-    isLoadingQuestion || isCheckingAnswer || isAiSpeaking || isAnswerFeedbackShowing;
+    isLoadingQuestion ||
+    isCheckingAnswer ||
+    isAiSpeaking ||
+    isAnswerFeedbackShowing ||
+    showErrorModal;
 
   const isFiveTutorial = isTutorialEnabled && activeFlowId === "five";
   const currentTutorialStep =
@@ -473,6 +525,24 @@ export default function TwentyQuestionsScreen({ navigation }) {
       </View>
 
       <MicButton onRecordComplete={handleRecordComplete} disabled={isMicDisabled} />
+
+      <Modal transparent visible={showErrorModal}>
+        <View style={styles.modalBackground}>
+          <View style={styles.modalWrap}>
+            <Text style={styles.modalText}>네트워크 오류가 발생했습니다.</Text>
+
+            <View style={styles.modalButtonWrap}>
+              <TouchableOpacity
+                style={styles.modalButton}
+                onPress={handleErrorModalOk}
+                activeOpacity={1}
+              >
+                <Text style={styles.modalButtonText}>확인</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -618,5 +688,46 @@ const styles = StyleSheet.create({
   greeni: {
     aspectRatio: 92.35 / 124,
     width: W * 0.25,
+  },
+
+  modalBackground: {
+    flex: 1,
+    backgroundColor: colors.lightGray95,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalWrap: {
+    width: W * 0.7,
+    backgroundColor: colors.ivory,
+    borderRadius: 20,
+    borderWidth: 3,
+    borderColor: colors.greenDark,
+    padding: 0,
+    alignItems: "center",
+    justifyContent: "flex-end",
+    overflow: "hidden",
+  },
+  modalText: {
+    fontSize: 16,
+    fontFamily: "Maplestory_Light",
+    color: colors.brown,
+    textAlign: "center",
+    margin: 30,
+  },
+  modalButtonWrap: {
+    flexDirection: "row",
+    height: 45,
+    width: "100%",
+  },
+  modalButton: {
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: colors.green,
+    width: "100%",
+  },
+  modalButtonText: {
+    color: colors.brown,
+    fontSize: 16,
+    fontFamily: "Maplestory_Light",
   },
 });

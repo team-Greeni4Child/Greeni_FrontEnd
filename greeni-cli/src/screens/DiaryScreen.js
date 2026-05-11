@@ -69,6 +69,7 @@ export default function DiaryScreen({ navigation, route }) {
   const isScreenActiveRef = useRef(true);
   const isEndingRef = useRef(false);
   const isClosingRef = useRef(false);
+  const failCountRef = useRef(0);
 
   // 튜토리얼용 일기 Ref
   const rootRef = useRef(null);
@@ -156,9 +157,10 @@ export default function DiaryScreen({ navigation, route }) {
     setShowExitModal(false);
   };
 
-  const handleCloseErrorModal = () => {
+  const handleCloseErrorModal = async () => {
     setShowErrorModal(false);
     setErrorMessage("");
+    await handleCloseDiarySession();
   };
 
   const handleCloseDiarySession = async () => {
@@ -236,6 +238,7 @@ export default function DiaryScreen({ navigation, route }) {
 
   const handleRecordComplete = async filePath => {
     if (isSending || isAiSpeaking || isEndingRef.current || isClosingRef.current) return;
+    if (showErrorModal) return;
 
     try {
       setIsSending(true);
@@ -304,6 +307,8 @@ export default function DiaryScreen({ navigation, route }) {
 
       if (!isScreenActiveRef.current) return;
 
+      failCountRef.current = 0;
+
       const result = aiRes?.result ?? aiRes ?? {};
       const nextSessionId = result?.sessionId || "";
       const aiText = result?.text || "";
@@ -367,10 +372,19 @@ export default function DiaryScreen({ navigation, route }) {
       }
 
       if (isScreenActiveRef.current) {
+        failCountRef.current += 1;
+
+        if (failCountRef.current >= 2) {
+          setErrorMessage("네트워크 오류가 발생했습니다.");
+          setShowErrorModal(true);
+          setIsSending(false);
+          return;
+        }
+
         setBubbleText("다시 한 번 말해줄래?");
       }
     } finally {
-      if (isScreenActiveRef.current) {
+      if (isScreenActiveRef.current && !showErrorModal) {
         setIsSending(false);
       }
     }
@@ -482,7 +496,9 @@ export default function DiaryScreen({ navigation, route }) {
     });
   };
 
-  const isMicDisabled = isSending || isAiSpeaking || isEndingRef.current || isClosingRef.current;
+  const isMicDisabled =
+    isSending || isAiSpeaking || isEndingRef.current || isClosingRef.current || showErrorModal;
+
   const isDiaryTutorial = isTutorialEnabled && activeFlowId === "diary";
   const currentTutorialStep =
     isDiaryTutorial && currentStep?.screen === "Diary" ? currentStep : null;
