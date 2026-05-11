@@ -10,12 +10,13 @@ import {
   Modal,
   BackHandler,
   Platform,
+  Animated,
+  Easing,
 } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import colors from "../theme/colors";
 import BackButton from "../components/BackButton";
 import MicButton from "../components/MicButton";
-import Button from "../components/Button";
 import TutorialOverlay from "../components/TutorialOverlay";
 import { ProfileContext } from "../context/ProfileContext";
 import { useTutorial } from "../context/TutorialContext";
@@ -41,7 +42,6 @@ export default function DiaryScreen({ navigation, route }) {
     startedFlows,
     startTutorial,
     goToStep,
-    stopTutorial,
     completeTutorial,
     registerTarget,
     clearTarget,
@@ -53,6 +53,10 @@ export default function DiaryScreen({ navigation, route }) {
   const [showExitModal, setShowExitModal] = useState(false);
   const [showErrorModal, setShowErrorModal] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+
+  // AI와 대화를 1번 이상 완료했을 때만 그림일기 버튼 표시
+  const [hasDiaryConversation, setHasDiaryConversation] = useState(false);
+  const drawButtonOpacity = useRef(new Animated.Value(0)).current;
 
   const sessionIdRef = useRef(createSessionId());
   const turnRef = useRef(0);
@@ -73,11 +77,17 @@ export default function DiaryScreen({ navigation, route }) {
   useEffect(() => {
     isScreenActiveRef.current = true;
 
+    console.log("[DIARY][ENTER]", {
+      sessionId: sessionIdRef.current,
+      selectedProfileId: selectedProfile?.profileId,
+      routeParams: route.params,
+    });
+
     return () => {
       isScreenActiveRef.current = false;
       stopAiAudio();
     };
-  }, []);
+  }, [route.params, selectedProfile?.profileId]);
 
   // 일기 튜토리얼 분기
   useEffect(() => {
@@ -157,6 +167,12 @@ export default function DiaryScreen({ navigation, route }) {
         setIsAiSpeaking(false);
       }
 
+      console.log("[DIARY][CLOSE_REQUEST]", {
+        profileId: selectedProfile?.profileId,
+        sessionId: sessionIdRef.current,
+        turnCount: turnRef.current,
+      });
+
       if (selectedProfile?.profileId && sessionIdRef.current) {
         await closeDiaryAi({
           profileId: selectedProfile.profileId,
@@ -191,8 +207,18 @@ export default function DiaryScreen({ navigation, route }) {
         setIsAiSpeaking(false);
       }
 
+      console.log("[DIARY][GO_DRAW]", {
+        sessionId: sessionIdRef.current,
+        turnCount: turnRef.current,
+        drawingOnly: turnRef.current === 0,
+        selectedProfileId: selectedProfile?.profileId,
+        extraParams: params,
+      });
+
       navigation.replace("DiaryDraw", {
         sessionId: sessionIdRef.current,
+        turnCount: turnRef.current,
+        drawingOnly: turnRef.current === 0,
         ...params,
       });
     } catch (e) {
@@ -209,6 +235,10 @@ export default function DiaryScreen({ navigation, route }) {
       setIsSending(true);
 
       if (!filePath || !selectedProfile?.profileId) {
+        console.log("[DIARY][RECORD_SKIP]", {
+          filePath,
+          selectedProfileId: selectedProfile?.profileId,
+        });
         return;
       }
 
@@ -217,8 +247,20 @@ export default function DiaryScreen({ navigation, route }) {
         setIsAiSpeaking(false);
       }
 
+      console.log("[DIARY][RECORD_COMPLETE]", {
+        filePath,
+        sessionId: sessionIdRef.current,
+        turnCount: turnRef.current,
+        selectedProfileId: selectedProfile?.profileId,
+      });
+
       // 1) S3 업로드
       const uploadRes = await uploadDiaryVoice(filePath);
+
+      console.log("[DIARY][VOICE_UPLOADED]", {
+        uploadRes,
+        voiceUrl: uploadRes?.fileUrl,
+      });
 
       if (!uploadRes?.fileUrl) {
         throw new Error("fileUrl 없음");
@@ -231,9 +273,21 @@ export default function DiaryScreen({ navigation, route }) {
         role: "user",
       });
 
+      console.log("[DIARY][VOICE_SAVED]", {
+        profileId: selectedProfile.profileId,
+        voiceUrl: uploadRes.fileUrl,
+      });
+
       if (!isScreenActiveRef.current) return;
 
       setBubbleText("...");
+
+      console.log("[DIARY][AI_REQUEST]", {
+        profileId: selectedProfile.profileId,
+        sessionId: sessionIdRef.current,
+        voiceUrl: uploadRes.fileUrl,
+        filePath,
+      });
 
       const aiRes = await requestDiaryAi({
         profileId: selectedProfile.profileId,
@@ -249,11 +303,27 @@ export default function DiaryScreen({ navigation, route }) {
       const aiText = result?.text || "";
       const aiVoiceBase64 = result?.base64Voice || "";
 
+      console.log("[DIARY][AI_RESULT]", {
+        prevSessionId: sessionIdRef.current,
+        nextSessionId,
+        hasText: !!aiText,
+        hasVoice: !!aiVoiceBase64,
+        turnBeforeIncrease: turnRef.current,
+        rawResult: result,
+      });
+
       if (nextSessionId) {
         sessionIdRef.current = nextSessionId;
       }
 
       turnRef.current += 1;
+      setHasDiaryConversation(true);
+
+      console.log("[DIARY][TURN_INCREASED]", {
+        sessionId: sessionIdRef.current,
+        turnCount: turnRef.current,
+        hasDiaryConversation: true,
+      });
 
       if (aiText) {
         setBubbleText(aiText);
@@ -333,6 +403,24 @@ export default function DiaryScreen({ navigation, route }) {
       radiusOffset: 10,
     });
   }, [measureTarget]);
+
+  useEffect(() => {
+    if (!hasDiaryConversation) {
+      drawButtonOpacity.setValue(0);
+      return;
+    }
+
+    drawButtonOpacity.setValue(0);
+
+    Animated.timing(drawButtonOpacity, {
+      toValue: 1,
+      duration: 450,
+      easing: Easing.out(Easing.quad),
+      useNativeDriver: true,
+    }).start(() => {
+      measureDrawButton();
+    });
+  }, [hasDiaryConversation, drawButtonOpacity, measureDrawButton]);
 
   useEffect(() => {
     if (!isTutorialEnabled || activeFlowId !== "diary") return;
@@ -446,19 +534,29 @@ export default function DiaryScreen({ navigation, route }) {
         disabled={isMicDisabled}
       />
 
-      {/* 일기 그리러 가는 버튼 */}
-      <TouchableOpacity
-        ref={drawButtonRef}
-        style={styles.diaryButton}
-        onPress={handleTutorialPressDrawDiary}
-        activeOpacity={0.8}
-      >
-        <Image
-          source={require("../assets/images/icon_draw_diary.png")}
-          style={styles.diaryButtonIcon}
-          resizeMode="contain"
-        />
-      </TouchableOpacity>
+      {hasDiaryConversation && (
+        <Animated.View
+          style={[
+            styles.diaryButton,
+            {
+              opacity: drawButtonOpacity,
+            },
+          ]}
+        >
+          <TouchableOpacity
+            ref={drawButtonRef}
+            onPress={handleTutorialPressDrawDiary}
+            activeOpacity={0.8}
+            onLayout={measureDrawButton}
+          >
+            <Image
+              source={require("../assets/images/icon_draw_diary.png")}
+              style={styles.diaryButtonIcon}
+              resizeMode="contain"
+            />
+          </TouchableOpacity>
+        </Animated.View>
+      )}
 
       {/* 중단 확인 모달 */}
       <Modal transparent visible={showExitModal}>
