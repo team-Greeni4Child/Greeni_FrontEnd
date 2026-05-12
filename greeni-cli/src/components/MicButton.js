@@ -37,7 +37,7 @@ const MAX_RECORDING_MS = 15000;
 const MIN_RECORDING_MS = 800;
 
 // 주변 소음보다 이 정도 커야 말소리로 판단. 말소리 잘 못잡으면 2낮추기
-const SPEECH_MARGIN_DB = 12;
+const SPEECH_MARGIN_DB = 30;
 
 // 주변 소음 기준값의 최소/최대 범위
 const NOISE_FLOOR_MIN = -60;
