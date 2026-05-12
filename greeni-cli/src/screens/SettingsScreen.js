@@ -58,6 +58,7 @@ export default function SettingsScreen({ route, navigation }) {
   const [isDeleteAccountModalVisible, setDeleteAccountModalVisible] = useState(false);
   const [showErrorModal, setShowErrorModal] = useState(false);
   const [errorModalMessage, setErrorModalMessage] = useState("");
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const [activeSheet, setActiveSheet] = useState(null);
 
@@ -233,15 +234,21 @@ export default function SettingsScreen({ route, navigation }) {
   };
 
   const handleLogout = async () => {
+    if (isLoggingOut) return;
+
     try {
-      /* 로그아웃 api 수정 완료되면 주석 풀기 */
-      // await logout();
+      setIsLoggingOut(true);
+
+      await logout();
     } catch (e) {
       console.log("Logout Fail:", e);
     } finally {
       await clearAuth();
+      setSelectedProfile(null);
+      setProfiles([]);
       setLogoutModalVisible(false);
       setStep("auth");
+      setIsLoggingOut(false);
     }
   };
 
@@ -537,17 +544,22 @@ export default function SettingsScreen({ route, navigation }) {
           >
             <TouchableWithoutFeedback>
               <View style={styles.modalWrap}>
-                <Text style={styles.modalText}>정말 로그아웃하시겠습니까?</Text>
+                <Text style={styles.modalText}>
+                  이 계정으로 로그인 된{"\n"}모든 기기가 함께 로그아웃됩니다.{"\n"}
+                  로그아웃 하시겠습니까?
+                </Text>
                 <View style={styles.modalButtonWrap}>
                   <TouchableOpacity
                     style={[styles.modalButton, styles.leftButton]}
                     onPress={handleLogout}
+                    disabled={isLoggingOut}
                   >
                     <Text style={styles.modalButtonText}>예</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={[styles.modalButton, styles.rightButton]}
                     onPress={() => setLogoutModalVisible(false)}
+                    disabled={isLoggingOut}
                   >
                     <Text style={[styles.modalButtonText, { color: colors.brown }]}>아니오</Text>
                   </TouchableOpacity>
@@ -650,13 +662,13 @@ const styles = StyleSheet.create({
   },
   topBackground: {
     width: W,
-    height: H * 0.87,
     backgroundColor: colors.pink,
     borderBottomLeftRadius: 30,
     borderBottomRightRadius: 30,
     alignItems: "center",
     justifyContent: "flex-start",
     paddingTop: H * 0.08,
+    paddingBlock: 20,
   },
 
   titleWrap: {

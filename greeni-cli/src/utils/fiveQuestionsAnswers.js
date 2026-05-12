@@ -48,7 +48,6 @@ export const FIVE_QUESTIONS_ANSWERS = [
   { answer: "눈사태", initial: "ㄴㅅㅌ", category: "자연" },
   { answer: "화산", initial: "ㅎㅅ", category: "자연" },
   { answer: "사막", initial: "ㅅㅁ", category: "자연" },
-  { answer: "빙하", initial: "ㅂㅎ", category: "자연" },
   { answer: "오로라", initial: "ㅇㄹㄹ", category: "자연" },
   { answer: "태풍", initial: "ㅌㅍ", category: "자연" },
   { answer: "번개", initial: "ㅂㄱ", category: "자연" },

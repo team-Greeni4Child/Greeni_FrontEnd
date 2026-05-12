@@ -197,11 +197,6 @@ export default function SignUpScreen({ navigation }) {
     }));
   };
 
-  const handlePressTermDetail = key => {
-    // TODO: 약관 상세보기
-    console.log("TERM DETAIL:", key);
-  };
-
   // 이메일 인증 버튼
   const handleVerifyEmail = async () => {
     if (isVerifyDisabled) return;
@@ -554,7 +549,6 @@ export default function SignUpScreen({ navigation }) {
         terms={terms}
         onClose={() => setShowTermsModal(false)}
         onToggleTerm={handleToggleTerm}
-        onPressDetail={handlePressTermDetail}
         onSubmit={handleSubmitFinalSignUp}
       />
 

@@ -1,13 +1,22 @@
 import "react-native-gesture-handler";
-import React, { useEffect, useRef, useState, createContext } from "react";
-import { Text, TextInput, BackHandler } from "react-native";
+import React, { useEffect, useRef, useState, createContext, useContext } from "react";
+import {
+  Text,
+  TextInput,
+  BackHandler,
+  Modal,
+  View,
+  TouchableOpacity,
+  StyleSheet,
+} from "react-native";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
-import { ProfileProvider } from "./context/ProfileContext";
+import { ProfileProvider, ProfileContext } from "./context/ProfileContext";
 import { TutorialProvider } from "./context/TutorialContext";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { getAccessToken, getSelectedProfile } from "./utils/tokenStorage";
 import { addLogoutListener } from "./utils/authEvents";
+import colors from "./theme/colors";
 
 import SplashScreen from "./screens/SplashScreen";
 import LoginScreen from "./screens/LoginScreen";
@@ -93,6 +102,53 @@ function MainStack() {
   );
 }
 
+function GlobalLogoutHandler({ setStep }) {
+  const { setProfiles, setSelectedProfile } = useContext(ProfileContext);
+  const [showLogoutNotice, setShowLogoutNotice] = useState(false);
+
+  useEffect(() => {
+    const unsubscribe = addLogoutListener(() => {
+      setShowLogoutNotice(true);
+    });
+
+    return unsubscribe;
+  }, []);
+
+  const handleConfirmLogoutNotice = () => {
+    setSelectedProfile(null);
+    setProfiles([]);
+    setShowLogoutNotice(false);
+    setStep("auth");
+  };
+
+  return (
+    <Modal
+      transparent
+      visible={showLogoutNotice}
+      animationType="fade"
+      onRequestClose={handleConfirmLogoutNotice}
+    >
+      <View style={styles.globalModalBackground}>
+        <View style={styles.globalModalWrap}>
+          <Text style={styles.globalModalText}>
+            다른 기기에서 로그아웃되어{"\n"}현재 기기에서도 로그아웃됩니다.
+          </Text>
+
+          <View style={styles.globalModalButtonWrap}>
+            <TouchableOpacity
+              style={styles.globalModalButton}
+              onPress={handleConfirmLogoutNotice}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.globalModalButtonText}>확인</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+    </Modal>
+  );
+}
+
 export default function App() {
   const [isBootstrapping, setIsBootstrapping] = useState(true);
   const [step, setStep] = useState("auth");
@@ -123,15 +179,6 @@ export default function App() {
     }
   };
 
-  // 토큰 만료 등으로 emitLogout()이 발생하면 로그인 화면으로 이동
-  useEffect(() => {
-    const unsubscribe = addLogoutListener(() => {
-      setStep("auth");
-    });
-
-    return unsubscribe;
-  }, []);
-
   // 기기의 백버튼과 커스텀 백버튼 통일
   useEffect(() => {
     const onHardwareBackPress = () => {
@@ -155,6 +202,8 @@ export default function App() {
       <ProfileProvider>
         <TutorialProvider>
           <AuthContext.Provider value={{ step, setStep }}>
+            <GlobalLogoutHandler setStep={setStep} />
+
             <NavigationContainer ref={navigationRef}>
               {isBootstrapping ? (
                 <Stack.Navigator screenOptions={{ headerShown: false }}>
@@ -176,3 +225,46 @@ export default function App() {
     </GestureHandlerRootView>
   );
 }
+
+const styles = StyleSheet.create({
+  globalModalBackground: {
+    flex: 1,
+    backgroundColor: colors.lightGray95,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  globalModalWrap: {
+    width: "80%",
+    backgroundColor: colors.ivory,
+    borderRadius: 20,
+    borderWidth: 3,
+    borderColor: colors.pinkDark,
+    paddingTop: 30,
+    alignItems: "center",
+    justifyContent: "flex-end",
+    overflow: "hidden",
+  },
+  globalModalText: {
+    fontSize: 16,
+    fontFamily: "Maplestory_Light",
+    color: colors.brown,
+    textAlign: "center",
+    marginBottom: 30,
+    lineHeight: 24,
+  },
+  globalModalButtonWrap: {
+    width: "100%",
+    height: 44,
+  },
+  globalModalButton: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: colors.pink,
+  },
+  globalModalButtonText: {
+    fontSize: 16,
+    fontFamily: "Maplestory_Light",
+    color: colors.brown,
+  },
+});

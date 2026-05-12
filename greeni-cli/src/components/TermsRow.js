@@ -70,7 +70,7 @@ const styles = StyleSheet.create({
     fontFamily: "Maplestory_Light",
   },
   detailButton: {
-    width: 25,
+    width: 40,
     height: 20,
     alignItems: "flex-end",
     justifyContent: "center",

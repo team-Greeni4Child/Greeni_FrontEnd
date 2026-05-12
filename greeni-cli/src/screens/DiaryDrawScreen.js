@@ -10,6 +10,7 @@ import {
   Modal,
   BackHandler,
   Platform,
+  ActivityIndicator,
 } from "react-native";
 import { launchImageLibrary } from "react-native-image-picker";
 import { useFocusEffect } from "@react-navigation/native";
@@ -286,7 +287,15 @@ export default function DiaryDrawScreen({ navigation, route }) {
 
       navigation.reset({
         index: 0,
-        routes: [{ name: "Home", params: { diaryAlreadyExists: true } }],
+        routes: [
+          {
+            name: "Home",
+            params: {
+              diaryAlreadyExists: true,
+              playDiarySaveAnimation: true,
+            },
+          },
+        ],
       });
     } catch (e) {
       console.log("SAVE DIARY FAIL:", e);
@@ -637,6 +646,16 @@ export default function DiaryDrawScreen({ navigation, route }) {
         </View>
       </Modal>
 
+      {/* 저장 중 모달 */}
+      <Modal transparent visible={isSaving}>
+        <View style={styles.modalBackground}>
+          <View style={styles.savingModalWrap}>
+            <ActivityIndicator size="large" color={colors.greenDark} />
+            <Text style={styles.savingText}>저장중</Text>
+          </View>
+        </View>
+      </Modal>
+
       {/* 중단 확인 모달 */}
       <Modal transparent visible={showExitModal}>
         <View style={styles.modalBackground}>
@@ -838,5 +857,23 @@ const styles = StyleSheet.create({
     color: colors.brown,
     fontSize: 16,
     fontFamily: "Maplestory_Light",
+  },
+
+  savingModalWrap: {
+    width: W * 0.65,
+    backgroundColor: colors.ivory,
+    borderRadius: 20,
+    borderWidth: 3,
+    borderColor: colors.greenDark,
+    paddingVertical: 30,
+    paddingHorizontal: 20,
+    alignItems: "center",
+  },
+  savingText: {
+    fontSize: 18,
+    fontFamily: "Maplestory_Light",
+    color: colors.brown,
+    textAlign: "center",
+    marginTop: 16,
   },
 });

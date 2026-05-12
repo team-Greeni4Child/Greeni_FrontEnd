@@ -10,6 +10,8 @@ import {
   BackHandler,
   Platform,
   Modal,
+  Animated,
+  Easing,
 } from "react-native";
 import colors from "../theme/colors";
 import NavigationBar from "../components/NavigationBar";
@@ -23,7 +25,21 @@ import { getDiaryByDay } from "../api/diary";
 
 const { width: W, height: H } = Dimensions.get("window");
 
-export default function HomeScreen({ navigation }) {
+const SAVE_ANIMATION_ICON_SIZE = 120;
+const SAVE_ANIMATION_DURATION = 820;
+const SAVE_ANIMATION_FLOAT_Y = -28;
+const SAVE_ANIMATION_FLOAT_DURATION = 600;
+const SAVE_ANIMATION_HOLD_DURATION = 200;
+
+const NAV_BAR_W = W * 0.9;
+const NAV_BAR_H = 60;
+const NAV_BAR_LEFT = W * 0.05;
+const NAV_BAR_BOTTOM = H * 0.06;
+const NAV_BAR_PAD_X = 20;
+const NAV_TAB_COUNT = 4;
+const CALENDAR_TAB_INDEX = 1;
+
+export default function HomeScreen({ navigation, route }) {
   const { setStep } = useContext(AuthContext);
   const { selectedProfile } = useContext(ProfileContext);
   const {
@@ -64,6 +80,17 @@ export default function HomeScreen({ navigation }) {
   // 일기 존재 여부 확인 중복 클릭 방지
   const [isCheckingDiary, setIsCheckingDiary] = useState(false);
   const homeStartedKey = selectedProfile?.profileId ? `home:${selectedProfile.profileId}` : "home";
+
+  // 일기 저장 완료 애니메이션
+  const [isDiarySaveAnimating, setIsDiarySaveAnimating] = useState(false);
+  const [flyingIconLayout, setFlyingIconLayout] = useState(null);
+  const diarySaveAnimationPlayedRef = useRef(false);
+  const saveAnimX = useRef(new Animated.Value(0)).current;
+  const saveAnimY = useRef(new Animated.Value(0)).current;
+  const saveAnimScale = useRef(new Animated.Value(1)).current;
+  const saveAnimOpacity = useRef(new Animated.Value(1)).current;
+  const calendarGlowOpacity = useRef(new Animated.Value(0)).current;
+  const calendarGlowScale = useRef(new Animated.Value(0.8)).current;
 
   // 인증 상태 확인
   const checkAuth = async () => {
@@ -128,7 +155,7 @@ export default function HomeScreen({ navigation }) {
 
   // 일기 버튼 클릭 처리
   const handlePressDiary = async (params = undefined) => {
-    if (isCheckingDiary) return;
+    if (isCheckingDiary || isDiarySaveAnimating) return;
 
     try {
       setIsCheckingDiary(true);
@@ -163,6 +190,7 @@ export default function HomeScreen({ navigation }) {
   };
 
   const handlePressFiveQuestions = (params = undefined) => {
+    if (isDiarySaveAnimating) return;
     navigation.navigate("FiveQuestions", params);
   };
 
@@ -181,6 +209,7 @@ export default function HomeScreen({ navigation }) {
   };
 
   const handlePressRolePlaying = (params = undefined) => {
+    if (isDiarySaveAnimating) return;
     navigation.navigate("RolePlaying", params);
   };
 
@@ -199,6 +228,7 @@ export default function HomeScreen({ navigation }) {
   };
 
   const handlePressCalendar = (params = undefined) => {
+    if (isDiarySaveAnimating) return;
     setTab(1);
     navigation.navigate("Calendar", params);
   };
@@ -231,6 +261,10 @@ export default function HomeScreen({ navigation }) {
       const onBackPress = () => {
         if (Platform.OS !== "android") return false;
 
+        if (isDiarySaveAnimating) {
+          return true;
+        }
+
         // 다른 모달이 열려있으면 닫기
         if (showDiaryModal) {
           setShowDiaryModal(false);
@@ -249,7 +283,7 @@ export default function HomeScreen({ navigation }) {
 
       const sub = BackHandler.addEventListener("hardwareBackPress", onBackPress);
       return () => sub.remove();
-    }, [showDiaryModal, showExitModal]),
+    }, [showDiaryModal, showExitModal, isDiarySaveAnimating]),
   );
 
   // 모달 확인 버튼 처리
@@ -337,6 +371,159 @@ export default function HomeScreen({ navigation }) {
       });
     });
   }, [registerTarget]);
+
+  const startDiarySaveAnimation = useCallback(
+    (retryCount = 0) => {
+      if (!diaryButtonRef.current) {
+        if (retryCount < 8) {
+          setTimeout(() => startDiarySaveAnimation(retryCount + 1), 80);
+        }
+        return;
+      }
+
+      diaryButtonRef.current.measureInWindow((diaryX, diaryY, diaryW, diaryH) => {
+        const navBarTop = H - NAV_BAR_BOTTOM - NAV_BAR_H;
+        const navInnerW = NAV_BAR_W - NAV_BAR_PAD_X * 2;
+        const tabW = navInnerW / NAV_TAB_COUNT;
+
+        const calendarCenterX = NAV_BAR_LEFT + NAV_BAR_PAD_X + tabW * (CALENDAR_TAB_INDEX + 0.5);
+
+        const calendarCenterY = navBarTop + NAV_BAR_H / 2;
+
+        const startX = diaryX + diaryW / 2 - SAVE_ANIMATION_ICON_SIZE / 2;
+        const startY = diaryY + diaryH / 2 - SAVE_ANIMATION_ICON_SIZE / 2;
+        const endX = calendarCenterX - SAVE_ANIMATION_ICON_SIZE / 2;
+        const endY = calendarCenterY - SAVE_ANIMATION_ICON_SIZE / 2;
+
+        saveAnimX.setValue(0);
+        saveAnimY.setValue(0);
+        saveAnimScale.setValue(1);
+        saveAnimOpacity.setValue(1);
+        calendarGlowOpacity.setValue(0);
+        calendarGlowScale.setValue(0.8);
+
+        setFlyingIconLayout({
+          startX,
+          startY,
+          endX,
+          endY,
+        });
+
+        setIsDiarySaveAnimating(true);
+
+        requestAnimationFrame(() => {
+          Animated.sequence([
+            Animated.parallel([
+              Animated.timing(saveAnimY, {
+                toValue: SAVE_ANIMATION_FLOAT_Y,
+                duration: SAVE_ANIMATION_FLOAT_DURATION,
+                easing: Easing.out(Easing.quad),
+                useNativeDriver: true,
+              }),
+              Animated.timing(saveAnimScale, {
+                toValue: 1.08,
+                duration: SAVE_ANIMATION_FLOAT_DURATION,
+                easing: Easing.out(Easing.quad),
+                useNativeDriver: true,
+              }),
+            ]),
+
+            Animated.delay(SAVE_ANIMATION_HOLD_DURATION),
+
+            Animated.parallel([
+              Animated.timing(saveAnimX, {
+                toValue: endX - startX,
+                duration: SAVE_ANIMATION_DURATION,
+                easing: Easing.inOut(Easing.cubic),
+                useNativeDriver: true,
+              }),
+              Animated.timing(saveAnimY, {
+                toValue: endY - startY,
+                duration: SAVE_ANIMATION_DURATION,
+                easing: Easing.inOut(Easing.cubic),
+                useNativeDriver: true,
+              }),
+              Animated.timing(saveAnimScale, {
+                toValue: 0.35,
+                duration: SAVE_ANIMATION_DURATION,
+                easing: Easing.in(Easing.quad),
+                useNativeDriver: true,
+              }),
+              Animated.timing(saveAnimOpacity, {
+                toValue: 0,
+                duration: SAVE_ANIMATION_DURATION,
+                easing: Easing.in(Easing.quad),
+                useNativeDriver: true,
+              }),
+            ]),
+
+            Animated.parallel([
+              Animated.sequence([
+                Animated.timing(calendarGlowOpacity, {
+                  toValue: 1,
+                  duration: 120,
+                  easing: Easing.out(Easing.quad),
+                  useNativeDriver: true,
+                }),
+                Animated.timing(calendarGlowOpacity, {
+                  toValue: 0,
+                  duration: 360,
+                  easing: Easing.out(Easing.quad),
+                  useNativeDriver: true,
+                }),
+              ]),
+              Animated.sequence([
+                Animated.timing(calendarGlowScale, {
+                  toValue: 1.25,
+                  duration: 160,
+                  easing: Easing.out(Easing.quad),
+                  useNativeDriver: true,
+                }),
+                Animated.timing(calendarGlowScale, {
+                  toValue: 1.5,
+                  duration: 320,
+                  easing: Easing.out(Easing.quad),
+                  useNativeDriver: true,
+                }),
+              ]),
+            ]),
+          ]).start(() => {
+            setIsDiarySaveAnimating(false);
+            setFlyingIconLayout(null);
+
+            if (route.params?.playDiarySaveAnimation) {
+              navigation.setParams({
+                playDiarySaveAnimation: false,
+              });
+            }
+          });
+        });
+      });
+    },
+    [
+      navigation,
+      route.params?.playDiarySaveAnimation,
+      saveAnimOpacity,
+      saveAnimScale,
+      saveAnimX,
+      saveAnimY,
+      calendarGlowOpacity,
+      calendarGlowScale,
+    ],
+  );
+
+  useEffect(() => {
+    if (!route.params?.playDiarySaveAnimation) return;
+    if (diarySaveAnimationPlayedRef.current) return;
+
+    diarySaveAnimationPlayedRef.current = true;
+
+    const timer = setTimeout(() => {
+      startDiarySaveAnimation();
+    }, 250);
+
+    return () => clearTimeout(timer);
+  }, [route.params?.playDiarySaveAnimation, startDiarySaveAnimation]);
 
   useEffect(() => {
     if (startedFlows[homeStartedKey]) return;
@@ -510,6 +697,8 @@ export default function HomeScreen({ navigation }) {
         state={tab}
         tabRefs={[homeTabButtonRef, calendarTabButtonRef]}
         onTabPress={i => {
+          if (isDiarySaveAnimating) return;
+
           setTab(i);
           if (i === 0) navigation.navigate("Home");
           if (i === 1) handleTutorialPressCalendar();
@@ -543,7 +732,7 @@ export default function HomeScreen({ navigation }) {
           ref={diaryButtonRef}
           style={[styles.diaryButton, { backgroundColor: colors.pink }]}
           onPress={handleTutorialPressDiary}
-          disabled={isCheckingDiary}
+          disabled={isCheckingDiary || isDiarySaveAnimating}
           onLayout={measureDiaryButton}
         >
           <Image source={require("../assets/images/icon_diary.png")} style={styles.icon} />
@@ -555,6 +744,7 @@ export default function HomeScreen({ navigation }) {
           ref={fiveQuestionsButtonRef}
           style={[styles.button, { backgroundColor: colors.green }]}
           onPress={handleTutorialPressFiveQuestions}
+          disabled={isDiarySaveAnimating}
           onLayout={measureFiveQuestionsButton}
         >
           <Image source={require("../assets/images/icon_twenty.png")} style={styles.icon} />
@@ -566,12 +756,58 @@ export default function HomeScreen({ navigation }) {
           ref={rolePlayingButtonRef}
           style={[styles.button, { backgroundColor: "#E1EE95" }]}
           onPress={handleTutorialPressRolePlaying}
+          disabled={isDiarySaveAnimating}
           onLayout={measureRolePlayingButton}
         >
           <Image source={require("../assets/images/icon_role.png")} style={styles.icon} />
           <Text style={styles.buttonText}>역할놀이</Text>
         </TouchableOpacity>
       </View>
+
+      <Modal
+        transparent
+        visible={isDiarySaveAnimating}
+        statusBarTranslucent
+        onRequestClose={() => {}}
+      >
+        <View style={styles.saveAnimationOverlay}>
+          <View style={styles.saveAnimationDim} />
+
+          {flyingIconLayout && (
+            <Animated.View
+              style={[
+                styles.calendarGlow,
+                {
+                  left: flyingIconLayout.endX + SAVE_ANIMATION_ICON_SIZE / 2 - 34,
+                  top: flyingIconLayout.endY + SAVE_ANIMATION_ICON_SIZE / 2 - 34,
+                  opacity: calendarGlowOpacity,
+                  transform: [{ scale: calendarGlowScale }],
+                },
+              ]}
+            />
+          )}
+
+          {flyingIconLayout && (
+            <Animated.Image
+              source={require("../assets/images/icon_diary.png")}
+              style={[
+                styles.flyingDiaryIcon,
+                {
+                  left: flyingIconLayout.startX,
+                  top: flyingIconLayout.startY,
+                  opacity: saveAnimOpacity,
+                  transform: [
+                    { translateX: saveAnimX },
+                    { translateY: saveAnimY },
+                    { scale: saveAnimScale },
+                  ],
+                },
+              ]}
+              resizeMode="contain"
+            />
+          )}
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -593,6 +829,7 @@ const styles = StyleSheet.create({
   bubble: {
     bottom: -10,
     maxWidth: W * 0.85,
+    minWidth: W * 0.5,
     paddingHorizontal: 40,
     paddingVertical: 60,
     alignItems: "center",
@@ -603,7 +840,7 @@ const styles = StyleSheet.create({
     color: colors.brown,
     fontFamily: "gangwongyoyuksaeeum",
     textAlign: "center",
-    lineHeight: 26,
+    lineHeight: 28,
   },
 
   greeni: {
@@ -660,6 +897,36 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontFamily: "Maplestory_Bold",
     color: colors.brown,
+  },
+
+  saveAnimationOverlay: {
+    flex: 1,
+  },
+  saveAnimationDim: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+  },
+  flyingDiaryIcon: {
+    position: "absolute",
+    width: SAVE_ANIMATION_ICON_SIZE,
+    height: SAVE_ANIMATION_ICON_SIZE,
+    zIndex: 52,
+    elevation: 52,
+  },
+  calendarGlow: {
+    position: "absolute",
+    width: 68,
+    height: 68,
+    borderRadius: 34,
+    backgroundColor: "rgba(255, 255, 255, 0.55)",
+    borderWidth: 2,
+    borderColor: "rgba(255, 255, 255, 0.85)",
+    zIndex: 51,
+    elevation: 51,
   },
 
   modalBackground: {

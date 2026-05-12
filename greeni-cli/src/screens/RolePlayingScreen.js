@@ -1,5 +1,14 @@
 import React, { useState, useCallback, useContext, useRef, useEffect } from "react";
-import { View, Text, Image, StyleSheet, Dimensions, ImageBackground } from "react-native";
+import {
+  View,
+  Text,
+  Image,
+  StyleSheet,
+  Dimensions,
+  ImageBackground,
+  Modal,
+  TouchableOpacity,
+} from "react-native";
 import { StatusBar } from "react-native";
 import Button from "../components/Button";
 import BackButton from "../components/BackButton";
@@ -51,6 +60,8 @@ export default function RolePlayingScreen({ navigation }) {
     clearTarget,
   } = useTutorial();
   const isSubmittingRef = useRef(false);
+  const isScreenActiveRef = useRef(true);
+  const failCountRef = useRef(0);
 
   // 튜토리얼용 역할놀이 Ref
   const rootRef = useRef(null);
@@ -62,17 +73,33 @@ export default function RolePlayingScreen({ navigation }) {
   const [sessionId, setSessionId] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isAiSpeaking, setIsAiSpeaking] = useState(false);
+  const [showErrorModal, setShowErrorModal] = useState(false);
+
+  const displayedBubbleText = isLoading ? "    ...    " : bubbleText;
+  const useLongBubble = displayedBubbleText.length >= 55;
+
+  useEffect(() => {
+    isScreenActiveRef.current = true;
+
+    return () => {
+      isScreenActiveRef.current = false;
+      stopAiAudio();
+    };
+  }, []);
 
   const handleSituation = key => {
     setSelectedSituation(key);
     setBubbleText(getInitialBubbleText(key));
     setSessionId("");
+    failCountRef.current = 0;
   };
 
   const handleRecordComplete = async voicePath => {
     if (!selectedSituation) return;
     if (isLoading) return;
     if (!voicePath) return;
+    if (!isScreenActiveRef.current) return;
+    if (showErrorModal) return;
 
     try {
       setIsLoading(true);
@@ -85,6 +112,10 @@ export default function RolePlayingScreen({ navigation }) {
         voicePath,
       });
 
+      if (!isScreenActiveRef.current) return;
+
+      failCountRef.current = 0;
+
       const nextSessionId = result?.sessionId || currentSessionId;
       setSessionId(nextSessionId);
 
@@ -94,24 +125,37 @@ export default function RolePlayingScreen({ navigation }) {
 
       setIsLoading(false);
 
-      if (result?.base64Voice) {
+      if (result?.base64Voice && isScreenActiveRef.current) {
         try {
           setIsAiSpeaking(true);
           await playBase64Mp3(result.base64Voice);
         } finally {
-          setIsAiSpeaking(false);
+          if (isScreenActiveRef.current) {
+            setIsAiSpeaking(false);
+          }
         }
       }
     } catch (e) {
       console.log("REQUEST ROLE PLAYING FAIL:", e);
-      setBubbleText("앗, 잘 못 들었어.\n한 번만 다시 말해줄래?");
-      setIsLoading(false);
+
+      if (isScreenActiveRef.current) {
+        failCountRef.current += 1;
+        setIsLoading(false);
+
+        if (failCountRef.current >= 2) {
+          setShowErrorModal(true);
+          return;
+        }
+
+        setBubbleText("앗, 잘 못 들었어.\n한 번만 다시 말해줄래?");
+      }
     }
   };
 
   const handleBackPress = useCallback(async () => {
     if (isSubmittingRef.current) return;
     isSubmittingRef.current = true;
+    isScreenActiveRef.current = false;
 
     try {
       await stopAiAudio();
@@ -142,6 +186,11 @@ export default function RolePlayingScreen({ navigation }) {
       navigation.goBack();
     }
   }, [navigation, selectedProfile?.profileId, selectedSituation, sessionId]);
+
+  const handleErrorModalOk = async () => {
+    setShowErrorModal(false);
+    await handleBackPress();
+  };
 
   // 역할놀이 Ref 측정
   const measureTarget = useCallback(
@@ -276,8 +325,16 @@ export default function RolePlayingScreen({ navigation }) {
         ]}
       >
         <ImageBackground
-          style={[styles.bubble, selectedSituation ? styles.bubbleSelected : styles.bubble]}
-          source={require("../assets/images/bubble_diary.png")}
+          style={[
+            styles.bubble,
+            selectedSituation ? styles.bubbleSelected : styles.bubble,
+            useLongBubble && styles.bubbleLong,
+          ]}
+          source={
+            useLongBubble
+              ? require("../assets/images/bubble_role_long.png")
+              : require("../assets/images/bubble_diary.png")
+          }
           resizeMode="stretch"
         >
           <Text
@@ -286,7 +343,7 @@ export default function RolePlayingScreen({ navigation }) {
               selectedSituation ? styles.bubbleTextSelected : styles.bubbleText,
             ]}
           >
-            {isLoading ? "    ...    " : bubbleText}
+            {displayedBubbleText}
           </Text>
         </ImageBackground>
         <Image
@@ -337,8 +394,26 @@ export default function RolePlayingScreen({ navigation }) {
 
       <MicButton
         onRecordComplete={handleRecordComplete}
-        disabled={!selectedSituation || isLoading || isAiSpeaking}
+        disabled={!selectedSituation || isLoading || isAiSpeaking || showErrorModal}
       />
+
+      <Modal transparent visible={showErrorModal}>
+        <View style={styles.modalBackground}>
+          <View style={styles.modalWrap}>
+            <Text style={styles.modalText}>네트워크 오류가 발생했습니다.</Text>
+
+            <View style={styles.modalButtonWrap}>
+              <TouchableOpacity
+                style={styles.modalButton}
+                onPress={handleErrorModalOk}
+                activeOpacity={1}
+              >
+                <Text style={styles.modalButtonText}>확인</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -386,6 +461,7 @@ const styles = StyleSheet.create({
   },
   bubble: {
     maxWidth: W * 0.85,
+    minWidth: W * 0.5,
     paddingHorizontal: 40,
     paddingVertical: 50,
     alignItems: "center",
@@ -396,16 +472,22 @@ const styles = StyleSheet.create({
     paddingVertical: 50,
     marginTop: 30,
   },
+  bubbleLong: {
+    minWidth: W * 0.5,
+    maxWidth: W * 0.85,
+    paddingHorizontal: 30,
+    paddingVertical: 60,
+  },
   bubbleText: {
     fontSize: 28,
     color: colors.brown,
     fontFamily: "gangwongyoyuksaeeum",
     textAlign: "center",
-    lineHeight: 26,
+    lineHeight: 28,
   },
   bubbleTextSelected: {
     fontSize: 28,
-    lineHeight: 26,
+    lineHeight: 28,
   },
   greeni: {
     aspectRatio: 80 / 110,
@@ -422,5 +504,46 @@ const styles = StyleSheet.create({
   situationWrap: {
     position: "absolute",
     bottom: H * 0.26,
+  },
+
+  modalBackground: {
+    flex: 1,
+    backgroundColor: colors.lightGray95,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalWrap: {
+    width: W * 0.7,
+    backgroundColor: colors.ivory,
+    borderRadius: 20,
+    borderWidth: 3,
+    borderColor: colors.greenDark,
+    padding: 0,
+    alignItems: "center",
+    justifyContent: "flex-end",
+    overflow: "hidden",
+  },
+  modalText: {
+    fontSize: 16,
+    fontFamily: "Maplestory_Light",
+    color: colors.brown,
+    textAlign: "center",
+    margin: 30,
+  },
+  modalButtonWrap: {
+    flexDirection: "row",
+    height: 45,
+    width: "100%",
+  },
+  modalButton: {
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: colors.green,
+    width: "100%",
+  },
+  modalButtonText: {
+    color: colors.brown,
+    fontSize: 16,
+    fontFamily: "Maplestory_Light",
   },
 });

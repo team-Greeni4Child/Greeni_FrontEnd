@@ -112,6 +112,11 @@ async function requestOnce(path, options = {}) {
   };
 }
 
+async function forceLogout() {
+  await clearAuth();
+  emitLogout();
+}
+
 // refreshToken을 이용해서 새 accessToken을 받는 함수
 // 성공하면 AsyncStorage에도 새 토큰으로 다시 저장
 async function refreshAccessToken() {
@@ -120,6 +125,8 @@ async function refreshAccessToken() {
 
   // refreshToken 자체가 없으면 재발급 불가
   if (!refreshToken) {
+    await forceLogout();
+
     throw new ApiError({
       status: 401,
       code: "NO_REFRESH_TOKEN",
@@ -143,8 +150,8 @@ async function refreshAccessToken() {
 
   // 재발급 자체가 실패하면 로그인 정보 정리
   if (!res.ok || data?.isSuccess === false) {
-    await clearAuth();
-    emitLogout();
+    await forceLogout();
+
     throw new ApiError({
       status: res.status,
       code: data?.code,
@@ -166,8 +173,8 @@ async function refreshAccessToken() {
 
   // 새 accessToken이 없으면 정상 재발급이 아님
   if (!newAccessToken) {
-    await clearAuth();
-    emitLogout();
+    await forceLogout();
+
     throw new ApiError({
       status: 401,
       code: "NO_NEW_ACCESS_TOKEN",
@@ -234,6 +241,18 @@ export async function request(path, options = {}) {
     const retryAuthorization = second.authorization;
     const retryData = second.data;
 
+    // 재시도 후에도 401이면 인증 정보가 더 이상 유효하지 않은 것으로 보고 로그아웃 처리
+    if (retryRes.status === 401) {
+      await forceLogout();
+
+      throw new ApiError({
+        status: retryRes.status,
+        code: retryData?.code,
+        message: retryData?.message,
+        result: retryData?.result,
+      });
+    }
+
     // 재시도 후에도 실패하면 최종 에러로 처리
     if (!retryRes.ok || retryData?.isSuccess === false) {
       throw new ApiError({
@@ -256,6 +275,18 @@ export async function request(path, options = {}) {
     }
 
     return retryData;
+  }
+
+  // refresh API가 직접 401을 반환한 경우도 로그아웃 처리
+  if (res.status === 401 && path === REFRESH_PATH) {
+    await forceLogout();
+
+    throw new ApiError({
+      status: res.status,
+      code: data?.code,
+      message: data?.message,
+      result: data?.result,
+    });
   }
 
   // 401이 아니더라도 400, 403, 404, 500 같은 실패 응답이면 에러 처리
