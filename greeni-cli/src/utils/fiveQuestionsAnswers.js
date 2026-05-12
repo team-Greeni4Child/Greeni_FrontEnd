@@ -37,7 +37,6 @@ export const FIVE_QUESTIONS_ANSWERS = [
   // 탈것
   { answer: "자전거", initial: "ㅈㅈㄱ", category: "탈것" },
   { answer: "오토바이", initial: "ㅇㅌㅂㅇ", category: "탈것" },
-  { answer: "소방차", initial: "ㅅㅂㅊ", category: "탈것" },
   { answer: "지하철", initial: "ㅈㅎㅊ", category: "탈것" },
   { answer: "전동킥보드", initial: "ㅈㄷㅋㅂㄷ", category: "탈것" },
   { answer: "경찰차", initial: "ㄱㅊㅊ", category: "탈것" },
