@@ -430,8 +430,11 @@ export default function DiaryScreen({ navigation, route }) {
     });
   }, [measureTarget]);
 
+  const isDiaryTutorial = isTutorialEnabled && activeFlowId === "diary";
+  const shouldShowDrawDiaryButton = hasDiaryConversation || isDiaryTutorial;
+
   useEffect(() => {
-    if (!hasDiaryConversation) {
+    if (!shouldShowDrawDiaryButton) {
       drawButtonOpacity.setValue(0);
       return;
     }
@@ -446,7 +449,7 @@ export default function DiaryScreen({ navigation, route }) {
     }).start(() => {
       measureDrawButton();
     });
-  }, [hasDiaryConversation, drawButtonOpacity, measureDrawButton]);
+  }, [shouldShowDrawDiaryButton, drawButtonOpacity, measureDrawButton]);
 
   useEffect(() => {
     if (!isTutorialEnabled || activeFlowId !== "diary") return;
@@ -499,7 +502,6 @@ export default function DiaryScreen({ navigation, route }) {
   const isMicDisabled =
     isSending || isAiSpeaking || isEndingRef.current || isClosingRef.current || showErrorModal;
 
-  const isDiaryTutorial = isTutorialEnabled && activeFlowId === "diary";
   const currentTutorialStep =
     isDiaryTutorial && currentStep?.screen === "Diary" ? currentStep : null;
 
@@ -562,7 +564,7 @@ export default function DiaryScreen({ navigation, route }) {
         disabled={isMicDisabled}
       />
 
-      {hasDiaryConversation && (
+      {shouldShowDrawDiaryButton && (
         <Animated.View
           style={[
             styles.diaryButton,
