@@ -5,7 +5,7 @@ import Button from "../components/Button";
 import { requestEmailVerification, verifyPasswordResetCode, logout } from "../api/auth";
 import { AuthContext } from "../App";
 import { ProfileContext } from "../context/ProfileContext";
-import { clearAuth } from "../utils/tokenStorage";
+import { clearAuth, clearSelectedProfile } from "../utils/tokenStorage";
 import {
   View,
   Text,
@@ -147,6 +147,7 @@ export default function FindPasswordScreen({ navigation, route }) {
       console.log("Logout Fail:", e);
     } finally {
       await clearAuth();
+      await clearSelectedProfile();
       setSelectedProfile(null);
       setProfiles([]);
       setShowForgotEmailModal(false);

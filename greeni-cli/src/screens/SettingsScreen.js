@@ -205,6 +205,25 @@ export default function SettingsScreen({ route, navigation }) {
     setEditingField(null);
   };
 
+  const goProfileAndReset = async () => {
+    await clearSelectedProfile();
+    setSelectedProfile(null);
+    setStep("profile");
+  };
+
+  const goAuthAndReset = async () => {
+    await clearAuth();
+    await clearSelectedProfile();
+
+    setSelectedProfile(null);
+    setProfiles([]);
+
+    setLogoutModalVisible(false);
+    setDeleteAccountModalVisible(false);
+
+    setStep("auth");
+  };
+
   const handleDeleteProfile = async () => {
     try {
       const deletingId = selectedProfile?.profileId;
@@ -213,7 +232,7 @@ export default function SettingsScreen({ route, navigation }) {
       await deleteProfile(deletingId);
 
       setDeleteModalVisible(false);
-      setStep("profile");
+      await clearSelectedProfile();
       setSelectedProfile(null);
 
       // 3) 목록 갱신
@@ -227,6 +246,7 @@ export default function SettingsScreen({ route, navigation }) {
         image: toImageSource(p.profileImage),
       }));
       setProfiles(mapped);
+      setStep("profile");
     } catch (e) {
       console.log("Delete Profile Fail:", e);
       openErrorModal(e?.message || "프로필 삭제에 실패했습니다.");
@@ -243,11 +263,7 @@ export default function SettingsScreen({ route, navigation }) {
     } catch (e) {
       console.log("Logout Fail:", e);
     } finally {
-      await clearAuth();
-      setSelectedProfile(null);
-      setProfiles([]);
-      setLogoutModalVisible(false);
-      setStep("auth");
+      await goAuthAndReset();
       setIsLoggingOut(false);
     }
   };
@@ -261,9 +277,7 @@ export default function SettingsScreen({ route, navigation }) {
       return;
     }
 
-    await clearAuth();
-    setDeleteAccountModalVisible(false);
-    setStep("auth");
+    await goAuthAndReset();
   };
 
   if (!selectedProfile) {
@@ -432,11 +446,7 @@ export default function SettingsScreen({ route, navigation }) {
               width={345}
               height={51}
               style={{ marginBottom: 12 }}
-              onPress={async () => {
-                await clearSelectedProfile();
-                setSelectedProfile(null);
-                setStep("profile");
-              }}
+              onPress={goProfileAndReset}
             />
             <Button
               title="프로필 삭제"
