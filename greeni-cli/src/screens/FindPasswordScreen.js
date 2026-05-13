@@ -1,8 +1,11 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useContext, useEffect, useRef, useState } from "react";
 import colors from "../theme/colors";
 import BackButton from "../components/BackButton";
 import Button from "../components/Button";
-import { requestEmailVerification, verifyPasswordResetCode } from "../api/auth";
+import { requestEmailVerification, verifyPasswordResetCode, logout } from "../api/auth";
+import { AuthContext } from "../App";
+import { ProfileContext } from "../context/ProfileContext";
+import { clearAuth } from "../utils/tokenStorage";
 import {
   View,
   Text,
@@ -29,7 +32,12 @@ const DEFAULT_EXPIRE_SECONDS = 3 * 60;
 // 재전송 쿨타임(10초)
 const RESEND_COOLDOWN_SECONDS = 10;
 
-export default function FindPasswordScreen({ navigation }) {
+export default function FindPasswordScreen({ navigation, route }) {
+  const { setStep } = useContext(AuthContext);
+  const { setProfiles, setSelectedProfile } = useContext(ProfileContext);
+
+  const fromSettingsPassword = route?.params?.fromSettingsPassword === true;
+
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
 
@@ -38,6 +46,9 @@ export default function FindPasswordScreen({ navigation }) {
 
   // 네트워크/서버 오류 모달
   const [showErrorModal, setShowErrorModal] = useState(false);
+
+  // 이메일을 모를 때 로그아웃 안내 모달
+  const [showForgotEmailModal, setShowForgotEmailModal] = useState(false);
 
   // 인증코드 유효시간 타이머
   const [secondsLeft, setSecondsLeft] = useState(null); // null이면 미표시
@@ -52,6 +63,7 @@ export default function FindPasswordScreen({ navigation }) {
   // 요청 중 중복 클릭 방지
   const [isRequestingEmail, setIsRequestingEmail] = useState(false);
   const [isVerifyingCode, setIsVerifyingCode] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const clearTimer = () => {
     if (timerRef.current) {
@@ -122,6 +134,25 @@ export default function FindPasswordScreen({ navigation }) {
 
   const handleErrorOk = () => {
     setShowErrorModal(false);
+  };
+
+  const handleLogout = async () => {
+    if (isLoggingOut) return;
+
+    try {
+      setIsLoggingOut(true);
+
+      await logout();
+    } catch (e) {
+      console.log("Logout Fail:", e);
+    } finally {
+      await clearAuth();
+      setSelectedProfile(null);
+      setProfiles([]);
+      setShowForgotEmailModal(false);
+      setStep("auth");
+      setIsLoggingOut(false);
+    }
   };
 
   // 이메일 인증 버튼
@@ -344,6 +375,16 @@ export default function FindPasswordScreen({ navigation }) {
         />
       </View>
 
+      {fromSettingsPassword && (
+        <TouchableOpacity
+          style={styles.forgotEmailButton}
+          onPress={() => setShowForgotEmailModal(true)}
+          activeOpacity={0.7}
+        >
+          <Text style={styles.forgotEmailText}>이메일이 기억나지 않아요</Text>
+        </TouchableOpacity>
+      )}
+
       <View style={styles.bottomWrap}>
         {/* 그리니 */}
         <Image
@@ -356,6 +397,42 @@ export default function FindPasswordScreen({ navigation }) {
         <View style={{ width: W * 0.402 }} />
       </View>
 
+      {/* 이메일을 모를 때 로그아웃 안내 모달 */}
+      <Modal transparent visible={showForgotEmailModal}>
+        <View style={styles.modalBackground}>
+          <View style={styles.modalWrap}>
+            <Text style={styles.modalText}>
+              가입 이메일을 모르면{"\n"}
+              현재 계정의 비밀번호를 찾을 수 없어요.{"\n\n"}
+              현재 계정을 계속 사용하려면{"\n"}
+              가입 이메일을 확인해주세요.{"\n\n"}
+              다른 계정으로 다시 시작하기 위해{"\n"}
+              로그아웃 하시겠습니까?
+            </Text>
+
+            <View style={styles.modalButtonWrap}>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.leftButton]}
+                onPress={() => setShowForgotEmailModal(false)}
+                activeOpacity={1}
+                disabled={isLoggingOut}
+              >
+                <Text style={styles.modalButtonText}>아니오</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.modalButton, styles.rightButton]}
+                onPress={handleLogout}
+                activeOpacity={1}
+                disabled={isLoggingOut}
+              >
+                <Text style={styles.modalButtonText}>예</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
       {/* 네트워크/서버 오류 모달 */}
       <Modal transparent visible={showErrorModal}>
         <View style={styles.modalBackground}>
@@ -365,7 +442,7 @@ export default function FindPasswordScreen({ navigation }) {
             </Text>
 
             <View style={styles.modalButtonWrap}>
-              <TouchableOpacity style={[styles.modalButton]} onPress={handleErrorOk}>
+              <TouchableOpacity style={styles.modalButton} onPress={handleErrorOk}>
                 <Text style={styles.modalButtonText}>확인</Text>
               </TouchableOpacity>
             </View>
@@ -480,6 +557,21 @@ const styles = StyleSheet.create({
     width: 60,
   },
 
+  forgotEmailButton: {
+    position: "absolute",
+    top: H * 0.56,
+    alignSelf: "center",
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    zIndex: 10,
+  },
+  forgotEmailText: {
+    fontSize: 12,
+    fontFamily: "Maplestory_Light",
+    color: "#999999",
+    textAlign: "center",
+  },
+
   bottomWrap: {
     marginTop: H * 0.08,
     flexDirection: "row",
@@ -514,7 +606,8 @@ const styles = StyleSheet.create({
     fontFamily: "Maplestory_Light",
     color: colors.brown,
     textAlign: "center",
-    margin: 30,
+    marginVertical: 30,
+    marginHorizontal: 10,
   },
   modalButtonWrap: {
     flexDirection: "row",
@@ -526,6 +619,18 @@ const styles = StyleSheet.create({
     alignItems: "center",
     width: "100%",
     backgroundColor: colors.green,
+  },
+  leftButton: {
+    width: "50%",
+    backgroundColor: colors.white,
+    borderTopColor: colors.greenDark,
+    borderTopWidth: 1,
+  },
+  rightButton: {
+    width: "50%",
+    backgroundColor: colors.green,
+    borderTopColor: colors.green,
+    borderTopWidth: 1,
   },
   modalButtonText: {
     color: colors.brown,

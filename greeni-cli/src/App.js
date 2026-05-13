@@ -204,7 +204,7 @@ export default function App() {
           <AuthContext.Provider value={{ step, setStep }}>
             <GlobalLogoutHandler setStep={setStep} />
 
-            <NavigationContainer ref={navigationRef}>
+            <NavigationContainer key={isBootstrapping ? "splash" : step} ref={navigationRef}>
               {isBootstrapping ? (
                 <Stack.Navigator screenOptions={{ headerShown: false }}>
                   <Stack.Screen name="Splash">
