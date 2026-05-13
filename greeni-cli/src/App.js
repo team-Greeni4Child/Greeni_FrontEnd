@@ -14,8 +14,9 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { ProfileProvider, ProfileContext } from "./context/ProfileContext";
 import { TutorialProvider } from "./context/TutorialContext";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
-import { getAccessToken, getSelectedProfile } from "./utils/tokenStorage";
+import { getAccessToken, getSelectedProfile, clearSelectedProfile } from "./utils/tokenStorage";
 import { addLogoutListener } from "./utils/authEvents";
+import { addProfileInvalidListener } from "./utils/profileEvents";
 import colors from "./theme/colors";
 
 import SplashScreen from "./screens/SplashScreen";
@@ -114,7 +115,8 @@ function GlobalLogoutHandler({ setStep }) {
     return unsubscribe;
   }, []);
 
-  const handleConfirmLogoutNotice = () => {
+  const handleConfirmLogoutNotice = async () => {
+    await clearSelectedProfile();
     setSelectedProfile(null);
     setProfiles([]);
     setShowLogoutNotice(false);
@@ -138,6 +140,54 @@ function GlobalLogoutHandler({ setStep }) {
             <TouchableOpacity
               style={styles.globalModalButton}
               onPress={handleConfirmLogoutNotice}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.globalModalButtonText}>확인</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+    </Modal>
+  );
+}
+
+function GlobalProfileInvalidHandler({ setStep }) {
+  const { setProfiles, setSelectedProfile } = useContext(ProfileContext);
+  const [showProfileInvalidNotice, setShowProfileInvalidNotice] = useState(false);
+
+  useEffect(() => {
+    const unsubscribe = addProfileInvalidListener(() => {
+      setShowProfileInvalidNotice(true);
+    });
+
+    return unsubscribe;
+  }, []);
+
+  const handleConfirmProfileInvalidNotice = async () => {
+    await clearSelectedProfile();
+    setSelectedProfile(null);
+    setProfiles([]);
+    setShowProfileInvalidNotice(false);
+    setStep("profile");
+  };
+
+  return (
+    <Modal
+      transparent
+      visible={showProfileInvalidNotice}
+      animationType="fade"
+      onRequestClose={handleConfirmProfileInvalidNotice}
+    >
+      <View style={styles.globalModalBackground}>
+        <View style={styles.globalModalWrap}>
+          <Text style={styles.globalModalText}>
+            다른 기기에서 프로필이 삭제되어{"\n"}프로필 선택 화면으로 이동합니다.
+          </Text>
+
+          <View style={styles.globalModalButtonWrap}>
+            <TouchableOpacity
+              style={styles.globalModalButton}
+              onPress={handleConfirmProfileInvalidNotice}
               activeOpacity={0.8}
             >
               <Text style={styles.globalModalButtonText}>확인</Text>
@@ -203,8 +253,9 @@ export default function App() {
         <TutorialProvider>
           <AuthContext.Provider value={{ step, setStep }}>
             <GlobalLogoutHandler setStep={setStep} />
+            <GlobalProfileInvalidHandler setStep={setStep} />
 
-            <NavigationContainer ref={navigationRef}>
+            <NavigationContainer key={isBootstrapping ? "splash" : step} ref={navigationRef}>
               {isBootstrapping ? (
                 <Stack.Navigator screenOptions={{ headerShown: false }}>
                   <Stack.Screen name="Splash">

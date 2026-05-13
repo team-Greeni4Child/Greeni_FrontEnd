@@ -5,8 +5,10 @@ import {
   getMemberId,
   saveAuth,
   clearAuth,
+  clearSelectedProfile,
 } from "../utils/tokenStorage";
 import { emitLogout } from "../utils/authEvents";
+import { emitProfileInvalid } from "../utils/profileEvents";
 
 export class ApiError extends Error {
   constructor({ status, code, message, result }) {
@@ -114,7 +116,17 @@ async function requestOnce(path, options = {}) {
 
 async function forceLogout() {
   await clearAuth();
+  await clearSelectedProfile();
   emitLogout();
+}
+
+async function forceProfileSelect() {
+  await clearSelectedProfile();
+  emitProfileInvalid();
+}
+
+function isProfileInvalidCode(code) {
+  return code === "PROFILE4031" || code === "PROFILE4041";
 }
 
 // refreshToken을 이용해서 새 accessToken을 받는 함수
@@ -255,6 +267,10 @@ export async function request(path, options = {}) {
 
     // 재시도 후에도 실패하면 최종 에러로 처리
     if (!retryRes.ok || retryData?.isSuccess === false) {
+      if (isProfileInvalidCode(retryData?.code)) {
+        await forceProfileSelect();
+      }
+
       throw new ApiError({
         status: retryRes.status,
         code: retryData?.code,
@@ -291,6 +307,10 @@ export async function request(path, options = {}) {
 
   // 401이 아니더라도 400, 403, 404, 500 같은 실패 응답이면 에러 처리
   if (!res.ok || data?.isSuccess === false) {
+    if (isProfileInvalidCode(data?.code)) {
+      await forceProfileSelect();
+    }
+
     throw new ApiError({
       status: res.status,
       code: data?.code,
