@@ -748,7 +748,7 @@ export default function HomeScreen({ navigation, route }) {
           onLayout={measureFiveQuestionsButton}
         >
           <Image source={require("../assets/images/icon_twenty.png")} style={styles.icon} />
-          <Text style={styles.buttonText}>다섯고개</Text>
+          <Text style={styles.buttonText}>다섯 고개</Text>
         </TouchableOpacity>
 
         {/* 역할놀이 */}
