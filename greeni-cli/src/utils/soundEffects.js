@@ -12,6 +12,7 @@ export async function playBackButtonSound() {
     Sound.removePlayBackListener?.();
 
     await Sound.startPlayer(backButtonSound.uri);
+    await Sound.setVolume(0.3).catch(() => {});
 
     Sound.addPlayBackListener(e => {
       if (e.currentPosition >= e.duration) {
@@ -19,10 +20,13 @@ export async function playBackButtonSound() {
           .catch(() => {})
           .finally(() => {
             Sound.removePlayBackListener?.();
+            Sound.setVolume(1).catch(() => {});
           });
       }
     });
   } catch (e) {
+    Sound.setVolume(1).catch(() => {});
+
     if (__DEV__) {
       console.log("PLAY BACK BUTTON SOUND FAIL:", e);
     }
@@ -38,6 +42,7 @@ export async function playButtonSound() {
     Sound.removePlayBackListener?.();
 
     await Sound.startPlayer(buttonSound.uri);
+    await Sound.setVolume(1.5).catch(() => {});
 
     Sound.addPlayBackListener(e => {
       if (e.currentPosition >= e.duration) {
@@ -45,10 +50,13 @@ export async function playButtonSound() {
           .catch(() => {})
           .finally(() => {
             Sound.removePlayBackListener?.();
+            Sound.setVolume(1).catch(() => {});
           });
       }
     });
   } catch (e) {
+    Sound.setVolume(1).catch(() => {});
+
     if (__DEV__) {
       console.log("PLAY BUTTON SOUND FAIL:", e);
     }
@@ -67,6 +75,7 @@ async function playEffectSound(uri, label) {
     Sound.removePlayBackListener?.();
 
     await Sound.startPlayer(uri);
+    await Sound.setVolume(0.4).catch(() => {});
 
     Sound.addPlayBackListener(e => {
       if (e.currentPosition >= e.duration) {
@@ -74,10 +83,13 @@ async function playEffectSound(uri, label) {
           .catch(() => {})
           .finally(() => {
             Sound.removePlayBackListener?.();
+            Sound.setVolume(1).catch(() => {});
           });
       }
     });
   } catch (e) {
+    Sound.setVolume(1).catch(() => {});
+
     if (__DEV__) {
       console.log(`${label} FAIL:`, e);
     }
@@ -101,6 +113,7 @@ export async function playHintSound() {
     Sound.removePlayBackListener?.();
 
     await Sound.startPlayer(hintSound.uri);
+    await Sound.setVolume(0.5).catch(() => {});
 
     return await new Promise(resolve => {
       Sound.addPlayBackListener(e => {
@@ -109,12 +122,15 @@ export async function playHintSound() {
             .catch(() => {})
             .finally(() => {
               Sound.removePlayBackListener?.();
+              Sound.setVolume(1).catch(() => {});
               resolve(true);
             });
         }
       });
     });
   } catch (e) {
+    Sound.setVolume(1).catch(() => {});
+
     if (__DEV__) {
       console.log("PLAY HINT SOUND FAIL:", e);
     }
