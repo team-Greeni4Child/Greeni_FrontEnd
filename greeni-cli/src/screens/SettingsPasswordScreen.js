@@ -32,7 +32,8 @@ export default function SettingsPasswordScreen({ navigation }) {
   // 요청 중 중복 클릭 방지
   const [isVerifying, setIsVerifying] = useState(false);
 
-  const handleErrorOk = () => {
+  const 
+  ErrorOk = () => {
     playButtonSound();
     setShowErrorModal(false);
   };
