@@ -72,6 +72,30 @@ def enableProguardInReleaseBuilds = false
  */
 def jscFlavor = 'io.github.react-native-community:jsc-android:2026004.+'
 
+def keystorePropertiesFile = rootProject.file("keystore.properties")
+def keystoreProperties = new Properties()
+
+if (keystorePropertiesFile.exists()) {
+    keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+}
+
+def isReleaseBuild = gradle.startParameter.taskNames.any { taskName ->
+    taskName.toLowerCase().contains("release")
+}
+
+def getKeystoreProperty = { key ->
+    def value = keystoreProperties[key]
+
+    if ((value == null || value.toString().trim().isEmpty()) && isReleaseBuild) {
+        throw new GradleException(
+            "Missing '${key}' in android/keystore.properties. " +
+            "Release builds require a valid upload signing key."
+        )
+    }
+
+    return value
+}
+
 android {
     ndkVersion rootProject.ext.ndkVersion
     buildToolsVersion rootProject.ext.buildToolsVersion
@@ -92,6 +116,18 @@ android {
             keyAlias 'androiddebugkey'
             keyPassword 'android'
         }
+
+        release {
+            def uploadStoreFile = getKeystoreProperty("storeFile")
+
+            if (uploadStoreFile != null && !uploadStoreFile.toString().trim().isEmpty()) {
+                storeFile file(uploadStoreFile)
+            }
+
+            storePassword getKeystoreProperty("storePassword")
+            keyAlias getKeystoreProperty("keyAlias")
+            keyPassword getKeystoreProperty("keyPassword")
+        }
     }
     buildTypes {
         debug {
@@ -100,7 +136,7 @@ android {
         release {
             // Caution! In production, you need to generate your own keystore file.
             // see https://reactnative.dev/docs/signed-apk-android.
-            signingConfig signingConfigs.debug
+            signingConfig signingConfigs.release
             minifyEnabled enableProguardInReleaseBuilds
             proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"
         }

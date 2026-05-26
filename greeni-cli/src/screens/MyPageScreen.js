@@ -16,6 +16,7 @@ import { searchBadgeList } from "../api/badge";
 import { toBadgeImageUrl } from "../utils/badgeImageMap";
 import LinearGradient from "react-native-linear-gradient";
 import colors from "../theme/colors";
+import { playButtonSound } from "../utils/soundEffects";
 import NavigationBar from "../components/NavigationBar";
 import TutorialOverlay from "../components/TutorialOverlay";
 import { useTutorial } from "../context/TutorialContext";
@@ -111,6 +112,11 @@ export default function MyPageScreen({ navigation }) {
     });
   };
 
+  const handlePressSettings = () => {
+    playButtonSound();
+    navigation.navigate("SettingsPassword");
+  };
+
   const profileName = selectedProfile.name;
   const profileBirth = formatBirth(selectedProfile.birth);
   const profileImageSource = selectedProfile.image;
@@ -149,7 +155,7 @@ export default function MyPageScreen({ navigation }) {
         <TouchableOpacity
           style={styles.settingBtn}
           activeOpacity={0.8}
-          onPress={() => navigation.navigate("SettingsPassword")}
+          onPress={handlePressSettings}
         >
           <Image
             source={require("../assets/images/setting.png")}

@@ -15,6 +15,7 @@ import BackButton from "../components/BackButton";
 import TutorialOverlay from "../components/TutorialOverlay";
 import colors from "../theme/colors";
 import MicButton from "../components/MicButton";
+import { playButtonSound } from "../utils/soundEffects";
 import { createRolePlayingActivity } from "../api/activity";
 import { requestRolePlaying, closeRolePlaying } from "../api/rolePlaying";
 import { playBase64Mp3, stopAiAudio } from "../utils/audio";
@@ -88,6 +89,7 @@ export default function RolePlayingScreen({ navigation }) {
   }, []);
 
   const handleSituation = key => {
+    playButtonSound();
     setSelectedSituation(key);
     setBubbleText(getInitialBubbleText(key));
     setSessionId("");
@@ -188,6 +190,7 @@ export default function RolePlayingScreen({ navigation }) {
   }, [navigation, selectedProfile?.profileId, selectedSituation, sessionId]);
 
   const handleErrorModalOk = async () => {
+    playButtonSound();
     setShowErrorModal(false);
     await handleBackPress();
   };

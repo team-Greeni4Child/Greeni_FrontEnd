@@ -14,6 +14,7 @@ import { StatusBar } from "react-native";
 import Button from "../components/Button";
 import BackButton from "../components/BackButton";
 import colors from "../theme/colors";
+import { playButtonSound } from "../utils/soundEffects";
 import { useFocusEffect } from "@react-navigation/native";
 import { verifyParentPassword } from "../api/auth";
 import { getAccessToken } from "../utils/tokenStorage";
@@ -31,7 +32,9 @@ export default function SettingsPasswordScreen({ navigation }) {
   // 요청 중 중복 클릭 방지
   const [isVerifying, setIsVerifying] = useState(false);
 
-  const handleErrorOk = () => {
+  const 
+  ErrorOk = () => {
+    playButtonSound();
     setShowErrorModal(false);
   };
 
@@ -50,6 +53,13 @@ export default function SettingsPasswordScreen({ navigation }) {
     }
 
     return valid;
+  };
+
+  const handleFindPassword = () => {
+    playButtonSound();
+    navigation.navigate("FindPassword", {
+      fromSettingsPassword: true,
+    });
   };
 
   const handlePassword = async () => {
@@ -133,11 +143,7 @@ export default function SettingsPasswordScreen({ navigation }) {
           <TouchableOpacity
             style={styles.findPasswordBtn}
             activeOpacity={0.85}
-            onPress={() =>
-              navigation.navigate("FindPassword", {
-                fromSettingsPassword: true,
-              })
-            }
+            onPress={handleFindPassword}
           >
             <Text style={styles.findPasswordBtnText}>비밀번호 찾기 {">"}</Text>
           </TouchableOpacity>

@@ -13,6 +13,7 @@ import colors from "../theme/colors";
 import BackButton from "../components/BackButton";
 import DiarySummaryToggle from "../components/DiarySummaryToggle";
 import DiaryVoicePlayer from "../components/DiaryVoicePlayer";
+import { playButtonSound } from "../utils/soundEffects";
 import { ProfileContext } from "../context/ProfileContext";
 import { getDiaryByDay, getDiaryVoiceByDay } from "../api/diary";
 
@@ -391,6 +392,8 @@ export default function DiaryRecordScreen({ navigation, route }) {
     const paramDate = route?.params?.date; // "YYYY-MM-DD"
 
     if (!profileId || !paramDate || isVoiceLoading) return;
+
+    playButtonSound();
 
     const [y, m, d] = paramDate.split("-").map(Number);
 

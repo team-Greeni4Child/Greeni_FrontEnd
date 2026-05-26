@@ -2,6 +2,7 @@ import React from "react";
 import { View, StyleSheet, TouchableOpacity, Text, Image } from "react-native";
 import Slider from "@react-native-community/slider";
 import colors from "../../theme/colors";
+import { playButtonSound } from "../../utils/soundEffects";
 
 // 색상 + 이미지 매핑
 const COLOR_ITEMS = [
@@ -22,12 +23,37 @@ export default function PenOptionsPanel({
   setPenColor,
   onPressCustomColor,
 }) {
+  const handleSetPenWidth = width => {
+    playButtonSound();
+    setPenWidth(width);
+  };
+
+  const handleDecrease = () => {
+    playButtonSound();
+    setPenWidth(v => Math.max(1, v - 1));
+  };
+
+  const handleIncrease = () => {
+    playButtonSound();
+    setPenWidth(v => Math.min(30, v + 1));
+  };
+
+  const handleSetPenColor = color => {
+    playButtonSound();
+    setPenColor(color);
+  };
+
+  const handlePressCustomColor = () => {
+    playButtonSound();
+    onPressCustomColor?.();
+  };
+
   return (
     <View style={styles.penPanel}>
       <View style={styles.presetRow}>
         <TouchableOpacity
           style={[styles.presetBtn, penWidth === 5 && styles.presetBtnActive]}
-          onPress={() => setPenWidth(5)}
+          onPress={() => handleSetPenWidth(5)}
           activeOpacity={0.8}
         >
           <Text style={[styles.presetText, penWidth === 5 && styles.presetTextActive]}>작음</Text>
@@ -35,7 +61,7 @@ export default function PenOptionsPanel({
 
         <TouchableOpacity
           style={[styles.presetBtn, penWidth === 15 && styles.presetBtnActive]}
-          onPress={() => setPenWidth(15)}
+          onPress={() => handleSetPenWidth(15)}
           activeOpacity={0.8}
         >
           <Text style={[styles.presetText, penWidth === 15 && styles.presetTextActive]}>보통</Text>
@@ -43,7 +69,7 @@ export default function PenOptionsPanel({
 
         <TouchableOpacity
           style={[styles.presetBtn, penWidth === 25 && styles.presetBtnActive]}
-          onPress={() => setPenWidth(25)}
+          onPress={() => handleSetPenWidth(25)}
           activeOpacity={0.8}
         >
           <Text style={[styles.presetText, penWidth === 25 && styles.presetTextActive]}>큼</Text>
@@ -52,11 +78,7 @@ export default function PenOptionsPanel({
 
       {/* 두께 */}
       <View style={styles.thicknessRow}>
-        <TouchableOpacity
-          style={styles.thicknessBtn}
-          onPress={() => setPenWidth(v => Math.max(1, v - 1))}
-          activeOpacity={0.8}
-        >
+        <TouchableOpacity style={styles.thicknessBtn} onPress={handleDecrease} activeOpacity={0.8}>
           <View style={styles.minusIcon}>
             <View style={styles.minusLine} />
           </View>
@@ -74,11 +96,7 @@ export default function PenOptionsPanel({
           thumbTintColor={colors.brown}
         />
 
-        <TouchableOpacity
-          style={styles.thicknessBtn}
-          onPress={() => setPenWidth(v => Math.min(30, v + 1))}
-          activeOpacity={0.8}
-        >
+        <TouchableOpacity style={styles.thicknessBtn} onPress={handleIncrease} activeOpacity={0.8}>
           <View style={styles.plusIcon}>
             <View style={styles.plusHorizontal} />
             <View style={styles.plusVertical} />
@@ -93,7 +111,7 @@ export default function PenOptionsPanel({
           return (
             <TouchableOpacity
               key={color}
-              onPress={() => setPenColor(color)}
+              onPress={() => handleSetPenColor(color)}
               activeOpacity={0.85}
               style={styles.colorBtn}
             >
@@ -106,7 +124,11 @@ export default function PenOptionsPanel({
         })}
 
         {/* 커스텀 색상(무지개 아이콘) */}
-        <TouchableOpacity onPress={onPressCustomColor} activeOpacity={0.85} style={styles.colorBtn}>
+        <TouchableOpacity
+          onPress={handlePressCustomColor}
+          activeOpacity={0.85}
+          style={styles.colorBtn}
+        >
           <Image source={RAINBOW_IMG} style={styles.colorImg} resizeMode="contain" />
           <View pointerEvents="none" style={styles.rainbowHint} />
         </TouchableOpacity>

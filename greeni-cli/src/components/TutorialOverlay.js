@@ -11,6 +11,7 @@ import {
 } from "react-native";
 import { RNHoleView } from "react-native-hole-view";
 import colors from "../theme/colors";
+import { playButtonSound } from "../utils/soundEffects";
 
 const { width: W } = Dimensions.get("window");
 
@@ -44,6 +45,11 @@ export default function TutorialOverlay({
     if (typeof onPressPrimary === "function") {
       onPressPrimary();
     }
+  };
+
+  const handlePressSkip = () => {
+    playButtonSound();
+    onPressSkip?.();
   };
 
   return (
@@ -111,7 +117,7 @@ export default function TutorialOverlay({
               onPressIn={() => {
                 skipPressedRef.current = true;
               }}
-              onPress={onPressSkip}
+              onPress={handlePressSkip}
             >
               <Text style={styles.skipText}>건너뛰기</Text>
             </TouchableOpacity>

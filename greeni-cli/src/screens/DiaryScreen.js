@@ -17,6 +17,7 @@ import { useFocusEffect } from "@react-navigation/native";
 import colors from "../theme/colors";
 import BackButton from "../components/BackButton";
 import MicButton from "../components/MicButton";
+import { playButtonSound } from "../utils/soundEffects";
 import TutorialOverlay from "../components/TutorialOverlay";
 import { ProfileContext } from "../context/ProfileContext";
 import { useTutorial } from "../context/TutorialContext";
@@ -154,17 +155,23 @@ export default function DiaryScreen({ navigation, route }) {
   };
 
   const handleCancelExit = () => {
+    playButtonSound();
     setShowExitModal(false);
   };
 
   const handleCloseErrorModal = async () => {
+    playButtonSound();
     setShowErrorModal(false);
     setErrorMessage("");
-    await handleCloseDiarySession();
+    await handleCloseDiarySession({ withSound: false });
   };
 
-  const handleCloseDiarySession = async () => {
+  const handleCloseDiarySession = async ({ withSound = true } = {}) => {
     if (isClosingRef.current || isEndingRef.current) return;
+
+    if (withSound) {
+      playButtonSound();
+    }
 
     try {
       isClosingRef.current = true;
@@ -477,6 +484,8 @@ export default function DiaryScreen({ navigation, route }) {
 
   // DiaryDraw로 넘어갈 때 튜토리얼 흐름을 이어주기 위한 분기 추가
   const handleTutorialPressDrawDiary = async () => {
+    playButtonSound();
+
     const isDrawButtonStep =
       isTutorialEnabled &&
       activeFlowId === "diary" &&

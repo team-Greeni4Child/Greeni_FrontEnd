@@ -16,6 +16,12 @@ import MicButton from "../components/MicButton";
 import { createFiveQuestionsActivity } from "../api/activity";
 import { createFiveQuestionsHint, checkFiveQuestionsAnswer } from "../api/fiveQuestions";
 import { playBase64Mp3, stopAiAudio } from "../utils/audio";
+import {
+  playButtonSound,
+  playCorrectSound,
+  playWrongSound,
+  playHintSound,
+} from "../utils/soundEffects";
 import { ProfileContext } from "../context/ProfileContext";
 import { getRandomFiveQuestionsAnswer } from "../utils/fiveQuestionsAnswers";
 import { useTutorial } from "../context/TutorialContext";
@@ -94,6 +100,7 @@ export default function TwentyQuestionsScreen({ navigation }) {
   };
 
   const handleErrorModalOk = async () => {
+    playButtonSound();
     setShowErrorModal(false);
     await handleBackPress();
   };
@@ -203,11 +210,17 @@ export default function TwentyQuestionsScreen({ navigation }) {
       setSessionId(nextSessionId);
       setCurrentHint(0);
       setBubbleText(nextHints[0]?.text || "첫 번째 힌트를 줄게!");
-      setCanAnswerCurrentQuestion(true);
+      setCanAnswerCurrentQuestion(false);
       setIsLoadingQuestion(false);
+
+      await playHintSound();
 
       if (nextHints[0]?.audioBase64 && isScreenActiveRef.current) {
         await playHintVoice(nextHints[0].audioBase64);
+      }
+
+      if (isScreenActiveRef.current) {
+        setCanAnswerCurrentQuestion(true);
       }
     } catch (e) {
       console.log("CREATE FIVE QUESTIONS HINT FAIL:", e);
@@ -252,9 +265,16 @@ export default function TwentyQuestionsScreen({ navigation }) {
 
       setCurrentHint(nextIndex);
       setBubbleText(nextHint?.text || "다음 힌트를 줄게!");
+      setCanAnswerCurrentQuestion(false);
+
+      await playHintSound();
 
       if (nextHint?.audioBase64 && isScreenActiveRef.current) {
         await playHintVoice(nextHint.audioBase64);
+      }
+
+      if (isScreenActiveRef.current) {
+        setCanAnswerCurrentQuestion(true);
       }
 
       return true;
@@ -292,6 +312,8 @@ export default function TwentyQuestionsScreen({ navigation }) {
         const isCorrect = !!result.correct;
 
         if (isCorrect) {
+          playCorrectSound();
+
           setCorrectCount(prev => prev + 1);
           setShowAnswerText(true);
           setBubbleText("맞았어!");
@@ -312,6 +334,8 @@ export default function TwentyQuestionsScreen({ navigation }) {
           setIsCheckingAnswer(false);
           return;
         }
+
+        playWrongSound();
 
         setWrongCount(prev => prev + 1);
         setShowAnswerText(true);
@@ -442,6 +466,7 @@ export default function TwentyQuestionsScreen({ navigation }) {
     isLoadingQuestion ||
     isCheckingAnswer ||
     isAiSpeaking ||
+    !canAnswerCurrentQuestion ||
     isAnswerFeedbackShowing ||
     showErrorModal;
 

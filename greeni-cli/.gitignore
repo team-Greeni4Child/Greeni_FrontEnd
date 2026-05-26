@@ -78,3 +78,6 @@ src/config/env.js
 !.yarn/releases
 !.yarn/sdks
 !.yarn/versions
+
+# release
+android/keystore.properties

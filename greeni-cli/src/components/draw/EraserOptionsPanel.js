@@ -2,14 +2,30 @@ import React from "react";
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import Slider from "@react-native-community/slider";
 import colors from "../../theme/colors";
+import { playButtonSound } from "../../utils/soundEffects";
 
 export default function EraserOptionsPanel({ eraserWidth, setEraserWidth }) {
+  const handleSetEraserWidth = width => {
+    playButtonSound();
+    setEraserWidth(width);
+  };
+
+  const handleDecrease = () => {
+    playButtonSound();
+    setEraserWidth(v => Math.max(5, v - 1));
+  };
+
+  const handleIncrease = () => {
+    playButtonSound();
+    setEraserWidth(v => Math.min(80, v + 1));
+  };
+
   return (
     <View style={styles.panel}>
       <View style={styles.presetRow}>
         <TouchableOpacity
           style={[styles.presetBtn, eraserWidth === 10 && styles.presetBtnActive]}
-          onPress={() => setEraserWidth(10)}
+          onPress={() => handleSetEraserWidth(10)}
           activeOpacity={0.8}
         >
           <Text style={[styles.presetText, eraserWidth === 10 && styles.presetTextActive]}>
@@ -19,7 +35,7 @@ export default function EraserOptionsPanel({ eraserWidth, setEraserWidth }) {
 
         <TouchableOpacity
           style={[styles.presetBtn, eraserWidth === 30 && styles.presetBtnActive]}
-          onPress={() => setEraserWidth(30)}
+          onPress={() => handleSetEraserWidth(30)}
           activeOpacity={0.8}
         >
           <Text style={[styles.presetText, eraserWidth === 30 && styles.presetTextActive]}>
@@ -29,7 +45,7 @@ export default function EraserOptionsPanel({ eraserWidth, setEraserWidth }) {
 
         <TouchableOpacity
           style={[styles.presetBtn, eraserWidth === 60 && styles.presetBtnActive]}
-          onPress={() => setEraserWidth(60)}
+          onPress={() => handleSetEraserWidth(60)}
           activeOpacity={0.8}
         >
           <Text style={[styles.presetText, eraserWidth === 60 && styles.presetTextActive]}>큼</Text>
@@ -37,11 +53,7 @@ export default function EraserOptionsPanel({ eraserWidth, setEraserWidth }) {
       </View>
 
       <View style={styles.thicknessRow}>
-        <TouchableOpacity
-          style={styles.thicknessBtn}
-          onPress={() => setEraserWidth(v => Math.max(5, v - 1))}
-          activeOpacity={0.8}
-        >
+        <TouchableOpacity style={styles.thicknessBtn} onPress={handleDecrease} activeOpacity={0.8}>
           <View style={styles.minusIcon}>
             <View style={styles.minusLine} />
           </View>
@@ -59,11 +71,7 @@ export default function EraserOptionsPanel({ eraserWidth, setEraserWidth }) {
           thumbTintColor={colors.brown}
         />
 
-        <TouchableOpacity
-          style={styles.thicknessBtn}
-          onPress={() => setEraserWidth(v => Math.min(80, v + 1))}
-          activeOpacity={0.8}
-        >
+        <TouchableOpacity style={styles.thicknessBtn} onPress={handleIncrease} activeOpacity={0.8}>
           <View style={styles.plusIcon}>
             <View style={styles.plusHorizontal} />
             <View style={styles.plusVertical} />

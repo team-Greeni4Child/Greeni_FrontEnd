@@ -10,6 +10,7 @@ import {
 } from "react-native";
 
 import colors from "../theme/colors";
+import { playButtonSound } from "../utils/soundEffects";
 
 const { width: W } = Dimensions.get("window");
 
@@ -41,6 +42,32 @@ export default function DiaryVoicePlayer({
 }) {
   const safeProgressRatio = Math.max(0, Math.min(1, progressRatio || 0));
 
+  const handlePressClose = () => {
+    playButtonSound();
+    onPressClose?.();
+  };
+
+  const handlePressPrev = () => {
+    if (isPrevDisabled) return;
+
+    playButtonSound();
+    onPressPrev?.();
+  };
+
+  const handlePressPlayPause = () => {
+    if (isLoading) return;
+
+    playButtonSound();
+    onPressPlayPause?.();
+  };
+
+  const handlePressNext = () => {
+    if (isNextDisabled) return;
+
+    playButtonSound();
+    onPressNext?.();
+  };
+
   return (
     <View style={styles.playerWrap}>
       <View style={styles.topRow}>
@@ -52,7 +79,7 @@ export default function DiaryVoicePlayer({
           {title}
         </Text>
 
-        <TouchableOpacity style={styles.closeButton} onPress={onPressClose} activeOpacity={0.8}>
+        <TouchableOpacity style={styles.closeButton} onPress={handlePressClose} activeOpacity={0.8}>
           <Text style={styles.closeText}>×</Text>
         </TouchableOpacity>
       </View>
@@ -74,7 +101,7 @@ export default function DiaryVoicePlayer({
 
         <View style={styles.controlRow}>
           <TouchableOpacity
-            onPress={onPressPrev}
+            onPress={handlePressPrev}
             activeOpacity={0.85}
             disabled={isPrevDisabled}
             style={[styles.sideButton, isPrevDisabled && styles.disabledButton]}
@@ -87,7 +114,7 @@ export default function DiaryVoicePlayer({
           </TouchableOpacity>
 
           <TouchableOpacity
-            onPress={onPressPlayPause}
+            onPress={handlePressPlayPause}
             activeOpacity={0.9}
             disabled={isLoading}
             style={[styles.playButton, isLoading && styles.disabledButton]}
@@ -104,7 +131,7 @@ export default function DiaryVoicePlayer({
           </TouchableOpacity>
 
           <TouchableOpacity
-            onPress={onPressNext}
+            onPress={handlePressNext}
             activeOpacity={0.85}
             disabled={isNextDisabled}
             style={[styles.sideButton, isNextDisabled && styles.disabledButton]}

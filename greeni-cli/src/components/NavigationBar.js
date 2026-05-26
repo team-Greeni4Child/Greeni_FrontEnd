@@ -1,6 +1,7 @@
 import React, { useRef, useEffect, useMemo } from "react";
 import { View, TouchableOpacity, StyleSheet, Image, Animated, Dimensions } from "react-native";
 import colors from "../theme/colors";
+import { playButtonSound } from "../utils/soundEffects";
 import MaskedView from "@react-native-masked-view/masked-view";
 import Svg, { Defs, Mask, Rect, Path, G } from "react-native-svg";
 
@@ -102,6 +103,13 @@ export default function NavigationBar({ state = 0, onTabPress, tabRefs = [] }) {
   const scaleX = DENT_W / DENT_VIEWBOX_W;
   const scaleY = DENT_H / DENT_VIEWBOX_H;
 
+  const handleTabPress = index => {
+    if (index === state) return;
+
+    playButtonSound();
+    onTabPress?.(index);
+  };
+
   return (
     <View style={styles.container}>
       <View style={styles.barClip}>
@@ -146,7 +154,7 @@ export default function NavigationBar({ state = 0, onTabPress, tabRefs = [] }) {
             key={i}
             ref={tabRefs[i] || null}
             style={styles.tab}
-            onPress={() => onTabPress && onTabPress(i)}
+            onPress={() => handleTabPress(i)}
             activeOpacity={0.8}
           >
             <Animated.View
