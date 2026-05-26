@@ -10,6 +10,8 @@ import com.facebook.react.ReactActivityDelegate
 import com.facebook.react.defaults.DefaultNewArchitectureEntryPoint.fabricEnabled
 import com.facebook.react.defaults.DefaultReactActivityDelegate
 
+import android.media.AudioManager
+
 class MainActivity : ReactActivity() {
 
   override fun getMainComponentName(): String = "greeni"
@@ -19,6 +21,8 @@ class MainActivity : ReactActivity() {
 
   override fun onCreate(savedInstanceState: Bundle?) {
     WindowCompat.setDecorFitsSystemWindows(window, false)
+    volumeControlStream = AudioManager.STREAM_MUSIC
+    
     super.onCreate(null)
 
     window.decorView.post {
