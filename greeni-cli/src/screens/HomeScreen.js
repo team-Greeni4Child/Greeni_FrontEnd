@@ -14,6 +14,7 @@ import {
   Easing,
 } from "react-native";
 import colors from "../theme/colors";
+import { playButtonSound } from "../utils/soundEffects";
 import NavigationBar from "../components/NavigationBar";
 import TutorialOverlay from "../components/TutorialOverlay";
 import { useFocusEffect } from "@react-navigation/native";
@@ -157,6 +158,8 @@ export default function HomeScreen({ navigation, route }) {
   const handlePressDiary = async (params = undefined) => {
     if (isCheckingDiary || isDiarySaveAnimating) return;
 
+    playButtonSound();
+
     try {
       setIsCheckingDiary(true);
 
@@ -191,6 +194,9 @@ export default function HomeScreen({ navigation, route }) {
 
   const handlePressFiveQuestions = (params = undefined) => {
     if (isDiarySaveAnimating) return;
+
+    playButtonSound();
+
     navigation.navigate("FiveQuestions", params);
   };
 
@@ -210,6 +216,9 @@ export default function HomeScreen({ navigation, route }) {
 
   const handlePressRolePlaying = (params = undefined) => {
     if (isDiarySaveAnimating) return;
+
+    playButtonSound();
+
     navigation.navigate("RolePlaying", params);
   };
 
@@ -288,6 +297,7 @@ export default function HomeScreen({ navigation, route }) {
 
   // 모달 확인 버튼 처리
   const handleDiaryModalOk = () => {
+    playButtonSound();
     setShowDiaryModal(false);
   };
 
@@ -604,6 +614,16 @@ export default function HomeScreen({ navigation, route }) {
   const currentTutorialStep =
     isTutorialEnabled && currentStep?.screen === "Home" ? currentStep : null;
 
+  const handleExitApp = () => {
+    playButtonSound();
+    BackHandler.exitApp();
+  };
+
+  const handleCancelExit = () => {
+    playButtonSound();
+    setShowExitModal(false);
+  };
+
   return (
     <View
       ref={rootRef}
@@ -644,7 +664,7 @@ export default function HomeScreen({ navigation, route }) {
             <View style={styles.modalButtonWrap}>
               <TouchableOpacity
                 style={[styles.modalButton, { width: "50%", backgroundColor: colors.ivory }]}
-                onPress={() => BackHandler.exitApp()}
+                onPress={handleExitApp}
                 activeOpacity={1}
               >
                 <Text style={styles.modalButtonText}>예</Text>
@@ -652,7 +672,7 @@ export default function HomeScreen({ navigation, route }) {
 
               <TouchableOpacity
                 style={[styles.modalButton, { width: "50%" }]}
-                onPress={() => setShowExitModal(false)}
+                onPress={handleCancelExit}
                 activeOpacity={1}
               >
                 <Text style={styles.modalButtonText}>아니요</Text>
@@ -748,7 +768,7 @@ export default function HomeScreen({ navigation, route }) {
           onLayout={measureFiveQuestionsButton}
         >
           <Image source={require("../assets/images/icon_twenty.png")} style={styles.icon} />
-          <Text style={styles.buttonText}>다섯 고개</Text>
+          <Text style={styles.buttonText}>다섯고개</Text>
         </TouchableOpacity>
 
         {/* 역할놀이 */}

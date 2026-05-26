@@ -27,6 +27,7 @@ import CreditsContent from "../contents/CreditsContent";
 import Button from "../components/Button";
 import BackButton from "../components/BackButton";
 import colors from "../theme/colors";
+import { playButtonSound } from "../utils/soundEffects";
 
 const { width: W, height: H } = Dimensions.get("window");
 
@@ -68,6 +69,7 @@ export default function SettingsScreen({ route, navigation }) {
   };
 
   const handleErrorOk = () => {
+    playButtonSound();
     setShowErrorModal(false);
     setErrorModalMessage("");
   };
@@ -101,11 +103,14 @@ export default function SettingsScreen({ route, navigation }) {
   const profileImageSource = safeProfile.image;
 
   const toggleEditEnabled = () => {
+    playButtonSound();
     setEditEnabled(prev => !prev);
   };
 
   const startEditField = field => {
     if (!editEnabled) return;
+
+    playButtonSound();
 
     if (field === "name") {
       setEditingField("name");
@@ -225,6 +230,8 @@ export default function SettingsScreen({ route, navigation }) {
   };
 
   const handleDeleteProfile = async () => {
+    playButtonSound();
+
     try {
       const deletingId = selectedProfile?.profileId;
       if (!deletingId) return;
@@ -256,6 +263,8 @@ export default function SettingsScreen({ route, navigation }) {
   const handleLogout = async () => {
     if (isLoggingOut) return;
 
+    playButtonSound();
+
     try {
       setIsLoggingOut(true);
 
@@ -269,6 +278,8 @@ export default function SettingsScreen({ route, navigation }) {
   };
 
   const handleDeleteAccount = async () => {
+    playButtonSound();
+
     try {
       await deleteAccount();
     } catch (e) {
@@ -284,10 +295,25 @@ export default function SettingsScreen({ route, navigation }) {
     return <View style={styles.root} />;
   }
 
-  const handlePrivacyPress = () => setActiveSheet("privacy");
-  const handleTermsPress = () => setActiveSheet("terms");
-  const handleCreditsPress = () => setActiveSheet("credits");
-  const handleCloseSheet = () => setActiveSheet(null);
+  const handlePrivacyPress = () => {
+    playButtonSound();
+    setActiveSheet("privacy");
+  };
+
+  const handleTermsPress = () => {
+    playButtonSound();
+    setActiveSheet("terms");
+  };
+
+  const handleCreditsPress = () => {
+    playButtonSound();
+    setActiveSheet("credits");
+  };
+
+  const handleCloseSheet = () => {
+    playButtonSound();
+    setActiveSheet(null);
+  };
 
   return (
     <TouchableWithoutFeedback onPress={() => finishEdit()}>
@@ -307,8 +333,9 @@ export default function SettingsScreen({ route, navigation }) {
 
                 <TouchableOpacity
                   style={styles.editIconTouch}
-                  onPress={() =>
+                  onPress={() => {
                     // navigation.navigate("ProfileImageSelectFromSettings", {
+                    playButtonSound();
                     navigation.navigate("ProfileImageSelect", {
                       onSelectImage: async ({ selectedIndex, isUploaded, uploadedAsset }) => {
                         try {
@@ -354,8 +381,8 @@ export default function SettingsScreen({ route, navigation }) {
                           openErrorModal(e?.message || "프로필 이미지 수정에 실패했습니다.");
                         }
                       },
-                    })
-                  }
+                    });
+                  }}
                 >
                   <Image
                     style={styles.editIcon}
@@ -446,7 +473,10 @@ export default function SettingsScreen({ route, navigation }) {
               width={345}
               height={51}
               style={{ marginBottom: 12 }}
-              onPress={goProfileAndReset}
+              onPress={() => {
+                playButtonSound();
+                goProfileAndReset();
+              }}
             />
             <Button
               title="프로필 삭제"
@@ -457,7 +487,10 @@ export default function SettingsScreen({ route, navigation }) {
               width={345}
               height={51}
               style={{ marginBottom: 12 }}
-              onPress={() => setDeleteModalVisible(true)}
+              onPress={() => {
+                playButtonSound();
+                setDeleteModalVisible(true);
+              }}
             />
             <Button
               title="로그아웃"
@@ -468,7 +501,10 @@ export default function SettingsScreen({ route, navigation }) {
               width={345}
               height={51}
               style={{ marginBottom: 12 }}
-              onPress={() => setLogoutModalVisible(true)}
+              onPress={() => {
+                playButtonSound();
+                setLogoutModalVisible(true);
+              }}
             />
             <Button
               title="회원탈퇴"
@@ -479,7 +515,10 @@ export default function SettingsScreen({ route, navigation }) {
               width={345}
               height={51}
               style={{ marginBottom: 12 }}
-              onPress={() => setDeleteAccountModalVisible(true)}
+              onPress={() => {
+                playButtonSound();
+                setDeleteAccountModalVisible(true);
+              }}
             />
           </View>
         </View>
@@ -532,7 +571,10 @@ export default function SettingsScreen({ route, navigation }) {
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={[styles.modalButton, styles.rightButton]}
-                    onPress={() => setDeleteModalVisible(false)}
+                    onPress={() => {
+                      playButtonSound();
+                      setDeleteModalVisible(false);
+                    }}
                   >
                     <Text style={[styles.modalButtonText, { color: colors.brown }]}>아니오</Text>
                   </TouchableOpacity>
@@ -568,7 +610,10 @@ export default function SettingsScreen({ route, navigation }) {
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={[styles.modalButton, styles.rightButton]}
-                    onPress={() => setLogoutModalVisible(false)}
+                    onPress={() => {
+                      playButtonSound();
+                      setLogoutModalVisible(false);
+                    }}
                     disabled={isLoggingOut}
                   >
                     <Text style={[styles.modalButtonText, { color: colors.brown }]}>아니오</Text>
@@ -603,7 +648,10 @@ export default function SettingsScreen({ route, navigation }) {
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={[styles.modalButton, styles.rightButton]}
-                    onPress={() => setDeleteAccountModalVisible(false)}
+                    onPress={() => {
+                      playButtonSound();
+                      setDeleteAccountModalVisible(false);
+                    }}
                   >
                     <Text style={[styles.modalButtonText, { color: colors.brown }]}>아니오</Text>
                   </TouchableOpacity>

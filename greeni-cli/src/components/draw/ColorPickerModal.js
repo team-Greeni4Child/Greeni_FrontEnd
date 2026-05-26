@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Modal, View, Text, StyleSheet, Pressable, TouchableOpacity } from "react-native";
 import colors from "../../theme/colors";
 import ColorPicker, { Panel1, HueSlider } from "reanimated-color-picker";
+import { playButtonSound } from "../../utils/soundEffects";
 
 export default function ColorPickerModal({ visible, initialColor = "#FF0000", onClose, onApply }) {
   const [temp, setTemp] = useState(initialColor); // 확정값(손 뗐을 때 확정)
@@ -16,6 +17,16 @@ export default function ColorPickerModal({ visible, initialColor = "#FF0000", on
       setPickerKey(prev => prev + 1);
     }
   }, [visible, initialColor]);
+
+  const handleClosePress = () => {
+    playButtonSound();
+    onClose?.();
+  };
+
+  const handleApplyPress = () => {
+    playButtonSound();
+    onApply?.(temp);
+  };
 
   return (
     <Modal transparent visible={visible} animationType="fade">
@@ -53,12 +64,12 @@ export default function ColorPickerModal({ visible, initialColor = "#FF0000", on
           </View>
 
           <View style={styles.btnRow}>
-            <TouchableOpacity style={[styles.btn, styles.ghost]} onPress={onClose}>
+            <TouchableOpacity style={[styles.btn, styles.ghost]} onPress={handleClosePress}>
               <Text style={styles.ghostText}>취소</Text>
             </TouchableOpacity>
 
             {/* 적용은 확정값(temp) */}
-            <TouchableOpacity style={styles.btn} onPress={() => onApply?.(temp)}>
+            <TouchableOpacity style={styles.btn} onPress={handleApplyPress}>
               <Text style={styles.btnText}>적용</Text>
             </TouchableOpacity>
           </View>

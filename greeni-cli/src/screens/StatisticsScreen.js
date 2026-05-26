@@ -18,6 +18,7 @@ import { ProfileContext } from "../context/ProfileContext";
 import Button from "../components/Button";
 import BackButton from "../components/BackButton";
 import colors from "../theme/colors";
+import { playButtonSound } from "../utils/soundEffects";
 import NavigationBar from "../components/NavigationBar";
 import EmotionVander from "../components/EmotionVander";
 import EmotionVander2 from "../components/EmotionVander2";
@@ -269,6 +270,11 @@ export default function StatisticsScreen({ route, navigation }) {
     navigation.navigate("MyPage", params);
   };
 
+  const handlePressSummary = () => {
+    playButtonSound();
+    navigation.navigate("Summary");
+  };
+
   // 통계화면 튜토리얼 이후 튜토리얼 흐름을 이어주기 위한 분기 추가
   const handleTutorialPressMyPage = () => {
     const isMyPageIntroStep =
@@ -436,10 +442,7 @@ export default function StatisticsScreen({ route, navigation }) {
           </View>
 
           {/* 활동요약 */}
-          <TouchableOpacity
-            style={styles.summaryWrap}
-            onPress={() => navigation.navigate("Summary")}
-          >
+          <TouchableOpacity style={styles.summaryWrap} onPress={handlePressSummary}>
             <View style={styles.summaryHeader}>
               <Text style={styles.summaryTitle}>활동 요약</Text>
               <Image source={require("../assets/images/next_arrow.png")} style={styles.nextArrow} />

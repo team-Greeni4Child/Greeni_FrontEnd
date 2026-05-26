@@ -11,6 +11,7 @@ import colors from "../theme/colors";
 
 import PictureIconImport from "../assets/images/icon_picture.svg";
 import TextIconImport from "../assets/images/icon_text.svg";
+import { playButtonSound } from "../utils/soundEffects";
 
 /**
  * PinkToggle
@@ -66,6 +67,8 @@ export default function DiarySummaryToggle({
 
   const handleToggle = () => {
     if (disabled) return;
+
+    playButtonSound();
     onChange?.(isPicture ? "text" : "picture");
   };
 

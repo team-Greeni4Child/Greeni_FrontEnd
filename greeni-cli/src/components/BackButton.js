@@ -1,5 +1,6 @@
 import React from "react";
 import { TouchableOpacity, Image, StyleSheet, Dimensions } from "react-native";
+import { playBackButtonSound } from "../utils/soundEffects";
 
 const { height: H } = Dimensions.get("window");
 
@@ -7,7 +8,10 @@ export default function BackButton({ navigation, top = 80, left = 25, touchableR
   return (
     <TouchableOpacity
       ref={touchableRef}
-      onPress={() => navigation.goBack()}
+      onPress={() => {
+        playBackButtonSound();
+        navigation.goBack();
+      }}
       style={[styles.backButton, { top, left }]}
     >
       <Image

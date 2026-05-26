@@ -18,6 +18,7 @@ import { useFocusEffect } from "@react-navigation/native";
 import colors from "../theme/colors";
 import BackButton from "../components/BackButton";
 import Button from "../components/Button";
+import { playButtonSound } from "../utils/soundEffects";
 import TutorialOverlay from "../components/TutorialOverlay";
 
 import PenOptionsPanel from "../components/draw/PenOptionsPanel";
@@ -167,6 +168,8 @@ export default function DiaryDrawScreen({ navigation, route }) {
   };
 
   const handlePressPhoto = async () => {
+    playButtonSound();
+
     setActiveTool("photo");
     setShowPenPanel(false);
     setShowEraserPanel(false);
@@ -182,32 +185,45 @@ export default function DiaryDrawScreen({ navigation, route }) {
   };
 
   const handleChangePhoto = async () => {
+    playButtonSound();
+
     setShowPhotoActionPanel(false);
     await pickBackgroundImage();
     setActiveTool("pen");
   };
 
   const handleDeletePhoto = () => {
+    playButtonSound();
+
     setBackgroundUri(null);
     setShowPhotoActionPanel(false);
     setActiveTool("pen");
   };
 
   const handleUndo = () => {
+    if (!canUndo) return;
+
+    playButtonSound();
     canvasRef.current?.undo?.();
   };
 
   const handleRedo = () => {
+    if (!canRedo) return;
+
+    playButtonSound();
     canvasRef.current?.redo?.();
   };
 
   const handlePressSave = () => {
     if (isSaving || isExiting) return;
+
+    playButtonSound();
     closeAllPanels();
     setShowSaveModal(true);
   };
 
   const handleCancelSave = () => {
+    playButtonSound();
     setShowSaveModal(false);
   };
 
@@ -218,16 +234,20 @@ export default function DiaryDrawScreen({ navigation, route }) {
   };
 
   const handleCancelExit = () => {
+    playButtonSound();
     setShowExitModal(false);
   };
 
   const handleCloseErrorModal = () => {
+    playButtonSound();
     setShowErrorModal(false);
     setErrorMessage("");
   };
 
   const handleConfirmExit = async () => {
     if (isExiting) return;
+
+    playButtonSound();
 
     try {
       setIsExiting(true);
@@ -255,6 +275,8 @@ export default function DiaryDrawScreen({ navigation, route }) {
 
   const handleConfirmSave = async () => {
     if (isSaving) return;
+
+    playButtonSound();
 
     try {
       setIsSaving(true);
@@ -436,6 +458,7 @@ export default function DiaryDrawScreen({ navigation, route }) {
           {/* 펜 */}
           <TouchableOpacity
             onPress={() => {
+              playButtonSound();
               setActiveTool("pen");
               setShowEraserPanel(false);
               setShowPhotoActionPanel(false);
@@ -453,6 +476,7 @@ export default function DiaryDrawScreen({ navigation, route }) {
           {/* 지우개 */}
           <TouchableOpacity
             onPress={() => {
+              playButtonSound();
               setActiveTool("eraser");
               setShowPenPanel(false);
               setShowPhotoActionPanel(false);

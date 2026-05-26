@@ -11,6 +11,7 @@ import {
 } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import colors from "../theme/colors";
+import { playButtonSound } from "../utils/soundEffects";
 import NavigationBar from "../components/NavigationBar";
 import TutorialOverlay from "../components/TutorialOverlay";
 import { getDiariesByMonth } from "../api/diary";
@@ -192,10 +193,14 @@ export default function CalendarScreen({ navigation }) {
   );
 
   const goPrev = () => {
+    playButtonSound();
+
     if (month === 0) {
       setYear(y => y - 1);
       setMonth(11);
-    } else setMonth(m => m - 1);
+    } else {
+      setMonth(m => m - 1);
+    }
   };
 
   const goNext = () => {
@@ -208,12 +213,15 @@ export default function CalendarScreen({ navigation }) {
     // 미래 달 이동 방지
     if (nextY > currentY || (nextY === currentY && nextM > currentM)) return;
 
+    playButtonSound();
     setYear(nextY);
     setMonth(nextM);
   };
 
   const openDiary = d => {
     if (!hasDiary(d)) return; // 스티커 없으면 아무 것도 안 함
+
+    playButtonSound();
     const dateKey = ymd(d);
 
     // '일기 보기' 화면으로 이동

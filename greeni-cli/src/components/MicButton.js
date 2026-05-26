@@ -11,6 +11,7 @@ import {
   Easing,
 } from "react-native";
 import Sound, { AudioEncoderAndroidType, AudioSourceAndroidType } from "react-native-nitro-sound";
+import { playButtonSound } from "../utils/soundEffects";
 
 const { width: W, height: H } = Dimensions.get("window");
 
@@ -374,6 +375,7 @@ export default function MicButton({ onRecordComplete, disabled = false, touchabl
       return;
     }
 
+    playButtonSound();
     await startRecording();
   };
 
