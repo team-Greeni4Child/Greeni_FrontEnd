@@ -178,3 +178,15 @@ export function playFiveWrongVoice() {
 export function playRoleSelectSituationVoice(shouldCancel) {
   return playVoiceSound("role_playing/role_select_situation.mp3", 1, shouldCancel);
 }
+
+export function playRoleShopIntroVoice(shouldCancel) {
+  return playVoiceSound("role_playing/role_shop_intro.mp3", 1, shouldCancel);
+}
+
+export function playRoleTeacherIntroVoice(shouldCancel) {
+  return playVoiceSound("role_playing/role_teacher_intro.mp3", 1, shouldCancel);
+}
+
+export function playRoleFriendIntroVoice(shouldCancel) {
+  return playVoiceSound("role_playing/role_friend_intro.mp3", 1, shouldCancel);
+}

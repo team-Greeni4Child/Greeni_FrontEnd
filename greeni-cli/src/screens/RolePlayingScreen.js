@@ -19,13 +19,20 @@ import { playButtonSound } from "../utils/soundEffects";
 import { createRolePlayingActivity } from "../api/activity";
 import { requestRolePlaying, closeRolePlaying } from "../api/rolePlaying";
 import { playBase64Mp3, stopAiAudio } from "../utils/audio";
-import { playRoleSelectSituationVoice, stopVoiceSound } from "../utils/voiceSounds";
+import {
+  playRoleFriendIntroVoice,
+  playRoleSelectSituationVoice,
+  playRoleShopIntroVoice,
+  playRoleTeacherIntroVoice,
+  stopVoiceSound,
+} from "../utils/voiceSounds";
 import { ProfileContext } from "../context/ProfileContext";
 import { useTutorial } from "../context/TutorialContext";
 
 // 현재 기기의 화면 너비 W, 화면 높이 H
 const { width: W, height: H } = Dimensions.get("window");
 const ROLE_INTRO_VOICE_DELAY_MS = 700;
+const ROLE_SELECTED_INTRO_VOICE_DELAY_MS = 150;
 
 function makeSessionId() {
   return `role_${Date.now()}_${Math.floor(Math.random() * 100000)}`;
@@ -35,10 +42,27 @@ function getInitialBubbleText(role) {
   if (!role) {
     return `밑에 있는 세가지 상황 중에\n하나를 골라줘`;
   }
-  if (role === "shop") return "어서 오세요.\n그리니 잡화점입니다!";
-  if (role === "teacher") return "안녕!\n오늘은 선생님과 이야기해보자.";
-  if (role === "friend") return "만나서 반가워!\n나랑 같이 놀자~";
+  if (role === "shop") {
+    return "나는 가게 주인 그리니고\n너는 물건을 사러 온 손님이야.\n어서오세요 손님.\n원하시는 물건이 있나요?";
+  }
+  if (role === "teacher") {
+    return "나는 선생님 그리니야.\n오늘 어떤 이야기를 해볼까?\n궁금한게 있니?";
+  }
+  if (role === "friend") {
+    return "나는 친구 그리니고\n너는 나랑 놀러 온 친구야.\n우리 뭐 하고 놀까?";
+  }
   return "";
+}
+
+function getRoleIntroVoicePlayer(role) {
+  if (role === "shop") return playRoleShopIntroVoice;
+  if (role === "teacher") return playRoleTeacherIntroVoice;
+  if (role === "friend") return playRoleFriendIntroVoice;
+  return null;
+}
+
+function wait(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 function toActivityRole(role) {
@@ -66,7 +90,7 @@ export default function RolePlayingScreen({ navigation }) {
   const isScreenActiveRef = useRef(true);
   const failCountRef = useRef(0);
   const roleIntroTimerRef = useRef(null);
-  const roleIntroCancelledRef = useRef(false);
+  const roleVoiceCancelTokenRef = useRef(0);
   const roleIntroVoiceStartedRef = useRef(false);
 
   // 튜토리얼용 역할놀이 Ref
@@ -91,8 +115,17 @@ export default function RolePlayingScreen({ navigation }) {
     }
   }, []);
 
-  const cancelRoleIntroVoice = useCallback(async () => {
-    roleIntroCancelledRef.current = true;
+  const createRoleVoiceToken = useCallback(() => {
+    roleVoiceCancelTokenRef.current += 1;
+    return roleVoiceCancelTokenRef.current;
+  }, []);
+
+  const isRoleVoiceCancelled = useCallback(token => {
+    return !isScreenActiveRef.current || roleVoiceCancelTokenRef.current !== token;
+  }, []);
+
+  const cancelRoleVoice = useCallback(async () => {
+    roleVoiceCancelTokenRef.current += 1;
     clearRoleIntroTimer();
 
     await stopVoiceSound();
@@ -106,15 +139,15 @@ export default function RolePlayingScreen({ navigation }) {
     let alive = true;
 
     isScreenActiveRef.current = true;
-    roleIntroCancelledRef.current = false;
     roleIntroVoiceStartedRef.current = false;
+
+    const token = createRoleVoiceToken();
 
     roleIntroTimerRef.current = setTimeout(async () => {
       roleIntroTimerRef.current = null;
 
       if (!alive) return;
-      if (!isScreenActiveRef.current) return;
-      if (roleIntroCancelledRef.current) return;
+      if (isRoleVoiceCancelled(token)) return;
       if (roleIntroVoiceStartedRef.current) return;
 
       roleIntroVoiceStartedRef.current = true;
@@ -123,7 +156,7 @@ export default function RolePlayingScreen({ navigation }) {
         setIsAiSpeaking(true);
 
         await playRoleSelectSituationVoice(() => {
-          return roleIntroCancelledRef.current || !isScreenActiveRef.current;
+          return !alive || isRoleVoiceCancelled(token);
         });
       } catch (e) {
         console.log("PLAY ROLE SELECT SITUATION VOICE FAIL:", e);
@@ -136,30 +169,55 @@ export default function RolePlayingScreen({ navigation }) {
 
     return () => {
       alive = false;
-      roleIntroCancelledRef.current = true;
+      roleVoiceCancelTokenRef.current += 1;
       clearRoleIntroTimer();
       isScreenActiveRef.current = false;
       stopVoiceSound();
       stopAiAudio();
     };
-  }, [clearRoleIntroTimer]);
+  }, [clearRoleIntroTimer, createRoleVoiceToken, isRoleVoiceCancelled]);
+
+  const playSelectedRoleIntroVoice = useCallback(
+    async role => {
+      const playIntroVoice = getRoleIntroVoicePlayer(role);
+
+      if (!playIntroVoice) return;
+      if (!isScreenActiveRef.current) return;
+
+      const token = createRoleVoiceToken();
+
+      try {
+        await wait(ROLE_SELECTED_INTRO_VOICE_DELAY_MS);
+
+        if (isRoleVoiceCancelled(token)) return;
+
+        setIsAiSpeaking(true);
+
+        await playIntroVoice(() => {
+          return isRoleVoiceCancelled(token);
+        });
+      } catch (e) {
+        console.log("PLAY SELECTED ROLE INTRO VOICE FAIL:", e);
+      } finally {
+        if (isScreenActiveRef.current && !isRoleVoiceCancelled(token)) {
+          setIsAiSpeaking(false);
+        }
+      }
+    },
+    [createRoleVoiceToken, isRoleVoiceCancelled],
+  );
 
   const handleSituation = async key => {
-    roleIntroCancelledRef.current = true;
-    clearRoleIntroTimer();
+    await cancelRoleVoice();
 
     setSelectedSituation(key);
     setBubbleText(getInitialBubbleText(key));
     setSessionId("");
     failCountRef.current = 0;
 
-    await stopVoiceSound();
-
-    if (isScreenActiveRef.current) {
-      setIsAiSpeaking(false);
-    }
-
     playButtonSound();
+
+    await playSelectedRoleIntroVoice(key);
   };
 
   const handleRecordComplete = async voicePath => {
@@ -195,7 +253,7 @@ export default function RolePlayingScreen({ navigation }) {
 
       if (result?.base64Voice && isScreenActiveRef.current) {
         try {
-          await cancelRoleIntroVoice();
+          await cancelRoleVoice();
           setIsAiSpeaking(true);
           await playBase64Mp3(result.base64Voice);
         } finally {
@@ -226,7 +284,7 @@ export default function RolePlayingScreen({ navigation }) {
     isSubmittingRef.current = true;
     isScreenActiveRef.current = false;
 
-    roleIntroCancelledRef.current = true;
+    roleVoiceCancelTokenRef.current += 1;
     clearRoleIntroTimer();
 
     try {
