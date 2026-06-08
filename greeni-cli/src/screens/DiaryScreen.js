@@ -25,11 +25,12 @@ import { uploadDiaryVoice } from "../api/s3";
 import { sendDiaryVoice } from "../api/diary";
 import { requestDiaryAi, closeDiaryAi } from "../api/diaryAi";
 import { playBase64Mp3, stopAiAudio } from "../utils/audio";
+import { playDiaryDrawVoice, playDiaryStartVoice, stopVoiceSound } from "../utils/voiceSounds";
 
 const { width: W, height: H } = Dimensions.get("window");
 const MAX_DIARY_TURNS = 10;
 const DRAW_TRANSITION_MESSAGE = "이제 그림일기 그리러 가자!";
-const DRAW_TRANSITION_DELAY_MS = 1200;
+const DRAW_TRANSITION_DELAY_MS = 300;
 
 function createSessionId() {
   return `diary_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
@@ -71,6 +72,7 @@ export default function DiaryScreen({ navigation, route }) {
   const isEndingRef = useRef(false);
   const isClosingRef = useRef(false);
   const failCountRef = useRef(0);
+  const initialVoicePlayedRef = useRef(false);
 
   // 튜토리얼용 일기 Ref
   const rootRef = useRef(null);
@@ -83,6 +85,7 @@ export default function DiaryScreen({ navigation, route }) {
   const shouldStartDiaryTutorial = route.params?.tutorialFlowId === "diary";
 
   useEffect(() => {
+    let alive = true;
     isScreenActiveRef.current = true;
 
     console.log("[DIARY][ENTER]", {
@@ -91,11 +94,33 @@ export default function DiaryScreen({ navigation, route }) {
       routeParams: route.params,
     });
 
+    const playInitialDiaryVoice = async () => {
+      if (initialVoicePlayedRef.current) return;
+      if (shouldStartDiaryTutorial) return;
+
+      initialVoicePlayedRef.current = true;
+
+      try {
+        setIsAiSpeaking(true);
+        await playDiaryStartVoice();
+      } catch (e) {
+        console.log("[DIARY] 시작 음성 재생 실패:", e);
+      } finally {
+        if (alive && isScreenActiveRef.current) {
+          setIsAiSpeaking(false);
+        }
+      }
+    };
+
+    playInitialDiaryVoice();
+
     return () => {
+      alive = false;
       isScreenActiveRef.current = false;
+      stopVoiceSound();
       stopAiAudio();
     };
-  }, [route.params, selectedProfile?.profileId]);
+  }, [route.params, selectedProfile?.profileId, shouldStartDiaryTutorial]);
 
   // 일기 튜토리얼 분기
   useEffect(() => {
@@ -138,10 +163,26 @@ export default function DiaryScreen({ navigation, route }) {
     if (!audioBase64 || !isScreenActiveRef.current) return;
 
     try {
+      await stopVoiceSound();
       setIsAiSpeaking(true);
       await playBase64Mp3(audioBase64);
     } catch (e) {
       console.log("[DIARY] AI 음성 재생 실패:", e);
+    } finally {
+      if (isScreenActiveRef.current) {
+        setIsAiSpeaking(false);
+      }
+    }
+  };
+
+  const playDiaryDrawTransitionVoice = async () => {
+    if (!isScreenActiveRef.current) return;
+
+    try {
+      setIsAiSpeaking(true);
+      await playDiaryDrawVoice();
+    } catch (e) {
+      console.log("[DIARY] 그림일기 음성 재생 실패:", e);
     } finally {
       if (isScreenActiveRef.current) {
         setIsAiSpeaking(false);
@@ -177,6 +218,7 @@ export default function DiaryScreen({ navigation, route }) {
       isClosingRef.current = true;
       setShowExitModal(false);
 
+      await stopVoiceSound();
       await stopAiAudio();
       if (isScreenActiveRef.current) {
         setIsAiSpeaking(false);
@@ -217,6 +259,7 @@ export default function DiaryScreen({ navigation, route }) {
     try {
       isEndingRef.current = true;
 
+      await stopVoiceSound();
       await stopAiAudio();
       if (isScreenActiveRef.current) {
         setIsAiSpeaking(false);
@@ -258,6 +301,7 @@ export default function DiaryScreen({ navigation, route }) {
         return;
       }
 
+      await stopVoiceSound();
       await stopAiAudio();
       if (isScreenActiveRef.current) {
         setIsAiSpeaking(false);
@@ -359,6 +403,10 @@ export default function DiaryScreen({ navigation, route }) {
 
       if (isLastTurn) {
         setBubbleText(DRAW_TRANSITION_MESSAGE);
+
+        await playDiaryDrawTransitionVoice();
+
+        if (!isScreenActiveRef.current) return;
 
         await wait(DRAW_TRANSITION_DELAY_MS);
 
