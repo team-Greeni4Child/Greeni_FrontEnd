@@ -1,17 +1,30 @@
 import Sound from "react-native-nitro-sound";
-import { Image } from "react-native";
+import RNFS from "react-native-fs";
+
+const EFFECT_ASSET_DIR = "sounds/effects";
+const EFFECT_CACHE_DIR = `${RNFS.CachesDirectoryPath}/sounds/effects`;
+
+async function getCachedEffectPath(fileName) {
+  const cachePath = `${EFFECT_CACHE_DIR}/${fileName}`;
+  const exists = await RNFS.exists(cachePath);
+
+  if (!exists) {
+    await RNFS.mkdir(EFFECT_CACHE_DIR);
+    await RNFS.copyFileAssets(`${EFFECT_ASSET_DIR}/${fileName}`, cachePath);
+  }
+
+  return cachePath;
+}
 
 // BackButton
-const backButtonSound = Image.resolveAssetSource(
-  require("../assets/sounds/effects/back_button.mp3"),
-);
-
 export async function playBackButtonSound() {
   try {
+    const path = await getCachedEffectPath("back_button.mp3");
+
     await Sound.stopPlayer().catch(() => {});
     Sound.removePlayBackListener?.();
 
-    await Sound.startPlayer(backButtonSound.uri);
+    await Sound.startPlayer(path);
     await Sound.setVolume(0.3).catch(() => {});
 
     Sound.addPlayBackListener(e => {
@@ -26,22 +39,18 @@ export async function playBackButtonSound() {
     });
   } catch (e) {
     Sound.setVolume(1).catch(() => {});
-
-    if (__DEV__) {
-      console.log("PLAY BACK BUTTON SOUND FAIL:", e);
-    }
   }
 }
 
 // Button
-const buttonSound = Image.resolveAssetSource(require("../assets/sounds/effects/button.mp3"));
-
 export async function playButtonSound() {
   try {
+    const path = await getCachedEffectPath("button.mp3");
+
     await Sound.stopPlayer().catch(() => {});
     Sound.removePlayBackListener?.();
 
-    await Sound.startPlayer(buttonSound.uri);
+    await Sound.startPlayer(path);
     await Sound.setVolume(1.5).catch(() => {});
 
     Sound.addPlayBackListener(e => {
@@ -56,25 +65,18 @@ export async function playButtonSound() {
     });
   } catch (e) {
     Sound.setVolume(1).catch(() => {});
-
-    if (__DEV__) {
-      console.log("PLAY BUTTON SOUND FAIL:", e);
-    }
   }
 }
 
 // Correct / Wrong
-// Correct / Wrong
-const correctSound = Image.resolveAssetSource(require("../assets/sounds/effects/correct.mp3"));
-
-const wrongSound = Image.resolveAssetSource(require("../assets/sounds/effects/wrong.mp3"));
-
-async function playEffectSound(uri, label) {
+async function playEffectSound(fileName, label) {
   try {
+    const path = await getCachedEffectPath(fileName);
+
     await Sound.stopPlayer().catch(() => {});
     Sound.removePlayBackListener?.();
 
-    await Sound.startPlayer(uri);
+    await Sound.startPlayer(path);
     await Sound.setVolume(0.4).catch(() => {});
 
     Sound.addPlayBackListener(e => {
@@ -89,30 +91,26 @@ async function playEffectSound(uri, label) {
     });
   } catch (e) {
     Sound.setVolume(1).catch(() => {});
-
-    if (__DEV__) {
-      console.log(`${label} FAIL:`, e);
-    }
   }
 }
 
 export function playCorrectSound() {
-  return playEffectSound(correctSound.uri, "PLAY CORRECT SOUND");
+  return playEffectSound("correct.mp3", "PLAY CORRECT SOUND");
 }
 
 export function playWrongSound() {
-  return playEffectSound(wrongSound.uri, "PLAY WRONG SOUND");
+  return playEffectSound("wrong.mp3", "PLAY WRONG SOUND");
 }
 
 // Hint
-const hintSound = Image.resolveAssetSource(require("../assets/sounds/effects/hint.mp3"));
-
 export async function playHintSound() {
   try {
+    const path = await getCachedEffectPath("hint.mp3");
+
     await Sound.stopPlayer().catch(() => {});
     Sound.removePlayBackListener?.();
 
-    await Sound.startPlayer(hintSound.uri);
+    await Sound.startPlayer(path);
     await Sound.setVolume(0.5).catch(() => {});
 
     return await new Promise(resolve => {
@@ -130,9 +128,5 @@ export async function playHintSound() {
     });
   } catch (e) {
     Sound.setVolume(1).catch(() => {});
-
-    if (__DEV__) {
-      console.log("PLAY HINT SOUND FAIL:", e);
-    }
   }
 }
