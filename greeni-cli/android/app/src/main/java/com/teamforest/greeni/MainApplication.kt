@@ -1,4 +1,4 @@
-package com.greeni
+package com.teamforest.greeni
 
 import android.app.Application
 import com.facebook.react.PackageList
