@@ -22,6 +22,7 @@ import {
   playWrongSound,
   playHintSound,
 } from "../utils/soundEffects";
+import { playFiveCorrectVoice, playFiveWrongVoice, stopVoiceSound } from "../utils/voiceSounds";
 import { ProfileContext } from "../context/ProfileContext";
 import { getRandomFiveQuestionsAnswer } from "../utils/fiveQuestionsAnswers";
 import { useTutorial } from "../context/TutorialContext";
@@ -70,6 +71,8 @@ export default function TwentyQuestionsScreen({ navigation }) {
   const rootRef = useRef(null);
   const backButtonRef = useRef(null);
 
+  const isFiveTutorial = isTutorialEnabled && activeFlowId === "five";
+
   useEffect(() => {
     if (!initialScoreRef.current) {
       initialScoreRef.current = { correctCount: 0, wrongCount: 0 };
@@ -85,6 +88,7 @@ export default function TwentyQuestionsScreen({ navigation }) {
         nextQuestionTimerRef.current = null;
       }
 
+      stopVoiceSound();
       stopAiAudio();
     };
   }, []);
@@ -126,10 +130,26 @@ export default function TwentyQuestionsScreen({ navigation }) {
     if (!isScreenActiveRef.current) return;
 
     try {
+      await stopVoiceSound();
       setIsAiSpeaking(true);
       await playBase64Mp3(audioBase64);
     } catch (e) {
       console.log("PLAY FIVE QUESTIONS HINT FAIL:", e);
+    } finally {
+      if (isScreenActiveRef.current) {
+        setIsAiSpeaking(false);
+      }
+    }
+  }, []);
+
+  const playFeedbackVoice = useCallback(async (playVoice, label) => {
+    if (!isScreenActiveRef.current) return;
+
+    try {
+      setIsAiSpeaking(true);
+      await playVoice();
+    } catch (e) {
+      console.log(`PLAY FIVE QUESTIONS ${label} VOICE FAIL:`, e);
     } finally {
       if (isScreenActiveRef.current) {
         setIsAiSpeaking(false);
@@ -178,6 +198,7 @@ export default function TwentyQuestionsScreen({ navigation }) {
       setIsAnswerFeedbackShowing(false);
       isMovingNextRef.current = false;
 
+      await stopVoiceSound();
       await stopAiAudio();
 
       if (!isScreenActiveRef.current) return;
@@ -312,11 +333,18 @@ export default function TwentyQuestionsScreen({ navigation }) {
         const isCorrect = !!result.correct;
 
         if (isCorrect) {
-          playCorrectSound();
-
           setCorrectCount(prev => prev + 1);
           setShowAnswerText(true);
           setBubbleText("맞았어!");
+
+          await playCorrectSound();
+
+          if (!isScreenActiveRef.current) return;
+
+          await playFeedbackVoice(playFiveCorrectVoice, "CORRECT");
+
+          if (!isScreenActiveRef.current) return;
+
           goToNextQuestion(() => {
             if (isScreenActiveRef.current) {
               setShowAnswerText(false);
@@ -335,11 +363,18 @@ export default function TwentyQuestionsScreen({ navigation }) {
           return;
         }
 
-        playWrongSound();
-
         setWrongCount(prev => prev + 1);
         setShowAnswerText(true);
         setBubbleText("틀렸어!");
+
+        await playWrongSound();
+
+        if (!isScreenActiveRef.current) return;
+
+        await playFeedbackVoice(playFiveWrongVoice, "WRONG");
+
+        if (!isScreenActiveRef.current) return;
+
         goToNextQuestion(() => {
           if (isScreenActiveRef.current) {
             setShowAnswerText(false);
@@ -370,6 +405,7 @@ export default function TwentyQuestionsScreen({ navigation }) {
       canAnswerCurrentQuestion,
       isAnswerFeedbackShowing,
       showNextHint,
+      playFeedbackVoice,
       goToNextQuestion,
       handleApiFail,
       showErrorModal,
@@ -388,6 +424,7 @@ export default function TwentyQuestionsScreen({ navigation }) {
     }
 
     try {
+      await stopVoiceSound();
       await stopAiAudio();
       setIsAiSpeaking(false);
 
@@ -470,7 +507,6 @@ export default function TwentyQuestionsScreen({ navigation }) {
     isAnswerFeedbackShowing ||
     showErrorModal;
 
-  const isFiveTutorial = isTutorialEnabled && activeFlowId === "five";
   const currentTutorialStep =
     isTutorialEnabled && activeFlowId === "five" && currentStep?.screen === "FiveQuestions"
       ? currentStep

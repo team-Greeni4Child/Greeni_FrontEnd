@@ -3,6 +3,8 @@ import RNFS from "react-native-fs";
 
 const EFFECT_ASSET_DIR = "sounds/effects";
 const EFFECT_CACHE_DIR = `${RNFS.CachesDirectoryPath}/sounds/effects`;
+const EFFECT_END_OFFSET_MS = 1500;
+const HINT_END_OFFSET_MS = 1000;
 
 async function getCachedEffectPath(fileName) {
   const cachePath = `${EFFECT_CACHE_DIR}/${fileName}`;
@@ -75,21 +77,40 @@ async function playEffectSound(fileName, label) {
 
     await Sound.stopPlayer().catch(() => {});
     Sound.removePlayBackListener?.();
+    Sound.removePlaybackEndListener?.();
 
     await Sound.startPlayer(path);
     await Sound.setVolume(0.4).catch(() => {});
 
-    Sound.addPlayBackListener(e => {
-      if (e.currentPosition >= e.duration) {
-        Sound.stopPlayer()
+    return await new Promise(resolve => {
+      let finished = false;
+
+      const finish = async () => {
+        if (finished) return;
+        finished = true;
+
+        await Sound.stopPlayer()
           .catch(() => {})
           .finally(() => {
             Sound.removePlayBackListener?.();
+            Sound.removePlaybackEndListener?.();
             Sound.setVolume(1).catch(() => {});
+            resolve(true);
           });
-      }
+      };
+
+      Sound.addPlayBackListener(e => {
+        if (e.duration > 0 && e.currentPosition >= e.duration - EFFECT_END_OFFSET_MS) {
+          finish();
+        }
+      });
+
+      Sound.addPlaybackEndListener?.(() => {
+        finish();
+      });
     });
   } catch (e) {
+    console.log(label, e);
     Sound.setVolume(1).catch(() => {});
   }
 }
@@ -109,21 +130,36 @@ export async function playHintSound() {
 
     await Sound.stopPlayer().catch(() => {});
     Sound.removePlayBackListener?.();
+    Sound.removePlaybackEndListener?.();
 
     await Sound.startPlayer(path);
     await Sound.setVolume(0.5).catch(() => {});
 
     return await new Promise(resolve => {
+      let finished = false;
+
+      const finish = async () => {
+        if (finished) return;
+        finished = true;
+
+        await Sound.stopPlayer()
+          .catch(() => {})
+          .finally(() => {
+            Sound.removePlayBackListener?.();
+            Sound.removePlaybackEndListener?.();
+            Sound.setVolume(1).catch(() => {});
+            resolve(true);
+          });
+      };
+
       Sound.addPlayBackListener(e => {
-        if (e.duration > 0 && e.currentPosition >= e.duration) {
-          Sound.stopPlayer()
-            .catch(() => {})
-            .finally(() => {
-              Sound.removePlayBackListener?.();
-              Sound.setVolume(1).catch(() => {});
-              resolve(true);
-            });
+        if (e.duration > 0 && e.currentPosition >= e.duration - HINT_END_OFFSET_MS) {
+          finish();
         }
+      });
+
+      Sound.addPlaybackEndListener?.(() => {
+        finish();
       });
     });
   } catch (e) {

@@ -114,3 +114,12 @@ export function playDiaryStartVoice() {
 export function playDiaryDrawVoice() {
   return playVoiceSound("diary/diary_draw.mp3", 1);
 }
+
+// five questions
+export function playFiveCorrectVoice() {
+  return playVoiceSound("five_questions/five_correct.mp3", 1);
+}
+
+export function playFiveWrongVoice() {
+  return playVoiceSound("five_questions/five_wrong.mp3", 1);
+}
