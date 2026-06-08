@@ -46,21 +46,36 @@ export async function stopVoiceSound() {
   }
 }
 
-async function playVoiceSound(filePath, volume = 1) {
+async function playVoiceSound(filePath, volume = 1, shouldCancel) {
+  const isCancelled = () => {
+    return typeof shouldCancel === "function" && shouldCancel();
+  };
+
   try {
     await stopVoiceSound();
 
+    if (isCancelled()) {
+      return false;
+    }
+
     const path = await getCachedVoicePath(filePath);
+
+    if (isCancelled()) {
+      return false;
+    }
+
     currentVoicePath = path;
 
     await Sound.stopPlayer().catch(() => {});
     Sound.removePlayBackListener?.();
     Sound.removePlaybackEndListener?.();
 
-    await Sound.startPlayer(path);
-    await Sound.setVolume(volume).catch(() => {});
+    if (isCancelled()) {
+      currentVoicePath = null;
+      return false;
+    }
 
-    return await new Promise(resolve => {
+    return await new Promise((resolve, reject) => {
       let finished = false;
 
       const finish = async completed => {
@@ -85,17 +100,52 @@ async function playVoiceSound(filePath, volume = 1) {
         }
       };
 
-      currentVoiceFinish = finish;
+      const start = async () => {
+        try {
+          currentVoiceFinish = finish;
 
-      Sound.addPlayBackListener(e => {
-        if (e.duration > 0 && e.currentPosition >= e.duration) {
-          finish(true);
+          await Sound.startPlayer(path);
+
+          if (isCancelled()) {
+            await finish(false);
+            return;
+          }
+
+          await Sound.setVolume(volume).catch(() => {});
+
+          Sound.addPlayBackListener(e => {
+            if (isCancelled()) {
+              finish(false);
+              return;
+            }
+
+            if (e.duration > 0 && e.currentPosition >= e.duration) {
+              finish(true);
+            }
+          });
+
+          Sound.addPlaybackEndListener?.(() => {
+            if (isCancelled()) {
+              finish(false);
+              return;
+            }
+
+            finish(true);
+          });
+        } catch (e) {
+          if (currentVoicePath === path) {
+            currentVoicePath = null;
+          }
+
+          if (currentVoiceFinish === finish) {
+            currentVoiceFinish = null;
+          }
+
+          reject(e);
         }
-      });
+      };
 
-      Sound.addPlaybackEndListener?.(() => {
-        finish(true);
-      });
+      start();
     });
   } catch (e) {
     await Sound.setVolume(1).catch(() => {});
@@ -122,4 +172,9 @@ export function playFiveCorrectVoice() {
 
 export function playFiveWrongVoice() {
   return playVoiceSound("five_questions/five_wrong.mp3", 1);
+}
+
+// role playing
+export function playRoleSelectSituationVoice(shouldCancel) {
+  return playVoiceSound("role_playing/role_select_situation.mp3", 1, shouldCancel);
 }
